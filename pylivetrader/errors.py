@@ -52,3 +52,7 @@ class NotSupported(LiveTraderError):
 
 class APINotSupported(LiveTraderError):
     msg = "API is not supported in livetrader."
+
+
+class BadOrderParameters(LiveTraderError):
+    pass

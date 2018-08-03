@@ -1,48 +1,50 @@
 import abc
+from abc import abstractmethod
 
 
 class BaseBackend(abc.ABC):
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_equities(self):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_equities(self):
         pass
 
     @property
-    @abc.abstractmethod
+    @abstractmethod
     def positions(self):
         pass
 
     @property
-    @abc.abstractmethod
+    @abstractmethod
     def portfolio(self):
         pass
 
     @property
-    @abc.abstractmethod
+    @abstractmethod
     def account(self):
         pass
 
     @property
-    @abc.abstractmethod
+    @abstractmethod
     def order(self, asset, amount, style):
         pass
 
-    @abc.abstractmethod
-    def get_orders(self):
+    @property
+    @abstractmethod
+    def orders(self):
         pass
 
-    @abc.abstractmethod
-    def get_last_traded_at(self, asset):
+    @abstractmethod
+    def get_last_traded_dt(self, asset):
         pass
 
-    @abs.abstractmethod
+    @abstractmethod
     def get_spot_value(self, assets, field, dt, date_frequency):
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_bars(self, assets, data_frequency, bar_count=500):
         pass

@@ -1,8 +1,14 @@
 import pytz
 from copy import copy
+import importlib
 
+from pylivetrader.assets import AssetFinder
 from pylivetrader.misc.api_context import api_method, LiveTraderAPI
 from pylivetrader.errors import APINotSupported
+
+
+def noop(*args, **kwargs):
+    pass
 
 
 class Algorithm:
@@ -12,8 +18,39 @@ class Algorithm:
     def __init__(self, *args, **kwargs):
         self._recorded_vars = {}
 
-        self._data_frequency = kwargs.get('data_frequency', 'minute')
+        self._data_frequency = kwargs.pop('data_frequency', 'minute')
         assert self._data_frequency in ('minute', 'daily')
+
+        backend = kwargs.pop('backend', 'alpaca')
+        try:
+            # First, tries to import official backend packages
+            backendmod = importlib.import_module(
+                'pylivetrader.backend.{}'.format(backend))
+        except ImportError:
+            # Then if failes, tries to find pkg in global package namespace.
+            try:
+                backendmod = importlib.import_module(backend).Backend(**options)
+            except ImportError:
+                raise RuntimeError(
+                    "Could not find backend package `{}`.".format(backend))
+
+        self._backend = backendmod.Backend(**kwargs.pop('backend_options', {}))
+
+        self.asset_finder = AssetFinder(self._backend)
+
+        self._initialize = kwargs.pop('initialize', noop)
+        self._handle_data = kwargs.pop('handle_data', noop)
+        self._before_trading_start = kwargs.pop('before_trading_start', noop)
+
+
+    def run(self):
+
+        self._initialize(self)
+
+        self._handle_data(self, None)
+
+        self._before_trading_start(self, None)
+
 
     @api_method
     def get_environment(self, field='platform'):
@@ -78,7 +115,7 @@ class Algorithm:
         Raises:
             AssetNotFound: When could not resolve the ``Asset`` by ``symbol``.
         '''
-        raise NotImplemented
+        return self.asset_finder.lookup_symbol(symbol, as_of_date=None)
 
     @api_method
     def continuous_future(self, *args, **kwargs):

@@ -16,11 +16,18 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pandas',
-        'numpy',
+        'numpy<1.15.0',
         'pytz',
+        'logbook',
+        'astor',
+        # supoort alpaca backend by default
+        'alpaca-trade-api',
     ],
     tests_require=[
         'pytest',
     ],
-    setup_requires=["flake8", "pytest-runner"]
+    setup_requires=["flake8", "pytest-runner"],
+    extras_require={
+        'alpaca': ['alpaca-trade-api'],
+    }
 )
