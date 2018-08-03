@@ -12,11 +12,11 @@ class Algorithm:
     """Provides algorithm compatible with zipline.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self._recorded_vars = {}
-        # TODO: need to be modifiable.
-        self._data_frequency = 'minute'
-        pass
+
+        self._data_frequency = kwargs.get('data_frequency', 'minute')
+        assert self._data_frequency in ('minute', 'daily')
 
     @api_method
     def get_environment(self, field='platform'):
