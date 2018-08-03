@@ -48,3 +48,7 @@ class SymbolNotFound(LiveTraderError):
 
 class NotSupported(LiveTraderError):
     msg = "Not supported in livetrader."
+
+
+class APINotSupported(LiveTraderError):
+    msg = "API is not supported in livetrader."

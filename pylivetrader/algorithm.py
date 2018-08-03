@@ -2,10 +2,7 @@ import pytz
 from copy import copy
 
 from pylivetrader.misc.api_context import api_method, LiveTraderAPI
-
-
-class APINotSupported:
-    pass
+from pylivetrader.errors import APINotSupported
 
 
 class Algorithm:
