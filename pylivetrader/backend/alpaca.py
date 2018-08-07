@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import uuid
 import alpaca_trade_api as tradeapi
+from alpaca_trade_api.rest import APIError
 
 from .base import BaseBackend
 

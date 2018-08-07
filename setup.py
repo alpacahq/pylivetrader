@@ -20,6 +20,7 @@ setup(
         'pytz',
         'logbook',
         'astor',
+        'trading_calendars',
         # supoort alpaca backend by default
         'alpaca-trade-api',
     ],

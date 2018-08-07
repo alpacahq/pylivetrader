@@ -93,3 +93,14 @@ def tolerant_equals(a, b, atol=10e-7, rtol=10e-7, equal_nan=False):
     if equal_nan and isnan(a) and isnan(b):
         return True
     return math.fabs(a - b) <= (atol + rtol * math.fabs(b))
+
+
+def round_if_near_integer(a, epsilon=1e-4):
+    """
+    Round a to the nearest integer if that integer is within an epsilon
+    of a.
+    """
+    if abs(a - round(a)) <= epsilon:
+        return round(a)
+    else:
+        return a

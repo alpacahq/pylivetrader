@@ -11,6 +11,7 @@ from zipline import api as api2
 
 def handle_data(ctx, data):
     symbol('AAPL')
+
 '''
 
     m = get_functions(script)

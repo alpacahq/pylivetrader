@@ -78,7 +78,7 @@ class AssetFinder:
         if len(failures) > 0:
             raise SidsNotFound(sids=list(failures))
 
-        return [hits for sid in sids]
+        return [hits[sid] for sid in sids]
 
     def retrieve_asset(self, sid, default_none=False):
         """
@@ -190,10 +190,10 @@ class AssetFinder:
     def lookup_generic(self,
                        asset_convertible_or_iterable,
                        as_of_date):
-        raise NotImplemented
+        raise NotImplementedError
 
     def map_identifier_index_to_sids(self, index, as_of_date):
-        raise NotImplemented
+        raise NotImplementedError
 
     def lifetimes(self, dates, include_start_date):
-        raise NotImplemented
+        raise NotImplementedError

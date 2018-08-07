@@ -58,15 +58,19 @@ def translate(script):
     return astor.to_source(tree)
 
 
+LIST_TO_REPLACE = [
+    'zipline.api',
+    'zipline.errors',
+]
+
+
 class ZiplineImportVisitor(ast.NodeVisitor):
 
     def visit_Import(self, node):
 
-        replace = ['zipline.api', 'zipline.errors']
-
         for i, ch in enumerate(node.names):
 
-            if ch.name in replace:
+            if ch.name in LIST_TO_REPLACE:
                 node.names[i].name = node.names[i].name.replace(
                     'zipline.', 'pylivetrader.')
 
@@ -75,11 +79,11 @@ class ZiplineImportVisitor(ast.NodeVisitor):
 
     def visit_ImportFrom(self, node):
 
-        replace = ['zipline.api', 'zipline.errors']
-
-        if node.module in replace:
+        if node.module in LIST_TO_REPLACE:
             node.module = node.module.replace('zipline.', 'pylivetrader.')
-        elif node.module == 'zipline':
+            return node
+
+        if node.module == 'zipline':
             for name in node.names:
                 if name.name not in ['api', 'errors']:
                     log.warning('pylivetrader does not supports {}.{} module. Fallback to load zipline'.format(node.module, name.name))

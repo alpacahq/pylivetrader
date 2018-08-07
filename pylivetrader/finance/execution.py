@@ -39,7 +39,7 @@ class ExecutionStyle(with_metaclass(abc.ABCMeta)):
         Get the limit price for this order.
         Returns either None or a numerical value >= 0.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_stop_price(self, is_buy):
@@ -47,7 +47,7 @@ class ExecutionStyle(with_metaclass(abc.ABCMeta)):
         Get the stop price for this order.
         Returns either None or a numerical value >= 0.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @property
     def exchange(self):
