@@ -110,8 +110,6 @@ class RealtimeClock(object):
                 if self.minute_emission:
                     yield server_time, MINUTE_END
                 yield server_time, SESSION_END
-
-                return
             elif server_time > session_close:
                 sleep(1)
             else:
