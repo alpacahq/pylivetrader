@@ -1,16 +1,19 @@
 import warnings
 import pytz
 import pandas as pd
+from pandas._libs.tslib import normalize_date
 from copy import copy
 import importlib
 from trading_calendars import get_calendar
 
 import pylivetrader.protocol as proto
-from pylivetrader.assets import AssetFinder
+from pylivetrader.assets import AssetFinder, Asset
 from pylivetrader.data.bardata import BarData, handle_non_market_minutes
 from pylivetrader.data.data_portal import DataPortal
 from pylivetrader.executor.executor import AlgorithmExecutor
-from pylivetrader.errors import APINotSupported
+from pylivetrader.errors import (
+    APINotSupported, CannotOrderDelistedAsset, UnsupportedOrderParameters
+)
 from pylivetrader.finance.execution import (
     MarketOrder, LimitOrder, StopLimitOrder, StopOrder
 )
@@ -24,7 +27,7 @@ from pylivetrader.misc.events import (
     AfterOpen,
     BeforeClose
 )
-from pylivetrader.misc.zipline_utils import round_if_near_integer
+from pylivetrader.misc.math_utils import round_if_near_integer, tolerant_equals
 from pylivetrader.misc.api_context import api_method, LiveTraderAPI
 
 
@@ -92,7 +95,7 @@ class Algorithm:
 
     def handle_data(self, data):
         if self._handle_data:
-            self._handle_data(data)
+            self._handle_data(self, data)
 
     def before_trading_start(self, data):
         if self._before_trading_start is None:
@@ -115,16 +118,13 @@ class Algorithm:
             self.initialize()
             self.initialized = True
 
-        # setup up datetime to be now.
-        self.on_dt_changed(pd.Timestamp.now().floor(pd.Timedelta('1Min')))
-
-        executor = AlgorithmExecutor(
+        self.executor = AlgorithmExecutor(
             self,
             self.data_portal,
             self._calculate_universe,
         )
 
-        return executor.run()
+        return self.executor.run()
 
     @api_method
     def get_environment(self, field='platform'):
@@ -147,6 +147,9 @@ class Algorithm:
 
     @api_method
     def order(self, asset, amount, limit_price=None, stop_price=None, style=None):
+        if not self._can_order_asset(asset):
+            return None
+
         amount, style = self._calculate_order(
             asset, amount, limit_price, stop_price, style)
         o = self._backend.order(asset, amount, style)
@@ -293,7 +296,14 @@ class Algorithm:
 
     @api_method
     def order_value(self, asset, value, limit_price=None, stop_price=None, style=None):
-        return NotImplementedError
+        if not self._can_order_asset(asset):
+            return None
+
+        amount = self._calculate_order_value_amount(asset, value)
+        return self.order(asset, amount,
+                          limit_price=limit_price,
+                          stop_price=stop_price,
+                          style=style)
 
     @property
     def recorded_vars(self):
@@ -351,23 +361,58 @@ class Algorithm:
 
     @api_method
     def order_percent(self, asset, percent, limit_price=None, stop_price=None, style=None):
-        raise NotImplementedError
+        if not self._can_order_asset(asset):
+            return None
+
+        amount = self._calculate_order_percent_amount(asset, percent)
+        return self.order(asset, amount,
+                          limit_price=limit_price,
+                          stop_price=stop_price,
+                          style=style)
 
     @api_method
     def order_target(self, asset, target, limit_price=None, stop_price=None, style=None):
-        raise NotImplementedError
+        if not self._can_order_asset(asset):
+            return None
+
+        amount = self._calculate_order_target_amount(asset, target)
+        return self.order(asset, amount,
+                          limit_price=limit_price,
+                          stop_price=stop_price,
+                          style=style)
 
     @api_method
     def order_target_value(self, asset, target, limit_price=None, stop_price=None, style=None):
-        raise NotImplementedError
+        if not self._can_order_asset(asset):
+            return None
+
+        target_amount = self._calculate_order_value_amount(asset, target)
+        amount = self._calculate_order_target_amount(asset, target_amount)
+        return self.order(asset, amount,
+                          limit_price=limit_price,
+                          stop_price=stop_price,
+                          style=style)
 
     @api_method
     def order_target_percent(self, asset, target, limit_price=None, stop_price=None, style=None):
-        raise NotImplementedError
+        if not self._can_order_asset(asset):
+            return None
+
+        amount = self._calculate_order_target_percent_amount(asset, target)
+        return self.order(asset, amount,
+                          limit_price=limit_price,
+                          stop_price=stop_price,
+                          style=style)
 
     @api_method
     def batch_market_order(self, share_counts):
-        raise NotImplementedError
+        style = MarketOrder()
+        order_args = [
+            (asset, amount, style)
+            for (asset, amount) in iteritems(share_counts)
+            if amount
+        ]
+        return self._backend.batch_order(order_args)
 
     @api_method
     def get_open_orders(self, asset=None):
@@ -375,13 +420,16 @@ class Algorithm:
 
         assets = set([
             order.asset
-            for order in orders.items()
+            for id, order in orders.items()
             if order.open
         ])
 
         return {
-            asset: [order for order in orders.items()
-                    if order.asset == asset and order.open]
+            asset: [
+                order.to_api_obj()
+                for id, order in orders.items()
+                if order.asset == asset and order.open
+            ]
             for asset in assets
         }
 
@@ -396,7 +444,7 @@ class Algorithm:
         order_id = order_param
         if isinstance(order_param, proto.Order):
             order_id = order_param.id
-        self._backend.cancel(order_id)
+        self._backend.cancel_order(order_id)
 
     @api_method
     def history(self, bar_count, frequency, field, ffill=True):
@@ -480,6 +528,64 @@ class Algorithm:
 
         # our universe is all the assets passed into `run`.
         return self._assets_from_source
+
+    def _calculate_order_value_amount(self, asset, value):
+        """
+        Calculates how many shares/contracts to order based on the type of
+        asset being ordered.
+        """
+        if not self.executor.current_data.can_trade(asset):
+            raise CannotOrderDelistedAsset(
+                msg="Cannot order {0}, as it not tradable".format(asset.symbol)
+            )
+
+        if tolerant_equals(last_price, 0):
+            zero_message = "Price of 0 for {psid}; can't infer value".format(
+                psid=asset
+            )
+            if self.logger:
+                self.logger.debug(zero_message)
+            # Don't place any order
+            return 0
+
+        return value / last_price
+
+    def _calculate_order_percent_amount(self, asset, percent):
+        value = self.portfolio.portfolio_value * percent
+        return self._calculate_order_value_amount(asset, value)
+
+    def _calculate_order_target_amount(self, asset, target):
+        if asset in self.portfolio.positions:
+            current_position = self.portfolio.positions[asset].amount
+            target -= current_position
+
+        return target
+
+    def _calculate_order_target_percent_amount(self, asset, target):
+        target_amount = self._calculate_order_percent_amount(asset, target)
+        return self._calculate_order_target_amount(asset, target_amount)
+
+    def _can_order_asset(self, asset):
+
+        if not isinstance(asset, Asset):
+            raise UnsupportedOrderParameters(
+                msg="Passing non-Asset argument to 'order()' is not supported."
+                    " Use 'sid()' or 'symbol()' methods to look up an Asset."
+            )
+
+        if asset.auto_close_date:
+            day = normalize_date(self.get_datetime())
+
+            if day > min(asset.end_date, asset.auto_close_date):
+                # If we are after the asset's end date or auto close date, warn
+                # the user that they can't place an order for this asset, and
+                # return None.
+                log.warn("Cannot place order for {0}"
+                         ", as it is not tradable.".format(asset.symbol))
+
+                return False
+
+        return True
 
     #
     # Account Controls

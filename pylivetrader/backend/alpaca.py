@@ -1,4 +1,6 @@
 import pandas as pd
+from pandas._libs.tslib import normalize_date
+
 import numpy as np
 import uuid
 import alpaca_trade_api as tradeapi
@@ -27,6 +29,9 @@ log = Logger('Alpaca')
 
 NY = 'America/New_York'
 
+end_offset = pd.Timedelta('1000 days')
+one_day_offset = pd.Timedelta('1 day')
+
 
 class Backend(BaseBackend):
 
@@ -34,10 +39,29 @@ class Backend(BaseBackend):
         self._api = tradeapi.REST(key_id, secret, base_url)
 
     def get_equities(self):
-        return [
-            Equity(asset.id, asset.exchange, symbol=asset.symbol, asset_name=asset.symbol)
-            for asset in self._api.list_assets(asset_class='us_equity')
-        ]
+        assets = []
+        t = normalize_date(pd.Timestamp('now', tz='America/New_York'))
+        raw_assets = self._api.list_assets(asset_class='us_equity')
+        for raw_asset in raw_assets:
+
+            asset = Equity(
+                raw_asset.id, raw_asset.exchange,
+                symbol=raw_asset.symbol,
+                asset_name=raw_asset.symbol,
+            )
+
+            asset.start_date = t - one_day_offset
+
+            if raw_asset.status == 'active' and raw_asset.tradable:
+                asset.end_date = t + end_offset
+            else:
+                # if asset is not tradable, set end_date = day before
+                asset.end_date = t - one_day_offset
+            asset.auto_close_date = asset.end_date
+
+            assets.append(asset)
+
+        return assets
 
     @property
     def positions(self):
@@ -98,18 +122,21 @@ class Backend(BaseBackend):
             dt=order.submitted_at,
             commission=0,
         )
-        zp_order.status = ZP_ORDER_STATUS.OPEN
+        zp_order._status = ZP_ORDER_STATUS.OPEN
         if order.canceled_at:
-            zp_order.status = ZP_ORDER_STATUS.CANCELLED
+            zp_order._status = ZP_ORDER_STATUS.CANCELLED
         if order.failed_at:
-            zp_order.status = ZP_ORDER_STATUS.REJECTED
+            zp_order._status = ZP_ORDER_STATUS.REJECTED
         if order.filled_at:
-            zp_order.status = ZP_ORDER_STATUS.FILLED
+            zp_order._status = ZP_ORDER_STATUS.FILLED
             zp_order.filled = int(order.filled_qty)
         return zp_order
 
     def _new_order_id(self):
         return uuid.uuid4().hex
+
+    def batch_order(self, args):
+        return [self.order(*order) for order in args]
 
     def order(self, asset, amount, style):
         symbol = asset.symbol
@@ -242,7 +269,6 @@ class Backend(BaseBackend):
         dfs = []
         for asset in assets if not assets_is_scalar else [assets]:
             symbol = asset.symbol
-            print(is_daily, bars_map[symbol], bar_count)
             df = bars_map[symbol].df.copy()
             df = _fix_tz(df)
             if is_daily:

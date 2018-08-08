@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 from contextlib import contextmanager
 from collections import Iterable
@@ -202,7 +203,95 @@ class BarData:
                 return pd.Panel(df_dict)
 
     def can_trade(self, assets):
-        raise NotImplementedError
+        """
+        For the given asset or iterable of assets, returns true if all of the
+        following are true:
+        1) the asset is alive for the session of the current simulation time
+          (if current simulation time is not a market minute, we use the next
+          session)
+        2) (if we are in minute mode) the asset's exchange is open at the
+          current simulation time or at the simulation calendar's next market
+          minute
+        3) there is a known last price for the asset.
+
+        Notes
+        -----
+        The second condition above warrants some further explanation.
+        - If the asset's exchange calendar is identical to the simulation
+        calendar, then this condition always returns True.
+        - If there are market minutes in the simulation calendar outside of
+        this asset's exchange's trading hours (for example, if the simulation
+        is running on the CME calendar but the asset is MSFT, which trades on
+        the NYSE), during those minutes, this condition will return false
+        (for example, 3:15 am Eastern on a weekday, during which the CME is
+        open but the NYSE is closed).
+
+        Parameters
+        ----------
+        assets: Asset or iterable of assets
+
+        Returns
+        -------
+        can_trade : bool or pd.Series[bool] indexed by asset.
+        """
+        dt = self.datetime
+
+        if self._adjust_minutes:
+            adjusted_dt = self._get_current_minute()
+        else:
+            adjusted_dt = dt
+
+        data_portal = self.data_portal
+
+        if isinstance(assets, Asset):
+            return self._can_trade_for_asset(
+                assets, dt, adjusted_dt, data_portal
+            )
+        else:
+            tradeable = [
+                self._can_trade_for_asset(
+                    asset, dt, adjusted_dt, data_portal
+                )
+                for asset in assets
+            ]
+            return pd.Series(data=tradeable, index=assets, dtype=bool)
+
+    @property
+    def calendar(self):
+        return self.data_portal.trading_calendar
+
+    def _can_trade_for_asset(self, asset, dt, adjusted_dt, data_portal):
+        # if self._is_restricted(asset, adjusted_dt):
+        #     return False
+
+        session_label = self.calendar.minute_to_session_label(dt)
+
+        if not asset.is_alive_for_session(session_label):
+            # asset isn't alive
+            return False
+
+        if asset.auto_close_date and session_label >= asset.auto_close_date:
+            return False
+
+        if not self._daily_mode:
+            # Find the next market minute for this calendar, and check if this
+            # asset's exchange is open at that minute.
+            if self.calendar.is_open_on_minute(dt):
+                dt_to_use_for_exchange_check = dt
+            else:
+                dt_to_use_for_exchange_check = \
+                    self.calendar.next_open(dt)
+
+            if not asset.is_exchange_open(dt_to_use_for_exchange_check):
+                return False
+
+        # is there a last price?
+        return not np.isnan(
+            data_portal.get_spot_value(
+                asset, "price", adjusted_dt, self.data_frequency
+            )
+        )
+
 
     def current_dt(self):
         return self.datetime

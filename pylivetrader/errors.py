@@ -58,6 +58,13 @@ class BadOrderParameters(LiveTraderError):
     pass
 
 
+class UnsupportedOrderParameters(LiveTraderError):
+    pass
+
+
+class CannotOrderDelistedAsset(LiveTraderError):
+    pass
+
 
 class ScheduleFunctionInvalidCalendar(LiveTraderError):
     """

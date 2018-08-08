@@ -1,4 +1,4 @@
-
+from trading_calendars import get_calendar
 
 class Asset:
 
@@ -51,6 +51,38 @@ class Asset:
 
     def from_dict(cls, dic):
         return cls(**dic)
+
+    def is_exchange_open(self, dt_minute):
+        """
+        Parameters
+        ----------
+        dt_minute: pd.Timestamp (UTC, tz-aware)
+            The minute to check.
+
+        Returns
+        -------
+        boolean: whether the asset's exchange is open at the given minute.
+        """
+        calendar = get_calendar(self.exchange)
+        return calendar.is_open_on_minute(dt_minute)
+
+    def is_alive_for_session(self, session_label):
+        """
+        Returns whether the asset is alive at the given dt.
+
+        Parameters
+        ----------
+        session_label: pd.Timestamp
+            The desired session label to check. (midnight UTC)
+
+        Returns
+        -------
+        boolean: whether the asset is alive at the given dt.
+        """
+        ref_start = self.start_date.value
+        ref_end = self.end_date.value
+
+        return ref_start <= session_label.value <= ref_end
 
 
 class Equity(Asset):

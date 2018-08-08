@@ -1,6 +1,8 @@
 import ast
 import astor
 from six import exec_
+import numpy as np
+import pandas as pd
 
 from pylivetrader import api
 
@@ -22,7 +24,8 @@ def get_functions(script, filename=None):
     if filename is None:
         filename = '<script>'
 
-    script = translate(script)
+    # With translate, file will be rewrited and lost line # information
+    # script = translate(script)
 
     code = compile(script, filename, 'exec')
 

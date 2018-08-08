@@ -27,9 +27,12 @@ class BaseBackend(abc.ABC):
     def account(self):
         pass
 
-    @property
     @abstractmethod
     def order(self, asset, amount, style):
+        pass
+
+    @abstractmethod
+    def batch_order(self, args):
         pass
 
     @property
