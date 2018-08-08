@@ -1,15 +1,28 @@
+import warnings
 import pytz
+import pandas as pd
 from copy import copy
 import importlib
 from trading_calendars import get_calendar
 
 import pylivetrader.protocol as proto
 from pylivetrader.assets import AssetFinder
-from pylivetrader.data.bardata import BarData
+from pylivetrader.data.bardata import BarData, handle_non_market_minutes
 from pylivetrader.data.data_portal import DataPortal
+from pylivetrader.executor.executor import AlgorithmExecutor
 from pylivetrader.errors import APINotSupported
 from pylivetrader.finance.execution import (
     MarketOrder, LimitOrder, StopLimitOrder, StopOrder
+)
+from pylivetrader.misc import events
+from pylivetrader.misc.events import (
+    EventManager,
+    make_eventrule,
+    date_rules,
+    time_rules,
+    calendars,
+    AfterOpen,
+    BeforeClose
 )
 from pylivetrader.misc.zipline_utils import round_if_near_integer
 from pylivetrader.misc.api_context import api_method, LiveTraderAPI
@@ -26,8 +39,8 @@ class Algorithm:
     def __init__(self, *args, **kwargs):
         self._recorded_vars = {}
 
-        self._data_frequency = kwargs.pop('data_frequency', 'minute')
-        assert self._data_frequency in ('minute', 'daily')
+        self.data_frequency = kwargs.pop('data_frequency', 'minute')
+        assert self.data_frequency in ('minute', 'daily')
 
         backend = kwargs.pop('backend', 'alpaca')
         try:
@@ -51,36 +64,67 @@ class Algorithm:
         self.data_portal = DataPortal(
             self._backend, self.asset_finder, self.trading_calendar)
 
-        self._bardata = BarData(
-            self.data_portal,
-            self._data_frequency,
-            self._calculated_universe,
-        )
+        self.event_manager = EventManager()
 
         self._initialize = kwargs.pop('initialize', noop)
         self._handle_data = kwargs.pop('handle_data', noop)
         self._before_trading_start = kwargs.pop('before_trading_start', noop)
+
+        self.event_manager.add_event(
+            events.Event(
+                events.Always(),
+                # We pass handle_data.__func__ to get the unbound method.
+                self.handle_data.__func__,
+            ),
+            prepend=True,
+        )
 
         self._account_needs_update = True
         self._portfolio_needs_update = True
 
         self._assets_from_source = []
 
+        self.initialized = False
+
+    def initialize(self, *args, **kwargs):
+        with LiveTraderAPI(self):
+            self._initialize(self, *args, **kwargs)
+
+    def handle_data(self, data):
+        if self._handle_data:
+            self._handle_data(data)
+
+    def before_trading_start(self, data):
+        if self._before_trading_start is None:
+            return
+
+        self._in_before_trading_start = True
+
+        with handle_non_market_minutes(data) if \
+                self.data_frequency == "minute" else ExitStack():
+            self._before_trading_start(self, data)
+
+        self._in_before_trading_start = False
 
     def run(self):
-        import pandas as pd
-        self.on_dt_changed(pd.Timestamp.now())
-
         # for compatibility with zipline to provide history api
         self._assets_from_source = \
             self.asset_finder.retrieve_all(self.asset_finder.sids)
 
-        self._initialize(self)
+        if not self.initialized:
+            self.initialize()
+            self.initialized = True
 
-        self._before_trading_start(self, self._bardata)
+        # setup up datetime to be now.
+        self.on_dt_changed(pd.Timestamp.now().floor(pd.Timedelta('1Min')))
 
-        self._handle_data(self, self._bardata)
+        executor = AlgorithmExecutor(
+            self,
+            self.data_portal,
+            self._calculate_universe,
+        )
 
+        return executor.run()
 
     @api_method
     def get_environment(self, field='platform'):
@@ -111,7 +155,9 @@ class Algorithm:
 
     @api_method
     def add_event(self, rule=None, callback=None):
-        raise NotImplementedError
+        self.event_manager.add_event(
+            events.Event(rule, callback),
+        )
 
     @api_method
     def schedule_function(self,
@@ -120,7 +166,63 @@ class Algorithm:
                           time_rule=None,
                           half_days=True,
                           calendar=None):
-        raise NotImplementedError
+        """Schedules a function to be called according to some timed rules.
+
+        Parameters
+        ----------
+        func : callable[(context, data) -> None]
+            The function to execute when the rule is triggered.
+        date_rule : EventRule, optional
+            The rule for the dates to execute this function.
+        time_rule : EventRule, optional
+            The rule for the times to execute this function.
+        half_days : bool, optional
+            Should this rule fire on half days?
+        calendar : Sentinel, optional
+            Calendar used to reconcile date and time rules.
+
+        See Also
+        --------
+        :class:`zipline.api.date_rules`
+        :class:`zipline.api.time_rules`
+        """
+
+        # When the user calls schedule_function(func, <time_rule>), assume that
+        # the user meant to specify a time rule but no date rule, instead of
+        # a date rule and no time rule as the signature suggests
+        if isinstance(date_rule, (AfterOpen, BeforeClose)) and not time_rule:
+            warnings.warn('Got a time rule for the second positional argument '
+                          'date_rule. You should use keyword argument '
+                          'time_rule= when calling schedule_function without '
+                          'specifying a date_rule', stacklevel=3)
+
+        date_rule = date_rule or date_rules.every_day()
+        time_rule = ((time_rule or time_rules.every_minute())
+                     if self.data_frequency == 'minute' else
+                     # If we are in daily mode the time_rule is ignored.
+                     time_rules.every_minute())
+
+        # Check the type of the algorithm's schedule before pulling calendar
+        # Note that the ExchangeTradingSchedule is currently the only
+        # TradingSchedule class, so this is unlikely to be hit
+        if calendar is None:
+            cal = self.trading_calendar
+        elif calendar is calendars.US_EQUITIES:
+            cal = get_calendar('NYSE')
+        elif calendar is calendars.US_FUTURES:
+            cal = get_calendar('us_futures')
+        else:
+            raise ScheduleFunctionInvalidCalendar(
+                given_calendar=calendar,
+                allowed_calendars=(
+                    '[calendars.US_EQUITIES, calendars.US_FUTURES]'
+                ),
+            )
+
+        self.add_event(
+            make_eventrule(date_rule, time_rule, cal, half_days),
+            func,
+        )
 
     @api_method
     def record(self, *args, **kwargs):
@@ -218,7 +320,6 @@ class Algorithm:
         self._portfolio_needs_update = True
         self._account_needs_update = True
         self.datetime = dt
-        self._bardata.datetime = dt
 
     @api_method
     def get_datetime(self, tz=None):
@@ -247,9 +348,6 @@ class Algorithm:
     def set_symbol_lookup_date(self, dt):
         raise APINotSupported
 
-    @property
-    def data_frequency(self):
-        return self._data_frequency
 
     @api_method
     def order_percent(self, asset, percent, limit_price=None, stop_price=None, style=None):
@@ -308,7 +406,7 @@ class Algorithm:
         return self.get_history_window(
             bar_count,
             frequency,
-            self._calculated_universe(),
+            self._calculate_universe(),
             field,
             ffill,
         )
@@ -375,7 +473,7 @@ class Algorithm:
         else:
             return MarketOrder()
 
-    def _calculated_universe(self):
+    def _calculate_universe(self):
         # this exists to provide backwards compatibility for older,
         # deprecated APIs, particularly around the iterability of
         # BarData (ie, 'for sid in data`).

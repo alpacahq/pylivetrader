@@ -1,7 +1,18 @@
 import pandas as pd
+
+from contextlib import contextmanager
 from collections import Iterable
 
 from pylivetrader.assets import Asset
+
+
+@contextmanager
+def handle_non_market_minutes(bar_data):
+    try:
+        bar_data._adjust_minutes = True
+        yield
+    finally:
+        bar_data._adjust_minutes = False
 
 
 def _is_iterable(d):

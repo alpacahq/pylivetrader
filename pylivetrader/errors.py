@@ -56,3 +56,14 @@ class APINotSupported(LiveTraderError):
 
 class BadOrderParameters(LiveTraderError):
     pass
+
+
+
+class ScheduleFunctionInvalidCalendar(LiveTraderError):
+    """
+    Raised when schedule_function is called with an invalid calendar argument.
+    """
+    msg = (
+        "Invalid calendar '{given_calendar}' passed to schedule_function. "
+        "Allowed options are {allowed_calendars}."
+    )

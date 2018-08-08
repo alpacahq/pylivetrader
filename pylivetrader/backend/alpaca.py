@@ -242,6 +242,7 @@ class Backend(BaseBackend):
         dfs = []
         for asset in assets if not assets_is_scalar else [assets]:
             symbol = asset.symbol
+            print(is_daily, bars_map[symbol], bar_count)
             df = bars_map[symbol].df.copy()
             df = _fix_tz(df)
             if is_daily:
