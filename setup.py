@@ -3,10 +3,11 @@
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
+from pylivetrader._version import VERSION
 
 setup(
     name='pylivetrader',
-    version='0.0.1',
+    version=VERSION,
     description='simple live trading framework',
     license='MIT',
     author='Sho Yoshida',
@@ -14,6 +15,10 @@ setup(
     url='https://github.com/alpacahq/pylivetrader.git',
     keywords='',
     packages=find_packages(),
+    entry_points='''
+    [console_scripts]
+    pylivetrader=pylivetrader.__main__:main
+    ''',
     install_requires=[
         'pandas',
         'numpy<1.15.0',
@@ -21,6 +26,7 @@ setup(
         'logbook',
         'astor',
         'trading_calendars',
+        'click',
         # supoort alpaca backend by default
         'alpaca-trade-api',
     ],

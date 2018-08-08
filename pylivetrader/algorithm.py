@@ -2,6 +2,7 @@ import warnings
 import pytz
 import pandas as pd
 from pandas._libs.tslib import normalize_date
+from contextlib import ExitStack
 from copy import copy
 import importlib
 from trading_calendars import get_calendar
@@ -30,9 +31,10 @@ from pylivetrader.misc.events import (
 from pylivetrader.misc.math_utils import round_if_near_integer, tolerant_equals
 from pylivetrader.misc.api_context import api_method, LiveTraderAPI
 
+from logbook import Logger
 
-def noop(*args, **kwargs):
-    pass
+
+log = Logger('Algorithm')
 
 
 class Algorithm:
@@ -45,11 +47,11 @@ class Algorithm:
         self.data_frequency = kwargs.pop('data_frequency', 'minute')
         assert self.data_frequency in ('minute', 'daily')
 
-        backend = kwargs.pop('backend', 'alpaca')
+        self._backend_name = kwargs.pop('backend', 'alpaca')
         try:
             # First, tries to import official backend packages
             backendmod = importlib.import_module(
-                'pylivetrader.backend.{}'.format(backend))
+                'pylivetrader.backend.{}'.format(self._backend_name))
         except ImportError:
             # Then if failes, tries to find pkg in global package namespace.
             try:
@@ -110,6 +112,14 @@ class Algorithm:
         self._in_before_trading_start = False
 
     def run(self):
+
+        log.info(
+            "livetrader start running with "
+            "backend = {} "
+            "data-frequency = {}".format(
+                self._backend_name, self.data_frequency)
+        )
+
         # for compatibility with zipline to provide history api
         self._assets_from_source = \
             self.asset_finder.retrieve_all(self.asset_finder.sids)
@@ -621,7 +631,7 @@ class Algorithm:
 
     @api_method
     def set_long_only(self, on_error='fail'):
-        raise APINotSupported
+        pass
 
     @api_method
     def attach_pipeline(self, pipeline, name, chunks=None):
@@ -630,3 +640,6 @@ class Algorithm:
     @api_method
     def pipeline_output(self, name):
         raise APINotSupported
+
+def noop(*args, **kwargs):
+    pass

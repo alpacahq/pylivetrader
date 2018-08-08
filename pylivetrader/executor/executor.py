@@ -70,15 +70,9 @@ class AlgorithmExecutor:
 
         with ExitStack() as stack:
             stack.callback(on_exit)
-            # stack.enter_context(self.processor)
             stack.enter_context(LiveTraderAPI(self.algo))
 
-            def execute_order_cancellation_policy():
-                pass
-
-            def calculate_minute_capital_changes(dt):
-                return []
-
+            # runs forever
             for dt, action in self.clock:
                 if action == BAR:
                     every_bar(dt)
