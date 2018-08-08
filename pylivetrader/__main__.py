@@ -58,6 +58,7 @@ def version():
     from ._version import VERSION
     click.echo('v{}'.format(VERSION))
 
+
 main.add_command(run)
 main.add_command(version)
 

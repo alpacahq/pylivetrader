@@ -1,2 +1,2 @@
-from .assets import Asset, Equity
-from .finder import AssetFinder
+from .assets import Asset, Equity # noqa
+from .finder import AssetFinder # noqa

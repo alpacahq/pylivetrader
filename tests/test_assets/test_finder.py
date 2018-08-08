@@ -1,6 +1,6 @@
 import pytest
 
-from pylivetrader.assets import Asset, Equity, AssetFinder
+from pylivetrader.assets import Equity, AssetFinder
 from pylivetrader.errors import SidsNotFound
 
 

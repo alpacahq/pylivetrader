@@ -40,6 +40,7 @@ class lazyval(object):
     >>> c.val
     'val'
     """
+
     def __init__(self, get):
         self._get = get
         self._cache = WeakKeyDictionary()
@@ -85,6 +86,7 @@ class classlazyval(lazyval):
     # We don't reassign the name on the class to implement the caching because
     # then we would need to use a metaclass to track the name of the
     # descriptor.
+
     def __get__(self, instance, owner):
         return super(classlazyval, self).__get__(owner, owner)
 
@@ -173,6 +175,7 @@ class _WeakArgs(Sequence):
     Works with _WeakArgsDict to provide a weak cache for function args.
     When any of those args are gc'd, the pair is removed from the cache.
     """
+
     def __init__(self, items, dict_remove=None):
         def remove(k, selfref=ref(self), dict_remove=dict_remove):
             self = selfref()

@@ -12,10 +12,10 @@ def test_order():
     o = Order(datetime.now(), asset, 3)
     assert o.asset == asset
     assert o.sid == asset
-    assert o.open == True
+    assert o.open
 
     o.filled = 3
     assert o.open_amount == 0
-    assert o.open == False
+    assert not o.open
 
     assert type(o.to_api_obj()) == proto.Order

@@ -1,6 +1,7 @@
 '''API redirection definitions.
 
-All the algorithm API redirections are going to be registered by misc.api_context#api_method method on the fly.
+All the algorithm API redirections are going to be registered by
+misc.api_context#api_method method on the fly.
 '''
 
 from pylivetrader.finance import execution

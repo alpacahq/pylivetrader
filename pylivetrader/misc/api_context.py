@@ -31,7 +31,8 @@ class LiveTraderAPI:
 
 def api_method(f):
     '''
-    Redirect pylivetrader.api.* operations to the algorithm in the local context.
+    Redirect pylivetrader.api.* operations to the algorithm
+    in the local context.
     '''
 
     @wraps(f)
@@ -39,7 +40,9 @@ def api_method(f):
         # Get the instance and call the method
         algorithm = get_context()
         if algorithm is None:
-            raise RuntimeError('{} method must be callled during live trading'.format(f.__name__))
+            raise RuntimeError(
+                '{} method must be callled during live trading'.format(
+                    f.__name__))
         return getattr(algorithm, f.__name__)(*args, **kwargs)
 
     # register api redirection

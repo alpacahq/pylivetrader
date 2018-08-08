@@ -190,6 +190,7 @@ class EventManager(object):
         An optional callback to produce a context manager to wrap the calls
         to handle_data. This will be passed the current BarData.
     """
+
     def __init__(self, create_context=None):
         self._events = []
         self._create_context = (
@@ -252,6 +253,7 @@ class StatelessRule(EventRule):
     same datetime.
     Because these are pure, they can be composed to create new rules.
     """
+
     def and_(self, rule):
         """
         Logical and of two rules, triggers only when both rules trigger.
@@ -274,6 +276,7 @@ class ComposedRule(StatelessRule):
     operators so that they will have the same short circuit logic that is
     expected.
     """
+
     def __init__(self, first, second, composer):
         if not (isinstance(first, StatelessRule) and
                 isinstance(second, StatelessRule)):
@@ -336,6 +339,7 @@ class AfterOpen(StatelessRule):
     >>> AfterOpen(minutes=30)  # doctest: +ELLIPSIS
     <zipline.utils.events.AfterOpen object at ...>
     """
+
     def __init__(self, offset=None, **kwargs):
         self.offset = _build_offset(
             offset,
@@ -392,6 +396,7 @@ class BeforeClose(StatelessRule):
     >>> BeforeClose(minutes=30)  # doctest: +ELLIPSIS
     <zipline.utils.events.BeforeClose object at ...>
     """
+
     def __init__(self, offset=None, **kwargs):
         self.offset = _build_offset(
             offset,
@@ -441,6 +446,7 @@ class NotHalfDay(StatelessRule):
     """
     A rule that only triggers when it is not a half day.
     """
+
     def should_trigger(self, dt):
         return self.cal.minute_to_session_label(dt) \
             not in self.cal.early_closes
@@ -476,6 +482,7 @@ class NthTradingDayOfWeek(TradingDayOfWeekRule):
     A rule that triggers on the nth trading day of the week.
     This is zero-indexed, n=0 is the first trading day of the week.
     """
+
     def __init__(self, n):
         super(NthTradingDayOfWeek, self).__init__(n, invert=False)
 
@@ -484,6 +491,7 @@ class NDaysBeforeLastTradingDayOfWeek(TradingDayOfWeekRule):
     """
     A rule that triggers n days before the last trading day of the week.
     """
+
     def __init__(self, n):
         super(NDaysBeforeLastTradingDayOfWeek, self).__init__(n, invert=True)
 
@@ -521,6 +529,7 @@ class NthTradingDayOfMonth(TradingDayOfMonthRule):
     A rule that triggers on the nth trading day of the month.
     This is zero-indexed, n=0 is the first trading day of the month.
     """
+
     def __init__(self, n):
         super(NthTradingDayOfMonth, self).__init__(n, invert=False)
 
@@ -529,6 +538,7 @@ class NDaysBeforeLastTradingDayOfMonth(TradingDayOfMonthRule):
     """
     A rule that triggers n days before the last trading day of the month.
     """
+
     def __init__(self, n):
         super(NDaysBeforeLastTradingDayOfMonth, self).__init__(n, invert=True)
 
@@ -543,6 +553,7 @@ class StatefulRule(EventRule):
     on the internal state that this holds.
     StatefulRules wrap other rules as state transformers.
     """
+
     def __init__(self, rule=None):
         self.rule = rule or Always()
 

@@ -67,22 +67,22 @@ class BarData:
                 if not self._adjust_minutes:
                     return pd.Series(data={
                         field: self.data_portal.get_spot_value(
-                                    asset,
-                                    field,
-                                    self._get_current_minute(),
-                                    self.data_frequency
-                               )
+                            asset,
+                            field,
+                            self._get_current_minute(),
+                            self.data_frequency
+                        )
                         for field in fields
                     }, index=fields, name=assets.symbol)
                 else:
                     return pd.Series(data={
                         field: self.data_portal.get_adjusted_value(
-                                    asset,
-                                    field,
-                                    self._get_current_minute(),
-                                    self.datetime,
-                                    self.data_frequency
-                               )
+                            asset,
+                            field,
+                            self._get_current_minute(),
+                            self.datetime,
+                            self.data_frequency
+                        )
                         for field in fields
                     }, index=fields, name=assets.symbol)
         else:
@@ -94,24 +94,24 @@ class BarData:
                 if not self._adjust_minutes:
                     return pd.Series(data={
                         asset: self.data_portal.get_spot_value(
-                                    asset,
-                                    field,
-                                    self._get_current_minute(),
-                                    self.data_frequency
-                               )
+                            asset,
+                            field,
+                            self._get_current_minute(),
+                            self.data_frequency
+                        )
                         for asset in assets
-                        }, index=assets, name=fields)
+                    }, index=assets, name=fields)
                 else:
                     return pd.Series(data={
                         asset: self.data_portal.get_adjusted_value(
-                                    asset,
-                                    field,
-                                    self._get_current_minute(),
-                                    self.datetime,
-                                    self.data_frequency
-                               )
+                            asset,
+                            field,
+                            self._get_current_minute(),
+                            self.datetime,
+                            self.data_frequency
+                        )
                         for asset in assets
-                        }, index=assets, name=fields)
+                    }, index=assets, name=fields)
 
             else:
                 # both assets and fields are iterable
@@ -121,34 +121,33 @@ class BarData:
                     for field in fields:
                         series = pd.Series(data={
                             asset: self.data_portal.get_spot_value(
-                                        asset,
-                                        field,
-                                        self._get_current_minute(),
-                                        self.data_frequency
-                                   )
+                                asset,
+                                field,
+                                self._get_current_minute(),
+                                self.data_frequency
+                            )
                             for asset in assets
-                            }, index=assets, name=field)
+                        }, index=assets, name=field)
                         data[field] = series
                 else:
                     for field in fields:
                         series = pd.Series(data={
                             asset: self.data_portal.get_adjusted_value(
-                                        asset,
-                                        field,
-                                        self._get_current_minute(),
-                                        self.datetime,
-                                        self.data_frequency
-                                   )
+                                asset,
+                                field,
+                                self._get_current_minute(),
+                                self.datetime,
+                                self.data_frequency
+                            )
                             for asset in assets
-                            }, index=assets, name=field)
+                        }, index=assets, name=field)
                         data[field] = series
 
                 return pd.DataFrame(data)
 
-
     def history(self, assets, fields, bar_count, frequency):
 
-        if type(fields) == str:
+        if isinstance(fields, str):
             single_asset = isinstance(assets, Asset)
 
             if single_asset:
@@ -291,7 +290,6 @@ class BarData:
                 asset, "price", adjusted_dt, self.data_frequency
             )
         )
-
 
     def current_dt(self):
         return self.datetime

@@ -1,6 +1,6 @@
 import warnings
 import pytz
-import pandas as pd
+import numpy as np
 from pandas._libs.tslib import normalize_date
 from contextlib import ExitStack
 from copy import copy
@@ -9,11 +9,12 @@ from trading_calendars import get_calendar
 
 import pylivetrader.protocol as proto
 from pylivetrader.assets import AssetFinder, Asset
-from pylivetrader.data.bardata import BarData, handle_non_market_minutes
+from pylivetrader.data.bardata import handle_non_market_minutes
 from pylivetrader.data.data_portal import DataPortal
 from pylivetrader.executor.executor import AlgorithmExecutor
 from pylivetrader.errors import (
-    APINotSupported, CannotOrderDelistedAsset, UnsupportedOrderParameters
+    APINotSupported, CannotOrderDelistedAsset, UnsupportedOrderParameters,
+    ScheduleFunctionInvalidCalendar,
 )
 from pylivetrader.finance.execution import (
     MarketOrder, LimitOrder, StopLimitOrder, StopOrder
@@ -55,16 +56,18 @@ class Algorithm:
         except ImportError:
             # Then if failes, tries to find pkg in global package namespace.
             try:
-                backendmod = importlib.import_module(backend).Backend(**options)
+                backendmod = importlib.import_module(self._backend_name)
             except ImportError:
                 raise RuntimeError(
-                    "Could not find backend package `{}`.".format(backend))
+                    "Could not find backend package `{}`.".format(
+                        self._backend_name))
 
         self._backend = backendmod.Backend(**kwargs.pop('backend_options', {}))
 
         self.asset_finder = AssetFinder(self._backend)
 
-        self.trading_calendar = kwargs.pop('trading_calendar', get_calendar('NYSE'))
+        self.trading_calendar = kwargs.pop(
+            'trading_calendar', get_calendar('NYSE'))
 
         self.data_portal = DataPortal(
             self._backend, self.asset_finder, self.trading_calendar)
@@ -156,7 +159,13 @@ class Algorithm:
         raise APINotSupported
 
     @api_method
-    def order(self, asset, amount, limit_price=None, stop_price=None, style=None):
+    def order(
+            self,
+            asset,
+            amount,
+            limit_price=None,
+            stop_price=None,
+            style=None):
         if not self._can_order_asset(asset):
             return None
 
@@ -274,7 +283,7 @@ class Algorithm:
             args (iterable[str]): List of ticker symbols for the asset.
 
         Returns:
-            equities (List[Equity]): The equity object lookuped by the ``symbol``.
+            equities (List[Equity]): The equity lookuped by the ``symbol``.
 
         Raises:
             AssetNotFound: When could not resolve the ``Asset`` by ``symbol``.
@@ -302,10 +311,16 @@ class Algorithm:
 
     @api_method
     def batch_order(self, order_arg_list):
-        return [self.order(*order_args) for order_args in order_arg_lists]
+        return [self.order(*order_args) for order_args in order_arg_list]
 
     @api_method
-    def order_value(self, asset, value, limit_price=None, stop_price=None, style=None):
+    def order_value(
+            self,
+            asset,
+            value,
+            limit_price=None,
+            stop_price=None,
+            style=None):
         if not self._can_order_asset(asset):
             return None
 
@@ -368,9 +383,14 @@ class Algorithm:
     def set_symbol_lookup_date(self, dt):
         raise APINotSupported
 
-
     @api_method
-    def order_percent(self, asset, percent, limit_price=None, stop_price=None, style=None):
+    def order_percent(
+            self,
+            asset,
+            percent,
+            limit_price=None,
+            stop_price=None,
+            style=None):
         if not self._can_order_asset(asset):
             return None
 
@@ -381,7 +401,13 @@ class Algorithm:
                           style=style)
 
     @api_method
-    def order_target(self, asset, target, limit_price=None, stop_price=None, style=None):
+    def order_target(
+            self,
+            asset,
+            target,
+            limit_price=None,
+            stop_price=None,
+            style=None):
         if not self._can_order_asset(asset):
             return None
 
@@ -392,7 +418,13 @@ class Algorithm:
                           style=style)
 
     @api_method
-    def order_target_value(self, asset, target, limit_price=None, stop_price=None, style=None):
+    def order_target_value(
+            self,
+            asset,
+            target,
+            limit_price=None,
+            stop_price=None,
+            style=None):
         if not self._can_order_asset(asset):
             return None
 
@@ -404,7 +436,13 @@ class Algorithm:
                           style=style)
 
     @api_method
-    def order_target_percent(self, asset, target, limit_price=None, stop_price=None, style=None):
+    def order_target_percent(
+            self,
+            asset,
+            target,
+            limit_price=None,
+            stop_price=None,
+            style=None):
         if not self._can_order_asset(asset):
             return None
 
@@ -419,7 +457,7 @@ class Algorithm:
         style = MarketOrder()
         order_args = [
             (asset, amount, style)
-            for (asset, amount) in iteritems(share_counts)
+            for (asset, amount) in share_counts.items()
             if amount
         ]
         return self._backend.batch_order(order_args)
@@ -549,6 +587,16 @@ class Algorithm:
                 msg="Cannot order {0}, as it not tradable".format(asset.symbol)
             )
 
+        last_price = \
+            self.executor.current_data.current(asset, "price")
+
+        if np.isnan(last_price):
+            raise CannotOrderDelistedAsset(
+                msg="Cannot order {0} on {1} as there is no last "
+                    "price for the security.".format(asset.symbol,
+                                                     self.datetime)
+            )
+
         if tolerant_equals(last_price, 0):
             zero_message = "Price of 0 for {psid}; can't infer value".format(
                 psid=asset
@@ -606,7 +654,12 @@ class Algorithm:
         raise APINotSupported
 
     @api_method
-    def set_max_position_size(self, asset=None, max_shares=None, max_notional=None, on_error='fail'):
+    def set_max_position_size(
+            self,
+            asset=None,
+            max_shares=None,
+            max_notional=None,
+            on_error='fail'):
         raise APINotSupported
 
     @api_method
@@ -640,6 +693,7 @@ class Algorithm:
     @api_method
     def pipeline_output(self, name):
         raise APINotSupported
+
 
 def noop(*args, **kwargs):
     pass

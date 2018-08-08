@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
 
 from pylivetrader._version import VERSION
 

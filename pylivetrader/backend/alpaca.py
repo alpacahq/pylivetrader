@@ -256,7 +256,8 @@ class Backend(BaseBackend):
             for bars in intra_list:
                 symbol = bars.symbol
                 df = _fix_tz(bars.df)
-                mask = (df.index.time >= pd.Timestamp('9:30').time()) & (df.index.time < pd.Timestamp('16:00').time())
+                mask = (df.index.time >= pd.Timestamp('9:30').time()) & (
+                    df.index.time < pd.Timestamp('16:00').time())
                 agged = df[mask].resample('1D').agg(dict(
                     open='first',
                     high='max',

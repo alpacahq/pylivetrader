@@ -1,10 +1,12 @@
 import ast
 import astor
 from six import exec_
-import numpy as np
-import pandas as pd
 
 from pylivetrader import api
+
+from logbook import Logger
+
+log = Logger('loader')
 
 
 def get_functions_by_path(path):
@@ -77,7 +79,6 @@ class ZiplineImportVisitor(ast.NodeVisitor):
                 node.names[i].name = node.names[i].name.replace(
                     'zipline.', 'pylivetrader.')
 
-
         return node
 
     def visit_ImportFrom(self, node):
@@ -89,7 +90,10 @@ class ZiplineImportVisitor(ast.NodeVisitor):
         if node.module == 'zipline':
             for name in node.names:
                 if name.name not in ['api', 'errors']:
-                    log.warning('pylivetrader does not supports {}.{} module. Fallback to load zipline'.format(node.module, name.name))
+                    log.warning(
+                        'pylivetrader does not supports {}.{} module.'
+                        ' Fallback to load zipline'.format(
+                            node.module, name.name))
                     return node
             node.module = 'pylivetrader'
 

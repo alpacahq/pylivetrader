@@ -1,6 +1,5 @@
 from functools import lru_cache
 from logbook import Logger
-import pandas as pd
 
 log = Logger('DataPortal')
 
@@ -15,7 +14,13 @@ class DataPortal:
     def get_last_traded_dt(self, asset, dt, data_frequency):
         return self.broker.get_last_traded_dt(asset)
 
-    def get_adjusted_value(self, assets, field, dt, perspective_dt, data_frequency):
+    def get_adjusted_value(
+            self,
+            assets,
+            field,
+            dt,
+            perspective_dt,
+            data_frequency):
         '''
         TODO:
         for external data (fetch_csv) support, need to update logic here.
@@ -48,7 +53,14 @@ class DataPortal:
         # Broker.get_realtime_history() returns the asset as level 0 column,
         # open, high, low, close, volume returned as level 1 columns.
         # To filter for field the levels needs to be swapped
-        bars = self._get_realtime_bars(assets, frequency, bar_count=bar_count, end_dt=end_dt).swaplevel(0, 1, axis=1)
+        bars = self._get_realtime_bars(
+            assets,
+            frequency,
+            bar_count=bar_count,
+            end_dt=end_dt).swaplevel(
+            0,
+            1,
+            axis=1)
 
         ohlcv_field = 'close' if field == 'price' else field
 

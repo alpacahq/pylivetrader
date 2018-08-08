@@ -19,7 +19,7 @@ from sys import float_info
 
 from six import with_metaclass
 
-import pylivetrader.misc.zipline_utils as zp_math
+import pylivetrader.misc.math_utils as zp_math
 
 from numpy import isfinite
 
@@ -77,6 +77,7 @@ class LimitOrder(ExecutionStyle):
     Execution style representing an order to be executed at a price equal to or
     better than a specified limit price.
     """
+
     def __init__(self, limit_price, exchange=None):
         """
         Store the given price.
@@ -99,6 +100,7 @@ class StopOrder(ExecutionStyle):
     Execution style representing an order to be placed once the market price
     reaches a specified stop price.
     """
+
     def __init__(self, stop_price, exchange=None):
         """
         Store the given price.
@@ -121,6 +123,7 @@ class StopLimitOrder(ExecutionStyle):
     Execution style representing a limit order to be placed with a specified
     limit price once the market reaches a specified stop price.
     """
+
     def __init__(self, limit_price, stop_price, exchange=None):
         """
         Store the given prices

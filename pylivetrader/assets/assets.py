@@ -1,5 +1,6 @@
 from trading_calendars import get_calendar
 
+
 class Asset:
 
     def __init__(self, sid, exchange, symbol="", asset_name="", **kwargs):
@@ -20,7 +21,8 @@ class Asset:
 
     def __str__(self):
         if self.symbol:
-            return '{}({} [{}])'.format(type(self).__name__, self.sid, self.symbol)
+            return '{}({} [{}])'.format(
+                type(self).__name__, self.sid, self.symbol)
         else:
             return '{}({})'.format(type(self).__name__, self.sid)
 
@@ -31,7 +33,7 @@ class Asset:
         params = [
             '{}={}'.format(a, getattr(self, a))
             for a in attrs
-            if getattr(self, a) != None and getattr(self, a) != ""
+            if getattr(self, a) is not None and getattr(self, a) != ""
         ]
 
         return 'Asset({}, {})'.format(self.sid, ", ".join(params))

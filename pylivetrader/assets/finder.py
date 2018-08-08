@@ -3,8 +3,6 @@ from pylivetrader.errors import (
 )
 from pylivetrader.misc.zipline_utils import split_delimited_symbol
 
-from .assets import Asset, Equity
-
 
 class AssetFinder:
 
@@ -185,7 +183,6 @@ class AssetFinder:
     @property
     def futures_sids(self):
         return []
-
 
     def lookup_generic(self,
                        asset_convertible_or_iterable,

@@ -5,11 +5,11 @@ from pylivetrader import protocol as proto
 
 
 class ORDER_STATUS(IntEnum):
-    OPEN      = 0
-    FILLED    = 1
+    OPEN = 0
+    FILLED = 1
     CANCELLED = 2
-    REJECTED  = 3
-    HELD      = 4
+    REJECTED = 3
+    HELD = 4
 
 
 ORDER_FIELDS_TO_IGNORE = {'type', 'direction', '_status', 'asset'}
@@ -46,7 +46,7 @@ class Order:
         """
 
         self.id = self.make_id() if id is None else id
-        self.dt= dt
+        self.dt = dt
         self.reason = None
         self.created = dt
         self.asset = asset

@@ -8,10 +8,6 @@ class BaseBackend(abc.ABC):
     def get_equities(self):
         pass
 
-    @abstractmethod
-    def get_equities(self):
-        pass
-
     @property
     @abstractmethod
     def positions(self):
