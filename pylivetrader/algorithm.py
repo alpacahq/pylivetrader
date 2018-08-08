@@ -248,8 +248,29 @@ class Algorithm:
 
     @api_method
     def record(self, *args, **kwargs):
-        '''Just do nothing for compatibility.'''
-        pass
+        """Track and record values each day.
+
+        Parameters
+        ----------
+        **kwargs
+            The names and values to record.
+
+        Notes
+        -----
+        These values will appear in the performance packets and the performance
+        dataframe passed to ``analyze`` and returned from
+        :func:`~zipline.run_algorithm`.
+        """
+        # Make 2 objects both referencing the same iterator
+        args = [iter(args)] * 2
+
+        # Zip generates list entries by calling `next` on each iterator it
+        # receives.  In this case the two iterators are the same object, so the
+        # call to next on args[0] will also advance args[1], resulting in zip
+        # returning (a,b) (c,d) (e,f) rather than (a,a) (b,b) (c,c) etc.
+        positionals = zip(*args)
+        for name, value in chain(positionals, iteritems(kwargs)):
+            self._recorded_vars[name] = value
 
     @api_method
     def set_benchmark(self, benchmark):
