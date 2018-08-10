@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class LiveTraderError(Exception):
     msg = None
 
@@ -127,3 +128,12 @@ class ScheduleFunctionInvalidCalendar(LiveTraderError):
         "Invalid calendar '{given_calendar}' passed to schedule_function. "
         "Allowed options are {allowed_calendars}."
     )
+
+
+class RegisterAccountControlPostInit(LiveTraderError):
+    # Raised if a user's script register's a trading control after initialize
+    # has been run.
+    msg = """
+You attempted to set an account control outside of `initialize`. \
+Account controls may only be set in your initialize method.
+""".strip()

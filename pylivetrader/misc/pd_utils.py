@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pandas as pd
 
 try:
-    from pandas._libs.tslib import normalize_date
+    from pandas._libs.tslib import normalize_date  # noqa
 except ImportError:
-    from pandas.tslib import normalize_date
+    from pandas.tslib import normalize_date  # noqa

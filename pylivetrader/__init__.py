@@ -13,5 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pylivetrader import api
-from .algorithm import Algorithm
+from pylivetrader import api # noqa
+from .algorithm import Algorithm # noqa

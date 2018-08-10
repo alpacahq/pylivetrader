@@ -348,7 +348,7 @@ class BarData:
             })
 
     def _is_stale_for_asset(self, asset, dt, adjusted_dt, data_portal):
-        session_label = normalize_date(dt) # FIXME
+        session_label = normalize_date(dt)  # FIXME
 
         if not asset.is_alive_for_session(session_label):
             return False

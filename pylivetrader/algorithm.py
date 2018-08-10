@@ -32,6 +32,7 @@ from pylivetrader.executor.executor import AlgorithmExecutor
 from pylivetrader.errors import (
     APINotSupported, CannotOrderDelistedAsset, UnsupportedOrderParameters,
     ScheduleFunctionInvalidCalendar, OrderDuringInitialize,
+    RegisterAccountControlPostInit, RegisterTradingControlPostInit,
 )
 from pylivetrader.finance.execution import (
     MarketOrder, LimitOrder, StopLimitOrder, StopOrder
@@ -50,6 +51,7 @@ from pylivetrader.finance.asset_restrictions import (
     SecurityListRestrictions,
 )
 
+from pylivetrader.misc.security_list import SecurityList
 from pylivetrader.misc import events
 from pylivetrader.misc.events import (
     EventManager,
@@ -83,7 +85,7 @@ class Algorithm:
         self._algoname = kwargs.pop('algoname', 'algo')
 
         self._state_store = StateStore(
-            kwargs.pop('statefile', None) or \
+            kwargs.pop('statefile', None) or
             '{}-state.pkl'.format(self._algoname)
         )
 

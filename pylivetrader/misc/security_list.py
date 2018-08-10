@@ -28,7 +28,8 @@ from pylivetrader.finance.asset_restrictions import SecurityListRestrictions
 
 DATE_FORMAT = "%Y%m%d"
 pylivetrader_dir = os.path.dirname(pylivetrader.__file__)
-SECURITY_LISTS_DIR = os.path.join(pylivetrader_dir, 'resources', 'security_lists')
+SECURITY_LISTS_DIR = os.path.join(
+    pylivetrader_dir, 'resources', 'security_lists')
 
 
 class SecurityList(object):
