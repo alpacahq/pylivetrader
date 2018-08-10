@@ -15,11 +15,25 @@ from pylivetrader.data.data_portal import DataPortal
 from pylivetrader.executor.executor import AlgorithmExecutor
 from pylivetrader.errors import (
     APINotSupported, CannotOrderDelistedAsset, UnsupportedOrderParameters,
-    ScheduleFunctionInvalidCalendar,
+    ScheduleFunctionInvalidCalendar, OrderDuringInitialize,
 )
 from pylivetrader.finance.execution import (
     MarketOrder, LimitOrder, StopLimitOrder, StopOrder
 )
+from pylivetrader.finance.controls import (
+    LongOnly,
+    MaxOrderCount,
+    MaxOrderSize,
+    MaxPositionSize,
+    MaxLeverage,
+    RestrictedListOrder
+)
+from pylivetrader.finance.asset_restrictions import (
+    NoRestrictions,
+    StaticRestrictions,
+    SecurityListRestrictions,
+)
+
 from pylivetrader.misc import events
 from pylivetrader.misc.events import (
     EventManager,
@@ -82,6 +96,12 @@ class Algorithm:
             self._backend, self.asset_finder, self.trading_calendar)
 
         self.event_manager = EventManager()
+
+        self.trading_controls = []
+
+        self.account_controls = []
+
+        self.restrictions = NoRestrictions()
 
         self._initialize = kwargs.pop('initialize', noop)
         self._handle_data = kwargs.pop('handle_data', noop)
@@ -436,7 +456,8 @@ class Algorithm:
 
     @api_method
     def set_symbol_lookup_date(self, dt):
-        raise APINotSupported
+        '''Just do nothing for compatibility.'''
+        pass
 
     @api_method
     def order_percent(
@@ -578,11 +599,11 @@ class Algorithm:
         amount = self.round_order(amount)
 
         # Raises a ZiplineError if invalid parameters are detected.
-        # self.validate_order_params(asset,
-        #                            amount,
-        #                            limit_price,
-        #                            stop_price,
-        #                            style)
+        self.validate_order_params(asset,
+                                   amount,
+                                   limit_price,
+                                   stop_price,
+                                   style)
 
         # Convert deprecated limit_price and stop_price parameters to use
         # ExecutionStyle objects.
@@ -590,6 +611,41 @@ class Algorithm:
                                                         stop_price,
                                                         style)
         return amount, style
+
+    def validate_order_params(self,
+                              asset,
+                              amount,
+                              limit_price,
+                              stop_price,
+                              style):
+        """
+        Helper method for validating parameters to the order API function.
+
+        Raises an UnsupportedOrderParameters if invalid arguments are found.
+        """
+
+        if not self.initialized:
+            raise OrderDuringInitialize(
+                msg="order() can only be called from within handle_data()"
+            )
+
+        if style:
+            if limit_price:
+                raise UnsupportedOrderParameters(
+                    msg="Passing both limit_price and style is not supported."
+                )
+
+            if stop_price:
+                raise UnsupportedOrderParameters(
+                    msg="Passing both stop_price and style is not supported."
+                )
+
+        for control in self.trading_controls:
+            control.validate(asset,
+                             amount,
+                             self.portfolio,
+                             self.get_datetime(),
+                             self.executor.current_data)
 
     @staticmethod
     def round_order(amount):
@@ -703,10 +759,44 @@ class Algorithm:
     #
     # Account Controls
     #
+    def register_account_control(self, control):
+        """
+        Register a new AccountControl to be checked on each bar.
+        """
+        if self.initialized:
+            raise RegisterAccountControlPostInit()
+        self.account_controls.append(control)
+
+    def validate_account_controls(self):
+        for control in self.account_controls:
+            control.validate(self.portfolio,
+                             self.account,
+                             self.get_datetime(),
+                             self.executor.current_data)
 
     @api_method
     def set_max_leverage(self, max_leverage):
-        raise APINotSupported
+        """Set a limit on the maximum leverage of the algorithm.
+
+        Parameters
+        ----------
+        max_leverage : float
+            The maximum leverage for the algorithm. If not provided there will
+            be no maximum.
+        """
+        control = MaxLeverage(max_leverage)
+        self.register_account_control(control)
+
+    #
+    # Trading Controls
+    #
+    def register_trading_control(self, control):
+        """
+        Register a new TradingControl to be checked prior to order calls.
+        """
+        if self.initialized:
+            raise RegisterTradingControlPostInit()
+        self.trading_controls.append(control)
 
     @api_method
     def set_max_position_size(
@@ -715,7 +805,32 @@ class Algorithm:
             max_shares=None,
             max_notional=None,
             on_error='fail'):
-        raise APINotSupported
+        """Set a limit on the number of shares and/or dollar value held for the
+        given sid. Limits are treated as absolute values and are enforced at
+        the time that the algo attempts to place an order for sid. This means
+        that it's possible to end up with more than the max number of shares
+        due to splits/dividends, and more than the max notional due to price
+        improvement.
+
+        If an algorithm attempts to place an order that would result in
+        increasing the absolute value of shares/dollar value exceeding one of
+        these limits, raise a TradingControlException.
+
+        Parameters
+        ----------
+        asset : Asset, optional
+            If provided, this sets the guard only on positions in the given
+            asset.
+        max_shares : int, optional
+            The maximum number of shares to hold for an asset.
+        max_notional : float, optional
+            The maximum value to hold for an asset.
+        """
+        control = MaxPositionSize(asset=asset,
+                                  max_shares=max_shares,
+                                  max_notional=max_notional,
+                                  on_error=on_error)
+        self.register_trading_control(control)
 
     @api_method
     def set_max_order_size(self,
@@ -723,23 +838,97 @@ class Algorithm:
                            max_shares=None,
                            max_notional=None,
                            on_error='fail'):
-        raise APINotSupported
+        """Set a limit on the number of shares and/or dollar value of any single
+        order placed for sid.  Limits are treated as absolute values and are
+        enforced at the time that the algo attempts to place an order for sid.
+
+        If an algorithm attempts to place an order that would result in
+        exceeding one of these limits, raise a TradingControlException.
+
+        Parameters
+        ----------
+        asset : Asset, optional
+            If provided, this sets the guard only on positions in the given
+            asset.
+        max_shares : int, optional
+            The maximum number of shares that can be ordered at one time.
+        max_notional : float, optional
+            The maximum value that can be ordered at one time.
+        """
+        control = MaxOrderSize(asset=asset,
+                               max_shares=max_shares,
+                               max_notional=max_notional,
+                               on_error=on_error)
+        self.register_trading_control(control)
 
     @api_method
     def set_max_order_count(self, max_count, on_error='fail'):
-        raise APINotSupported
+        """Set a limit on the number of orders that can be placed in a single
+        day.
+
+        Parameters
+        ----------
+        max_count : int
+            The maximum number of orders that can be placed on any single day.
+        """
+        control = MaxOrderCount(on_error, max_count)
+        self.register_trading_control(control)
 
     @api_method
     def set_do_not_order_list(self, restricted_list, on_error='fail'):
-        raise NotImplementedError
+        """Set a restriction on which assets can be ordered.
+
+        Parameters
+        ----------
+        restricted_list : container[Asset], SecurityList
+            The assets that cannot be ordered.
+        """
+        if isinstance(restricted_list, SecurityList):
+            warnings.warn(
+                "`set_do_not_order_list(security_lists.leveraged_etf_list)` "
+                "is deprecated. Use `set_asset_restrictions("
+                "security_lists.restrict_leveraged_etfs)` instead.",
+                category=DeprecationWarning,
+                stacklevel=2
+            )
+            restrictions = SecurityListRestrictions(restricted_list)
+        else:
+            warnings.warn(
+                "`set_do_not_order_list(container_of_assets)` is deprecated. "
+                "Create a zipline.finance.asset_restrictions."
+                "StaticRestrictions object with a container of assets and use "
+                "`set_asset_restrictions(StaticRestrictions("
+                "container_of_assets))` instead.",
+                category=DeprecationWarning,
+                stacklevel=2
+            )
+            restrictions = StaticRestrictions(restricted_list)
+
+        self.set_asset_restrictions(restrictions, on_error)
 
     @api_method
     def set_asset_restrictions(self, restrictions, on_error='fail'):
-        raise APINotSupported
+        """Set a restriction on which assets can be ordered.
+
+        Parameters
+        ----------
+        restricted_list : Restrictions
+            An object providing information about restricted assets.
+
+        See Also
+        --------
+        zipline.finance.asset_restrictions.Restrictions
+        """
+        control = RestrictedListOrder(on_error, restrictions)
+        self.register_trading_control(control)
+        self.restrictions |= restrictions
 
     @api_method
     def set_long_only(self, on_error='fail'):
-        pass
+        """Set a rule specifying that this algorithm cannot take short
+        positions.
+        """
+        self.register_trading_control(LongOnly(on_error))
 
     @api_method
     def attach_pipeline(self, pipeline, name, chunks=None):

@@ -58,12 +58,51 @@ class BadOrderParameters(LiveTraderError):
     pass
 
 
+class OrderDuringInitialize(LiveTraderError):
+    """
+    Raised if order is called during initialize()
+    """
+    msg = "{msg}"
+
+
 class UnsupportedOrderParameters(LiveTraderError):
-    pass
+    """
+    Raised if a set of mutually exclusive parameters are passed to an order
+    call.
+    """
+    msg = "{msg}"
 
 
 class CannotOrderDelistedAsset(LiveTraderError):
     pass
+
+
+class RegisterTradingControlPostInit(LiveTraderError):
+    # Raised if a user's script register's a trading control after initialize
+    # has been run.
+    msg = """
+You attempted to set a trading control outside of `initialize`. \
+Trading controls may only be set in your initialize method.
+""".strip()
+
+
+class AccountControlViolation(LiveTraderError):
+    """
+    Raised if the account violates a constraint set by a AccountControl.
+    """
+    msg = """
+Account violates account constraint {constraint}.
+""".strip()
+
+
+class TradingControlViolation(LiveTraderError):
+    """
+    Raised if an order would violate a constraint set by a TradingControl.
+    """
+    msg = """
+Order for {amount} shares of {asset} at {datetime} violates trading constraint
+{constraint}.
+""".strip()
 
 
 class ScheduleFunctionInvalidCalendar(LiveTraderError):
