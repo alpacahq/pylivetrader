@@ -103,7 +103,8 @@ class Algorithm:
                     "Could not find backend package `{}`.".format(
                         self._backend_name))
 
-        self._backend = backendmod.Backend(**kwargs.pop('backend_options', {}))
+        backend_options = kwargs.pop('backend_options', None) or {}
+        self._backend = backendmod.Backend(**backend_options)
 
         self.asset_finder = AssetFinder(self._backend)
 
