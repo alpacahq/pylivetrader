@@ -15,3 +15,7 @@ def test_asset():
     assert asset.asset_name == 'Apple, inc'
 
     assert str(asset) == 'Asset(asset-id [AAPL])'
+
+    # check rich comp
+    asset2 = Asset('asset-id-2', 'NSDQ', symbol='NVDA')
+    assert asset < asset2

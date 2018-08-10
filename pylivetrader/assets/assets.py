@@ -15,8 +15,9 @@
 # limitations under the License.
 
 from trading_calendars import get_calendar
+from functools import total_ordering
 
-
+@total_ordering
 class Asset:
 
     def __init__(self, sid, exchange, symbol="", asset_name="", **kwargs):
@@ -41,6 +42,12 @@ class Asset:
                 type(self).__name__, self.sid, self.symbol)
         else:
             return '{}({})'.format(type(self).__name__, self.sid)
+
+    def __lt__(self, other):
+        return self.symbol < other.symbol
+
+    def __eq__(self, other):
+        return self.sid_hash == other.sid_hash
 
     def __repr__(self):
 
