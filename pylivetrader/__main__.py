@@ -81,7 +81,7 @@ def run(ctx,
     if not (Path(algofile).exists() and Path(algofile).is_file()):
         ctx.fail("couldn't find algofile '{}'".format(algofile))
 
-    functions = get_functions_by_path(algofile, translate=zipline)
+    functions = get_functions_by_path(algofile, use_translate=zipline)
 
     backend_options = None
     if backend_config is not None:

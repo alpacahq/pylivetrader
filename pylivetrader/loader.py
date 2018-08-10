@@ -24,7 +24,7 @@ from logbook import Logger
 log = Logger('loader')
 
 
-def get_functions_by_path(path, translate=False):
+def get_functions_by_path(path, use_translate=False):
 
     with open(path, 'r') as f:
         file = f.read()
@@ -33,16 +33,16 @@ def get_functions_by_path(path, translate=False):
         if '/' in filename:
             filename = path.split('/')[-1]
 
-        return get_functions(file, filename, translate)
+        return get_functions(file, filename, use_translate)
 
 
-def get_functions(script, filename=None, translate=False):
+def get_functions(script, filename=None, use_translate=False):
 
     if filename is None:
         filename = '<script>'
 
     # With translate, file will be rewrited and lost line # information
-    if translate:
+    if use_translate:
         script = translate(script)
 
     code = compile(script, filename, 'exec')
