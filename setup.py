@@ -27,6 +27,7 @@ setup(
         'astor',
         'trading_calendars',
         'click',
+        'PyYAML',
         # supoort alpaca backend by default
         'alpaca-trade-api',
     ],

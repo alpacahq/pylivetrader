@@ -18,6 +18,7 @@
 from pathlib import Path
 import click
 
+from pylivetrader.misc import configloader
 from pylivetrader.misc.api_context import LiveTraderAPI
 from pylivetrader.algorithm import Algorithm
 from pylivetrader.loader import get_functions_by_path
@@ -44,6 +45,13 @@ def main():
     show_default=True,
     help='Broker backend to run algorithm with.')
 @click.option(
+    '--backend-config',
+    type=click.Path(
+        exists=True, file_okay=True, dir_okay=False,
+        readable=True, resolve_path=True),
+    default=None,
+    help='Path to broker backend config file.')
+@click.option(
     '--data-frequency',
     type=click.Choice({'daily', 'minute'}),
     default='minute',
@@ -60,7 +68,13 @@ def main():
     is_flag=True,
     help='Run with zipline algofile in magic translation (pre-alpha).')
 @click.pass_context
-def run(ctx, algofile, backend, data_frequency, statefile, zipline):
+def run(ctx,
+        algofile,
+        backend,
+        backend_config,
+        data_frequency,
+        statefile,
+        zipline):
     if algofile is None or algofile == '':
         ctx.fail("must specify algo file with '-f' ")
 
@@ -69,8 +83,13 @@ def run(ctx, algofile, backend, data_frequency, statefile, zipline):
 
     functions = get_functions_by_path(algofile, translate=zipline)
 
+    backend_options = None
+    if backend_config is not None:
+        backend_options = configloader.load_config(backend_config)
+
     algorithm = Algorithm(
         backend=backend,
+        backend_options=backend_options,
         data_frequency=data_frequency,
         algoname=extract_filename(algofile),
         statefile=statefile,
