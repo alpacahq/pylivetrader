@@ -8,12 +8,13 @@ setup(
     name='pylivetrader',
     version=VERSION,
     description='simple live trading framework',
-    license='MIT',
+    license='Apache 2.0',
     author='Sho Yoshida',
     author_email='nya060@gmail.com',
     url='https://github.com/alpacahq/pylivetrader.git',
     keywords='',
     packages=find_packages(),
+    include_package_data=True,
     entry_points='''
     [console_scripts]
     pylivetrader=pylivetrader.__main__:main
@@ -33,7 +34,5 @@ setup(
         'pytest',
     ],
     setup_requires=["flake8", "pytest-runner"],
-    extras_require={
-        'alpaca': ['alpaca-trade-api'],
-    }
+    extras_require={}
 )
