@@ -36,13 +36,14 @@ def get_functions_by_path(path):
         return get_functions(file, filename)
 
 
-def get_functions(script, filename=None):
+def get_functions(script, filename=None, translate=False):
 
     if filename is None:
         filename = '<script>'
 
     # With translate, file will be rewrited and lost line # information
-    # script = translate(script)
+    if translate:
+        script = translate(script)
 
     code = compile(script, filename, 'exec')
 

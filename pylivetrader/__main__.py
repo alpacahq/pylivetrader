@@ -54,15 +54,20 @@ def main():
     default=None,
     type=click.Path(writable=True),
     help='Path to the state file. Use <algofile>-state.pkl by default.')
+@click.option(
+    '-z', '--zipline',
+    default=False,
+    is_flag=True,
+    help='Run with zipline algofile in magic translation (pre-alpha).')
 @click.pass_context
-def run(ctx, algofile, backend, data_frequency, statefile):
+def run(ctx, algofile, backend, data_frequency, statefile, zipline):
     if algofile is None or algofile == '':
         ctx.fail("must specify algo file with '-f' ")
 
     if not (Path(algofile).exists() and Path(algofile).is_file()):
         ctx.fail("couldn't find algofile '{}'".format(algofile))
 
-    functions = get_functions_by_path(algofile)
+    functions = get_functions_by_path(algofile, translate=zipline)
 
     algorithm = Algorithm(
         backend=backend,
