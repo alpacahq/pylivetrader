@@ -29,11 +29,16 @@ def main():
 @click.option(
     '--data-frequency',
     type=click.Choice({'daily', 'minute'}),
-    default='daily',
+    default='minute',
     show_default=True,
     help='The data frequency of the live trade.')
+@click.option(
+    '-s', '--statefile',
+    default=None,
+    type=click.Path(writable=True),
+    help='Path to the state file. Use <algofile>-state.pkl by default.')
 @click.pass_context
-def run(ctx, algofile, backend, data_frequency):
+def run(ctx, algofile, backend, data_frequency, statefile):
     if algofile is None or algofile == '':
         ctx.fail("must specify algo file with '-f' ")
 
@@ -45,6 +50,8 @@ def run(ctx, algofile, backend, data_frequency):
     algorithm = Algorithm(
         backend=backend,
         data_frequency=data_frequency,
+        algoname=extract_filename(algofile),
+        statefile=statefile,
         **functions,
     )
 
@@ -57,6 +64,15 @@ def run(ctx, algofile, backend, data_frequency):
 def version():
     from ._version import VERSION
     click.echo('v{}'.format(VERSION))
+
+
+def extract_filename(algofile):
+    algofilename = algofile
+    if '/' in algofilename:
+        algofilename = algofilename.split('/')[-1]
+    if '.py' in algofilename:
+        algofilename = algofilename[:-3]
+    return algofilename
 
 
 main.add_command(run)

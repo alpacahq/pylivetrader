@@ -1,9 +1,25 @@
+#
+# Copyright 2016 Quantopian, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import pandas as pd
 import numpy as np
 
 from contextlib import contextmanager
 from collections import Iterable
 
+from pylivetrader.misc.pd_utils import normalize_date
 from pylivetrader.assets import Asset
 
 
@@ -290,6 +306,67 @@ class BarData:
                 asset, "price", adjusted_dt, self.data_frequency
             )
         )
+
+    def is_stale(self, assets):
+        """
+        For the given asset or iterable of assets, returns true if the asset
+        is alive and there is no trade data for the current simulation time.
+
+        If the asset has never traded, returns False.
+
+        If the current simulation time is not a valid market time, we use the
+        current time to check if the asset is alive, but we use the last
+        market minute/day for the trade data check.
+
+        Parameters
+        ----------
+        assets: Asset or iterable of assets
+
+        Returns
+        -------
+        boolean or Series of booleans, indexed by asset.
+        """
+        dt = self.datetime
+        if self._adjust_minutes:
+            adjusted_dt = self._get_current_minute()
+        else:
+            adjusted_dt = dt
+
+        data_portal = self.data_portal
+
+        if isinstance(assets, Asset):
+            return self._is_stale_for_asset(
+                assets, dt, adjusted_dt, data_portal
+            )
+        else:
+            return pd.Series(data={
+                asset: self._is_stale_for_asset(
+                    asset, dt, adjusted_dt, data_portal
+                )
+                for asset in assets
+            })
+
+    def _is_stale_for_asset(self, asset, dt, adjusted_dt, data_portal):
+        session_label = normalize_date(dt) # FIXME
+
+        if not asset.is_alive_for_session(session_label):
+            return False
+
+        current_volume = data_portal.get_spot_value(
+            asset, "volume",  adjusted_dt, self.data_frequency
+        )
+
+        if current_volume > 0:
+            # found a current value, so we know this asset is not stale.
+            return False
+        else:
+            # we need to distinguish between if this asset has ever traded
+            # (stale = True) or has never traded (stale = False)
+            last_traded_dt = \
+                data_portal.get_spot_value(asset, "last_traded", adjusted_dt,
+                                           self.data_frequency)
+
+            return not (last_traded_dt is pd.NaT)
 
     def current_dt(self):
         return self.datetime

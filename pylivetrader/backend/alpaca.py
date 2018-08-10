@@ -1,5 +1,4 @@
 import pandas as pd
-from pandas._libs.tslib import normalize_date
 
 import numpy as np
 import uuid
@@ -20,6 +19,7 @@ from pylivetrader.finance.execution import (
     StopOrder,
     StopLimitOrder,
 )
+from pylivetrader.misc.pd_utils import normalize_date
 from pylivetrader.errors import SymbolNotFound
 from pylivetrader.assets import Equity
 

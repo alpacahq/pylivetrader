@@ -5,13 +5,12 @@ def test_functions_01():
     # translate zipline to pylivetrader
 
     script = '''
-from zipline.api import *
-import zipline.api as api1
-from zipline import api as api2
+from pylivetrader.api import *
 
 def handle_data(ctx, data):
     symbol('AAPL')
 
+    order('AAPL', 1)
 '''
 
     m = get_functions(script)

@@ -1,7 +1,8 @@
 import warnings
 import pytz
 import numpy as np
-from pandas._libs.tslib import normalize_date
+from pylivetrader.misc.pd_utils import normalize_date
+from itertools import chain
 from contextlib import ExitStack
 from copy import copy
 import importlib
@@ -31,6 +32,7 @@ from pylivetrader.misc.events import (
 )
 from pylivetrader.misc.math_utils import round_if_near_integer, tolerant_equals
 from pylivetrader.misc.api_context import api_method, LiveTraderAPI
+from pylivetrader.statestore import StateStore
 
 from logbook import Logger
 
@@ -47,6 +49,12 @@ class Algorithm:
 
         self.data_frequency = kwargs.pop('data_frequency', 'minute')
         assert self.data_frequency in ('minute', 'daily')
+
+        self._algoname = kwargs.pop('algoname', 'algo')
+
+        self._state_store = StateStore(
+            kwargs.pop('statefile', '{}-state.pkl'.format(self._algoname))
+        )
 
         self._backend_name = kwargs.pop('backend', 'alpaca')
         try:
@@ -92,15 +100,27 @@ class Algorithm:
 
         self._assets_from_source = []
 
+        self._context_persistence_excludes = []
+
+        self._max_shares = int(1e+11)
+
         self.initialized = False
 
     def initialize(self, *args, **kwargs):
+        self._context_persistence_excludes = (
+            list(self.__dict__.keys()) + ['executor'])
+        self._state_store.load(self, self._algoname)
+
         with LiveTraderAPI(self):
             self._initialize(self, *args, **kwargs)
+            self._state_store.save(
+                self, self._algoname, self._context_persistence_excludes)
 
     def handle_data(self, data):
         if self._handle_data:
             self._handle_data(self, data)
+            self._state_store.save(
+                self, self._algoname, self._context_persistence_excludes)
 
     def before_trading_start(self, data):
         if self._before_trading_start is None:
@@ -111,6 +131,8 @@ class Algorithm:
         with handle_non_market_minutes(data) if \
                 self.data_frequency == "minute" else ExitStack():
             self._before_trading_start(self, data)
+            self._state_store.save(
+                self, self._algoname, self._context_persistence_excludes)
 
         self._in_before_trading_start = False
 
@@ -166,11 +188,22 @@ class Algorithm:
             limit_price=None,
             stop_price=None,
             style=None):
+
         if not self._can_order_asset(asset):
             return None
 
         amount, style = self._calculate_order(
             asset, amount, limit_price, stop_price, style)
+
+        if amount == 0:
+            return None
+
+        if amount > self._max_shares:
+            # Arbitrary limit of 100 billion (US) shares will never be
+            # exceeded except by a buggy algorithm.
+            raise OverflowError("Can't order more than %d shares" %
+                                self.max_shares)
+
         o = self._backend.order(asset, amount, style)
         if o:
             return o.id
@@ -206,7 +239,7 @@ class Algorithm:
         See Also
         --------
         :class:`zipline.api.date_rules`
-        :class:`zipline.api.time_rules`
+        :class:`zipline.api.time_rules` sta
         """
 
         # When the user calls schedule_function(func, <time_rule>), assume that
@@ -269,7 +302,7 @@ class Algorithm:
         # call to next on args[0] will also advance args[1], resulting in zip
         # returning (a,b) (c,d) (e,f) rather than (a,a) (b,b) (c,c) etc.
         positionals = zip(*args)
-        for name, value in chain(positionals, iteritems(kwargs)):
+        for name, value in chain(positionals, kwargs.items()):
             self._recorded_vars[name] = value
 
     @api_method
