@@ -53,7 +53,8 @@ class Algorithm:
         self._algoname = kwargs.pop('algoname', 'algo')
 
         self._state_store = StateStore(
-            kwargs.pop('statefile', '{}-state.pkl'.format(self._algoname))
+            kwargs.pop('statefile', None) or \
+            '{}-state.pkl'.format(self._algoname)
         )
 
         self._backend_name = kwargs.pop('backend', 'alpaca')
