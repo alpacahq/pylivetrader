@@ -67,7 +67,9 @@ class RealtimeClock(object):
 
             session_label = server_time.floor('1D')
             if not self.calendar.is_session(session_label):
+                # wait until next session
                 sleep(1)
+                continue
 
             if current_session is None or current_session != session_label:
                 yield session_label, SESSION_START
