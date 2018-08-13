@@ -2,7 +2,13 @@
 # coding: utf-8
 from setuptools import setup, find_packages
 
-from pylivetrader._version import VERSION
+from runpy import run_path
+from pathlib import Path
+
+
+VERSION = run_path(
+    str(Path(__file__).parent) + '/pylivetrader/_version.py')['VERSION']
+
 
 setup(
     name='pylivetrader',
