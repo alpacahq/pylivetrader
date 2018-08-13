@@ -85,7 +85,7 @@ class AssetFinder:
                 hits[sid] = self._asset_cache[sid]
             except KeyError:
                 if not default_none:
-                    failures.append(sid)
+                    failures.add(sid)
                 else:
                     hits[sid] = None
 
@@ -120,7 +120,7 @@ class AssetFinder:
 
         Returns
         -------
-        equities : dict[int -> Equity]
+        equities : dict[str -> Equity]
 
         Raises
         ------
@@ -143,7 +143,7 @@ class AssetFinder:
     def lookup_symbol(self, symbol, as_of_date, fuzzy=False):
         if symbol is None:
             raise TypeError("Cannot lookup asset for symbol of None for "
-                            "as of date %s." % as_of_date)
+                            "as of date {}.".format(as_of_date))
 
         if fuzzy:
             return self._lookup_symbol_fuzzy(symbol, as_of_date)

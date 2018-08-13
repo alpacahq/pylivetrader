@@ -19,3 +19,6 @@ def test_asset():
     # check rich comp
     asset2 = Asset('asset-id-2', 'NSDQ', symbol='NVDA')
     assert asset < asset2
+
+    sorted_assets = sorted([asset2, asset])
+    assert sorted_assets[0] == asset

@@ -48,7 +48,9 @@ class Asset:
         return self.symbol < other.symbol
 
     def __eq__(self, other):
-        return self.sid_hash == other.sid_hash
+        if hasattr(other, 'sid_hash'):
+            return self.sid_hash == other.sid_hash
+        return False
 
     def __repr__(self):
 
