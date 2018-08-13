@@ -17,6 +17,7 @@
 from trading_calendars import get_calendar
 from functools import total_ordering
 
+
 @total_ordering
 class Asset:
 
