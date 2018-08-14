@@ -27,7 +27,7 @@ from pylivetrader.misc.api_context import LiveTraderAPI
 
 class AlgorithmExecutor:
 
-    def __init__(self, algo, data_portal, universe_func):
+    def __init__(self, algo, data_portal):
 
         self.data_portal = data_portal
         self.algo = algo
@@ -37,7 +37,6 @@ class AlgorithmExecutor:
         self.current_data = BarData(
             data_portal,
             self.algo.data_frequency,
-            universe_func,
         )
 
         before_trading_start_minute = \

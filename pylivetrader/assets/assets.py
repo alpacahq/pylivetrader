@@ -28,8 +28,8 @@ class Asset:
         self.symbol = symbol
         self.asset_name = asset_name
 
-        self.start_date = None
-        self.end_date = None
+        self.start_date = kwargs.get('start_date')
+        self.end_date = kwargs.get('end_date')
         self.first_traded = None
         self.auto_close_date = None
         self.exchange_full = None
@@ -48,7 +48,9 @@ class Asset:
         return self.symbol < other.symbol
 
     def __eq__(self, other):
-        return self.sid_hash == other.sid_hash
+        if hasattr(other, 'sid_hash'):
+            return self.sid_hash == other.sid_hash
+        return False
 
     def __repr__(self):
 
