@@ -39,12 +39,11 @@ def _is_iterable(d):
 
 class BarData:
 
-    def __init__(self, data_portal, data_frequency, universe_func):
+    def __init__(self, data_portal, data_frequency):
 
         self.data_portal = data_portal
         self.data_frequency = data_frequency
         self._daily_mode = data_frequency == 'daily'
-        self.universe_func = universe_func
 
         # Need to handle in before / after market hour
         self._adjust_minutes = False

@@ -213,7 +213,6 @@ class Algorithm:
         self.executor = AlgorithmExecutor(
             self,
             self.data_portal,
-            self._calculate_universe,
         )
 
         return self.executor.run()

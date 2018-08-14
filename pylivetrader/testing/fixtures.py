@@ -55,7 +55,11 @@ class MockBackend:
     def get_equities(self):
         return [
             Equity(
-                asset, symbol=asset.upper().replace('-', ''), exchange='NYSE',
+                asset,
+                symbol=asset.upper().replace('-', ''),
+                exchange='NYSE',
+                start_date=self.start,
+                end_date=self.end + pd.Timedelta('1000 days'),
             ) for asset in self.assets
         ]
 

@@ -28,8 +28,8 @@ class Asset:
         self.symbol = symbol
         self.asset_name = asset_name
 
-        self.start_date = None
-        self.end_date = None
+        self.start_date = kwargs.get('start_date')
+        self.end_date = kwargs.get('end_date')
         self.first_traded = None
         self.auto_close_date = None
         self.exchange_full = None
