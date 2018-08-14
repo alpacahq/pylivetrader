@@ -68,8 +68,7 @@ def main():
     is_flag=True,
     help='Run with zipline algofile in magic translation (pre-alpha).'
          'With current translator, line # information will be lost and makes '
-         'it hard to debug algorithm. We recommented to translate your '
-         'script manually.'
+         'it hard to debug algorithm. We recommend manual translation.'
     )
 @click.pass_context
 def run(ctx,
