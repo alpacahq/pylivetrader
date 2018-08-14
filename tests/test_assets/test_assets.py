@@ -22,3 +22,5 @@ def test_asset():
 
     sorted_assets = sorted([asset2, asset])
     assert sorted_assets[0] == asset
+
+    assert not asset == 'invalid'
