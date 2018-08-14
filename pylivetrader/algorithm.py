@@ -155,6 +155,8 @@ class Algorithm:
         self._account_needs_update = True
         self._portfolio_needs_update = True
 
+        self._in_before_trading_start = False
+
         self._assets_from_source = []
 
         self._context_persistence_excludes = []

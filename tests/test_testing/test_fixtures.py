@@ -1,4 +1,4 @@
-from pylivetrader.testing.fixtures import MockBackend
+from pylivetrader.testing.fixtures import Backend as MockBackend
 
 
 def test_mock_backend():

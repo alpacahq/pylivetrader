@@ -10,7 +10,7 @@ from trading_calendars import get_calendar
 
 def get_fixture_data_portal(**kwargs):
 
-    b = MockBackend(**kwargs)
+    b = Backend(**kwargs)
 
     finder = AssetFinder(b)
 
@@ -28,7 +28,7 @@ def create_bars(minutes, offset):
     }, index=minutes)
 
 
-class MockBackend:
+class Backend:
 
     def __init__(self, start=None, end=None, assets=None, exchange='NYSE'):
         self.start = normalize_date(pd.Timestamp(start or '2018-08-13'))
