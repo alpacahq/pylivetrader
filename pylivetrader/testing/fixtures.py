@@ -32,7 +32,7 @@ class MockBackend:
 
     def __init__(self, start=None, end=None, assets=None, exchange='NYSE'):
         self.start = normalize_date(pd.Timestamp(start or '2018-08-13'))
-        self.end   = normalize_date(pd.Timestamp(end or '2018-08-14'))
+        self.end = normalize_date(pd.Timestamp(end or '2018-08-14'))
 
         self._exchange = exchange
         self._calendar = get_calendar(exchange)
