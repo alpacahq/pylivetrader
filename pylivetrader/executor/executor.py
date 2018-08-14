@@ -46,6 +46,7 @@ class AlgorithmExecutor:
             self.algo.trading_calendar,
             before_trading_start_minute,
             minute_emission=algo.data_frequency == 'minute',
+            time_skew=self.algo._backend.time_skew,
         )
 
     def run(self):

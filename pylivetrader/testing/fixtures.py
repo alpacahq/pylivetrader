@@ -107,3 +107,7 @@ class Backend:
             barslist.append(bars[-bar_count:])
 
         return pd.concat(barslist, axis=1)
+
+    @property
+    def time_skew(self):
+        return pd.Timedelta('0s')
