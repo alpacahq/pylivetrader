@@ -137,3 +137,17 @@ class RegisterAccountControlPostInit(LiveTraderError):
 You attempted to set an account control outside of `initialize`. \
 Account controls may only be set in your initialize method.
 """.strip()
+
+
+class HistoryInInitialize(LiveTraderError):
+    """
+    Raised when an algorithm calls history() in initialize.
+    """
+    msg = "history() should only be called in handle_data()"
+
+
+class OrderInBeforeTradingStart(LiveTraderError):
+    """
+    Raised when an algorithm calls an order method in before_trading_start.
+    """
+    msg = "Cannot place orders inside before_trading_start."

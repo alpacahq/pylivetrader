@@ -17,7 +17,8 @@
 import warnings
 import pytz
 import numpy as np
-from pylivetrader.misc.pd_utils import normalize_date
+import pandas as pd
+from datetime import tzinfo
 from itertools import chain
 from contextlib import ExitStack
 from copy import copy
@@ -33,6 +34,7 @@ from pylivetrader.errors import (
     APINotSupported, CannotOrderDelistedAsset, UnsupportedOrderParameters,
     ScheduleFunctionInvalidCalendar, OrderDuringInitialize,
     RegisterAccountControlPostInit, RegisterTradingControlPostInit,
+    OrderInBeforeTradingStart, HistoryInInitialize,
 )
 from pylivetrader.finance.execution import (
     MarketOrder, LimitOrder, StopLimitOrder, StopOrder
@@ -46,6 +48,7 @@ from pylivetrader.finance.controls import (
     RestrictedListOrder
 )
 from pylivetrader.finance.asset_restrictions import (
+    Restrictions,
     NoRestrictions,
     StaticRestrictions,
     SecurityListRestrictions,
@@ -63,7 +66,21 @@ from pylivetrader.misc.events import (
     BeforeClose
 )
 from pylivetrader.misc.math_utils import round_if_near_integer, tolerant_equals
-from pylivetrader.misc.api_context import api_method, LiveTraderAPI
+from pylivetrader.misc.api_context import (
+    api_method,
+    LiveTraderAPI,
+    require_initialized,
+    disallowed_in_before_trading_start,
+)
+from pylivetrader.misc.pd_utils import normalize_date
+from pylivetrader.misc.preprocess import preprocess
+from pylivetrader.misc.input_validation import (
+    coerce_string,
+    ensure_upper_case,
+    expect_types,
+    expect_dtypes,
+    optional,
+)
 from pylivetrader.statestore import StateStore
 
 from logbook import Logger
@@ -221,6 +238,7 @@ class Algorithm:
         raise APINotSupported
 
     @api_method
+    @disallowed_in_before_trading_start(OrderInBeforeTradingStart())
     def order(
             self,
             asset,
@@ -351,6 +369,7 @@ class Algorithm:
         pass
 
     @api_method
+    @preprocess(symbol=ensure_upper_case)
     def symbol(self, symbol):
         '''Lookup equity by symbol.
 
@@ -408,6 +427,7 @@ class Algorithm:
         return [self.order(*order_args) for order_args in order_arg_list]
 
     @api_method
+    @disallowed_in_before_trading_start(OrderInBeforeTradingStart())
     def order_value(
             self,
             asset,
@@ -451,6 +471,8 @@ class Algorithm:
         self.datetime = dt
 
     @api_method
+    @preprocess(tz=coerce_string(pytz.timezone))
+    @expect_types(tz=optional(tzinfo))
     def get_datetime(self, tz=None):
         dt = self.datetime
         assert dt.tzinfo == pytz.utc, "Algorithm should have a utc datetime"
@@ -548,6 +570,8 @@ class Algorithm:
                           style=style)
 
     @api_method
+    @expect_types(share_counts=pd.Series)
+    @expect_dtypes(share_counts=np.dtype('float64'))
     def batch_market_order(self, share_counts):
         style = MarketOrder()
         order_args = [
@@ -590,6 +614,7 @@ class Algorithm:
         self._backend.cancel_order(order_id)
 
     @api_method
+    @require_initialized(HistoryInInitialize())
     def history(self, bar_count, frequency, field, ffill=True):
         """DEPRECATED: use ``data.history`` instead.
         """
@@ -926,6 +951,10 @@ class Algorithm:
         self.set_asset_restrictions(restrictions, on_error)
 
     @api_method
+    @expect_types(
+        restrictions=Restrictions,
+        on_error=str,
+    )
     def set_asset_restrictions(self, restrictions, on_error='fail'):
         """Set a restriction on which assets can be ordered.
 
