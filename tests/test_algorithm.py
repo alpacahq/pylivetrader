@@ -267,6 +267,7 @@ def initialize(ctx):
 
     algo.order(algo.sid('asset-1'), 1)
 
+
 def test_post_init():
     algo = get_algo('')
 
