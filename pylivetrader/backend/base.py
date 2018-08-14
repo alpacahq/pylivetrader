@@ -17,6 +17,8 @@
 import abc
 from abc import abstractmethod
 
+import pandas as pd
+
 
 class BaseBackend(abc.ABC):
 
@@ -63,3 +65,12 @@ class BaseBackend(abc.ABC):
     @abstractmethod
     def get_bars(self, assets, data_frequency, bar_count=500):
         pass
+
+    @property
+    def time_skew(self):
+        '''
+        Returns:
+            skew (pd.Timedelta):
+                Time skew between local clock and broker server clock
+        '''
+        return pd.Timedelta('0s')
