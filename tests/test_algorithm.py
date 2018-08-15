@@ -32,9 +32,12 @@ from pylivetrader.misc.api_context import LiveTraderAPI
 from pylivetrader.loader import get_functions
 
 
-def get_algo(script):
+def get_algo(script, **kwargs):
     functions = get_functions(script)
-    return Algorithm(backend='pylivetrader.testing.fixtures', **functions)
+    return Algorithm(
+        backend='pylivetrader.testing.fixtures',
+        **functions, **kwargs,
+    )
 
 
 def simulate_init_and_handle(algo):
@@ -281,3 +284,30 @@ def test_post_init():
         algo.set_max_order_count(1)
     with pytest.raises(RegisterTradingControlPostInit):
         algo.set_long_only()
+
+
+def test_state_restore():
+    algo = get_algo('''
+def handle_data(ctx, data):
+    ctx.value = 1
+    ''')
+
+    simulate_init_and_handle(algo)
+
+    algo = get_algo('''
+def handle_data(ctx, data):
+    ctx.value = 1
+    ''')
+
+    algo.initialize()
+
+    assert algo.value == 1
+
+    # should fail with checksum check
+    algo = get_algo('''
+def handle_data(ctx, data):
+    ctx.value = 1
+    ''', algoname='invalid', statefile='algo-state.pkl')
+
+    with pytest.raises(ValueError):
+        algo.initialize()
