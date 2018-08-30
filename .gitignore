@@ -6,3 +6,6 @@ dist
 *.egg-info
 .pytest_cache
 *.pkl
+.envrc
+.vscode
+.coverage
