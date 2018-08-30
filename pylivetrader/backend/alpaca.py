@@ -332,7 +332,7 @@ class Backend(BaseBackend):
         '''
         Interface method.
 
-        Return: pd.Dataframe() with MultiIndex [asset -> OHLCV]
+        Return: pd.Dataframe() with columns MultiIndex [asset -> OHLCV]
         '''
         assets_is_scalar = not isinstance(assets, (list, set, tuple))
         is_daily = 'd' in data_frequency  # 'daily' or '1d'
@@ -348,9 +348,7 @@ class Backend(BaseBackend):
             intra_bars = {}
             symbol_bars_minute = self._symbol_bars(
                 symbols, 'minute', limit=1000)
-            for symbol, bars in symbol_bars_minute.items():
-                symbol = bars.symbol
-                df = bars.df
+            for symbol, df in symbol_bars_minute.items():
                 mask = (df.index.time >= pd.Timestamp('9:30').time()) & (
                     df.index.time < pd.Timestamp('16:00').time())
                 agged = df[mask].resample('1D').agg(dict(
@@ -367,15 +365,10 @@ class Backend(BaseBackend):
             symbol = asset.symbol
             df = symbol_bars.get(symbol)
             if df is None:
-                dfs.append(
-                    pd.DataFrame(
-                        [],
-                        columns=[
-                            'open',
-                            'high',
-                            'low',
-                            'close',
-                            'volume']))
+                dfs.append(pd.DataFrame(
+                    [], columns=[
+                        'open', 'high', 'low', 'close', 'volume']
+                ))
                 continue
             if is_daily:
                 agged = intra_bars.get(symbol)
