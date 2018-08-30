@@ -54,6 +54,7 @@ setup(
     ],
     tests_require=[
         'pytest',
+        'pytest-cov',
     ],
     setup_requires=["flake8", "pytest-runner"],
     extras_require={}
