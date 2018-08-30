@@ -187,7 +187,7 @@ class Backend(BaseBackend):
     def account(self):
         account = self._api.get_account()
         z_account = zp.Account()
-        z_account.buying_power = float(account.cash)
+        z_account.buying_power = float(account.buying_power)
         z_account.total_position_value = float(
             account.portfolio_value) - float(account.cash)
         return z_account
@@ -236,15 +236,6 @@ class Backend(BaseBackend):
         stop_price = style.get_stop_price(side == 'buy') or None
 
         zp_order_id = self._new_order_id()
-        dt = pd.to_datetime('now', utc=True)
-        zp_order = ZPOrder(
-            dt=dt,
-            asset=asset,
-            amount=amount,
-            stop=stop_price,
-            limit=limit_price,
-            id=zp_order_id,
-        )
 
         try:
             order = self._api.submit_order(
@@ -255,7 +246,7 @@ class Backend(BaseBackend):
                 time_in_force='day',
                 limit_price=limit_price,
                 stop_price=stop_price,
-                client_order_id=zp_order.id,
+                client_order_id=zp_order_id,
             )
             zp_order = self._order2zp(order)
             return zp_order
