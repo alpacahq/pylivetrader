@@ -333,7 +333,7 @@ class Backend(BaseBackend):
             symbols = [asset.symbol for asset in assets]
 
         symbol_bars = self._symbol_bars(
-            symbols, data_frequency, limit=bar_count)
+            symbols, 'day' if is_daily else 'minute', limit=bar_count)
 
         if is_daily:
             intra_bars = {}
@@ -375,30 +375,29 @@ class Backend(BaseBackend):
     def _symbol_bars(
             self,
             symbols,
-            frequency,
+            size,
             _from=None,
             to=None,
             limit=None):
         '''
-        Query historic_agg either minute or daily in parallel
+        Query historic_agg either minute or day in parallel
         for multiple symbols, and return in dict.
 
-        symbols:   list[str]
-        frequency: str ('daily', 'minute')
-        _from:     str or pd.Timestamp
-        to:        str or pd.Timestamp
-        limit:     str or int
+        symbols: list[str]
+        size:    str ('day', 'minute')
+        _from:   str or pd.Timestamp
+        to:      str or pd.Timestamp
+        limit:   str or int
 
         return: dict[str -> pd.DataFrame]
         '''
-        assert frequency in ('daily', 'minute')
+        assert size in ('day', 'minute')
 
         # temp workaround for less bars after masking by
         # market hours
         query_limit = limit
         if query_limit is not None:
             query_limit *= 2
-        size = 'day' if frequency == 'daily' else 'minute'
 
         @skip_http_error((404, 504))
         def fetch(symbol):
