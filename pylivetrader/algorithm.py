@@ -106,6 +106,8 @@ class Algorithm:
             '{}-state.pkl'.format(self._algoname)
         )
 
+        self._pipelines = {}
+
         self._backend_name = kwargs.pop('backend', 'alpaca')
         try:
             # First, tries to import official backend packages
@@ -981,11 +983,25 @@ class Algorithm:
 
     @api_method
     def attach_pipeline(self, pipeline, name, chunks=None):
-        raise APINotSupported
+        self._pipelines[name] = pipeline
 
     @api_method
     def pipeline_output(self, name):
-        raise APINotSupported
+        try:
+            from pipeline_live.engine import LivePipelineEngine
+        except ImportError:
+            raise RuntimeError('pipeline-live is not installed')
+
+        finder = self.asset_finder
+
+        def list_symbols():
+            return sorted([
+                a.symbol for a in finder._asset_cache.values()])
+
+        eng = LivePipelineEngine(list_symbols)
+        output = eng.run_pipeline(self._pipelines[name])
+        output.index = pd.Index(finder.lookup_symbols(output.index))
+        return output
 
 
 def noop(*args, **kwargs):

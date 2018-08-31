@@ -140,7 +140,7 @@ class AssetFinder:
     def retrieve_futures_contracts(self, sids):
         raise NotSupported
 
-    def lookup_symbol(self, symbol, as_of_date, fuzzy=False):
+    def lookup_symbol(self, symbol, as_of_date=None, fuzzy=False):
         if symbol is None:
             raise TypeError("Cannot lookup asset for symbol of None for "
                             "as of date {}.".format(as_of_date))
@@ -149,7 +149,7 @@ class AssetFinder:
             return self._lookup_symbol_fuzzy(symbol, as_of_date)
         return self._lookup_symbol_strict(symbol, as_of_date)
 
-    def _lookup_symbol_strict(self, symbol, as_of_date):
+    def _lookup_symbol_strict(self, symbol, as_of_date=None):
         # split the symbol into the components, if there are no
         # company/share class parts then share_class_symbol will be empty
         company_symbol, share_class_symbol = split_delimited_symbol(symbol)
@@ -162,7 +162,7 @@ class AssetFinder:
             # no equity has ever held this symbol
             raise SymbolNotFound(symbol=symbol)
 
-    def _lookup_symbol_fuzzy(self, symbol, as_of_date):
+    def _lookup_symbol_fuzzy(self, symbol, as_of_date=None):
         symbol = symbol.upper()
         company_symbol, share_class_symbol = split_delimited_symbol(symbol)
         try:
@@ -173,7 +173,7 @@ class AssetFinder:
             # no equity has ever held a symbol matching the fuzzy symbol
             raise SymbolNotFound(symbol=symbol)
 
-    def lookup_symbols(self, symbols, as_of_date, fuzzy=False):
+    def lookup_symbols(self, symbols, as_of_date=None, fuzzy=False):
         memo = {}
         out = []
         append_output = out.append

@@ -31,6 +31,8 @@ from pylivetrader.executor.executor import AlgorithmExecutor
 from pylivetrader.misc.api_context import LiveTraderAPI
 from pylivetrader.loader import get_functions
 
+from unittest.mock import Mock
+
 
 def get_algo(script, **kwargs):
     functions = get_functions(script)
@@ -311,3 +313,36 @@ def handle_data(ctx, data):
 
     with pytest.raises(ValueError):
         algo.initialize()
+
+
+def test_pipeline():
+    algo = get_algo('')
+    pipe = Mock()
+    algo.attach_pipeline(pipe, 'mock')
+
+    import sys
+
+    pkg = 'pipeline_live.engine'
+    if pkg in sys.modules:
+        del sys.modules[pkg]
+    with pytest.raises(RuntimeError):
+        algo.pipeline_output('mock')
+
+    mod = Mock()
+    sys.modules[pkg] = mod
+
+    eng = Mock()
+
+    def ctor(list_symbols):
+        symbols = list_symbols()
+        assert symbols[0] == 'ASSET0'
+        return eng
+    mod.LivePipelineEngine = ctor
+
+    eng.run_pipeline.return_value = pd.DataFrame(
+        [[42.0]], index=['ASSET0'], columns=['close'])
+
+    res = algo.pipeline_output('mock')
+    assert res.index[0].symbol == 'ASSET0'
+
+    del sys.modules[pkg]
