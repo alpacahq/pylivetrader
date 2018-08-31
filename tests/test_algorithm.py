@@ -346,3 +346,14 @@ def test_pipeline():
     assert res.index[0].symbol == 'ASSET0'
 
     del sys.modules[pkg]
+
+
+def test_backend_param():
+    class Backend:
+        pass
+    bknd = Backend()
+    algo = Algorithm(backend=bknd)
+    assert algo._backend == bknd
+
+    with pytest.raises(RuntimeError):
+        Algorithm(backend='foo.does.not.exist')
