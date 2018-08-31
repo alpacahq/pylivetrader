@@ -94,6 +94,17 @@ class Algorithm:
     """
 
     def __init__(self, *args, **kwargs):
+        '''
+        data_frequency: 'minute' or 'daily'
+        algoname: str, defaults to 'algo'
+        backend: str or Backend instance, defaults to 'alpaca'
+                 (str is either backend module name under
+                  'pylivetrader.backend', or global import path)
+        trading_calendar: pd.DateIndex for trading calendar
+        initialize: initialize function
+        handle_data: handle_data function
+        before_trading_start: before_trading_start function
+        '''
         self._recorded_vars = {}
 
         self.data_frequency = kwargs.pop('data_frequency', 'minute')
@@ -108,22 +119,29 @@ class Algorithm:
 
         self._pipelines = {}
 
-        self._backend_name = kwargs.pop('backend', 'alpaca')
-        try:
-            # First, tries to import official backend packages
-            backendmod = importlib.import_module(
-                'pylivetrader.backend.{}'.format(self._backend_name))
-        except ImportError:
-            # Then if failes, tries to find pkg in global package namespace.
+        backend_param = kwargs.pop('backend', 'alpaca')
+        if not isinstance(backend_param, str):
+            self._backend = backend_param
+            self._backend_name = backend_param.__class__.__name__
+        else:
+            self._backend_name = backend_param
             try:
-                backendmod = importlib.import_module(self._backend_name)
+                # First, tries to import official backend packages
+                backendmod = importlib.import_module(
+                    'pylivetrader.backend.{}'.format(self._backend_name))
             except ImportError:
-                raise RuntimeError(
-                    "Could not find backend package `{}`.".format(
-                        self._backend_name))
+                # Then if failes, tries to find pkg in global package
+                # namespace.
+                try:
+                    backendmod = importlib.import_module(
+                        self._backend_name)
+                except ImportError:
+                    raise RuntimeError(
+                        "Could not find backend package `{}`.".format(
+                            self._backend_name))
 
-        backend_options = kwargs.pop('backend_options', None) or {}
-        self._backend = backendmod.Backend(**backend_options)
+            backend_options = kwargs.pop('backend_options', None) or {}
+            self._backend = backendmod.Backend(**backend_options)
 
         self.asset_finder = AssetFinder(self._backend)
 
