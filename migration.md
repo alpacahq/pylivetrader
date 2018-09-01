@@ -1,11 +1,11 @@
-# Migrate your algorithm from Quantopian
+# Migrate your Algorithm from Quantopian
 
 This document describes how you can transform your algorithm source built in
 Quantopian to pylivetrader. pylivetrader API is compatible with zipline API,
 but there are some changes that require mechanical and manual process to
 move from Quantopian/zipline.
 
-## Copy and paste
+## Copy and Paste
 First thing first, you need to create a python script. Go to your Quantopian
 algorithm page, copy the entire source code, paste and save it as a
 python script. Here we name it `algo.py` as an example.
@@ -20,7 +20,7 @@ has been putting so much effort to make it easy to migrate from 2 to 3.
 
 In short, the `2to3` command will help here.  You should have this program
 if you have installed Python 3. For more details of this script, you can
-read the (official document](https://docs.python.org/3.6/library/2to3.html).
+read the [official document](https://docs.python.org/3.6/library/2to3.html).
 
 ```sh
 $ 2to3 -w algo.py
@@ -30,11 +30,11 @@ This updates your Python script so it works with Python 3. Remember, you
 will have the original file as `algo.py.bak`.
 
 ## Fix imports
-pylivetrader is API-compatible with Quantopian/zipline, but you still need
+pylivetrader is API-compatible with Quantopian/zipline, but you still need to
 update your import statements so you import pylivetrader modules, instead of
 Quantopian/zipline ones. Any imported modules starting from `quantopian`
-will not work outside of Quantopian environment. There are a couple of cases
-here.
+will not work outside of the Quantopian environment. There are a couple of cases
+that need different solutions here.
 
 ### Algorithm API
 This is the API under the `quantopian.algorithms` or `zipline.algorithm`
@@ -48,7 +48,7 @@ pylivetrader does not provide direct replacement for pipeline, but you can
 use [pipeline-live](https://github.com/alpacahq/pipeline-live). You need to
 install this package separately as pylivetrader does not automatically
 include it.  For more information,
-please read [pipeline-live's migration document](https://github.com/alpacahq/pipeline-live/migration.md)
+please read [pipeline-live's migration document](https://github.com/alpacahq/pipeline-live/migration.md).
 
 Under `attach_pipeline` and `pipeline_output`, pylivetrader uses
 the pipeline-live pakcage if it is installed, otherwise throws `RuntimeError`.
@@ -58,7 +58,7 @@ This is the API under the `quantopian.optimize` or `zipline.optimize`
 package. Optimize API
 is not currently supported by pylivetrader.
 
-### Anything else that starts wtih `quantopian.`
+### Anything Else that Starts wtih `quantopian.`
 For those other APIs, you will have to change the code so it works as you
 intended.  The good news is that there is no limiation or restriction in this
 pylivetrader, so you will probably be able to do what you can do.
@@ -72,8 +72,8 @@ environment, but they still exist for compatibility.
 ### Implicit imports
 The Quantopian environment adds certain functions to the namespace
 when it loads the algorithm source code. In pylivetrader, your algorithm
-file have to explicitly import those by yourself.  These "auto" functions
-are under `pylivetrader.api` package.  You can copy this block to your
+file has to explicitly import those by yourself.  These "auto" functions
+are under `pylivetrader.api` package.  You can add this line to your
 algorithm source code.
 
 ```py
@@ -108,7 +108,7 @@ The implicitly imported APIs are the following.
 - set_max_position_size
 - set_max_leverage:w
 
-## Checking and testing
+## Checking and Testing
 Once you convert your algorithm code, you may want to check if there is
 no easy mistake at the literal level. This is optional, but we recommend
 using [`autopep8`](https://pypi.org/project/autopep8/) and
@@ -125,7 +125,7 @@ broker supports it. You should expect some issues such as network problem,
 API to return errors, orders not being filled for long. Paper trading will
 help you spot these issues by running your algorithm in live.
 
-## Future plans
+## Future Plans
 pylivetrader is designed to run Quantopian/zipline algorithm with minimum
 effort. The procedure explained here will be also automated as much as
 possible by pylivetrader in the future. Also, as discussed above, the
