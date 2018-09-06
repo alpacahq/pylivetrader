@@ -35,7 +35,7 @@ def handle_data(context, data):
 You can run your algorithm from CLI tool named `pylivetrader`, simply like below. Then your algorithm just start running with broker API. You don't need to ready for bundle file in advance as zipline does.
 
 ```sh
-$ pylivetrader run -f algo.py --broker-config config.yaml
+$ pylivetrader run -f algo.py --backend-config config.yaml
 ```
 
 Config file is just simple yaml or json format.
@@ -72,5 +72,5 @@ Configuration by config file. Either yaml or json.
 $ cat config.yaml
 key_id: {your api key id}
 secret: {your api secret key}
-$ pylivetrader run -f algo.py --broker-config config.yaml
+$ pylivetrader run -f algo.py --backend-config config.yaml
 ```
