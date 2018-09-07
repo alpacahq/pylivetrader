@@ -91,11 +91,7 @@ class Asset:
         -------
         boolean: whether the asset's exchange is open at the given minute.
         """
-
-        # We currently support only US Equity calendar
-        # (to avoid unexpected exchange name that's missing in
-        # the trading_calendars package)
-        calendar = get_calendar('NYSE')
+        calendar = get_calendar(self.exchange)
         return calendar.is_open_on_minute(dt_minute)
 
     def is_alive_for_session(self, session_label):

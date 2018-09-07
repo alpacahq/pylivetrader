@@ -20,7 +20,13 @@ import concurrent.futures
 from requests.exceptions import HTTPError
 import numpy as np
 import pandas as pd
-from trading_calendars import get_calendar
+from trading_calendars import (
+    get_calendar,
+    register_calendar_alias,
+)
+from trading_calendars.calendar_utils import (
+    global_calendar_dispatcher as default_calendar,
+)
 import uuid
 
 from .base import BaseBackend
@@ -140,6 +146,12 @@ class Backend(BaseBackend):
             asset.auto_close_date = asset.end_date
 
             assets.append(asset)
+
+            # register all unseen exchange name as
+            # alias of NYSE (e.g. AMEX, ARCA, NYSEARCA.)
+            if not default_calendar.has_calendar(raw_asset.exchange):
+                register_calendar_alias(raw_asset.exchange,
+                                        'NYSE', force=True)
 
         return assets
 
