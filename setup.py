@@ -52,7 +52,7 @@ setup(
         'click',
         'PyYAML',
         # supoort alpaca backend by default
-        'alpaca-trade-api',
+        'alpaca-trade-api>=0.18',
     ],
     tests_require=[
         'pytest',
