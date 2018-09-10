@@ -42,7 +42,7 @@ You can create a new git repository here by `git init`
 and follow the instruction to "push" to Heroku.
 
 You will need to configure the environment variables
-in Heroku dashboard settings. If everything works,
+in Heroku dashboard settings.
 
 Lastly, start your worker dyno by
 
