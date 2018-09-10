@@ -1,11 +1,11 @@
 # Working Example to Run Quantopian Algorithm in Live
 
 This directory contains an actual algorithm code that is converted
-from Quantopian source to pylivetrader code. `original.py` is
+from Quantopian source to pylivetrader code. [original.py](./original.py) is
 the code from Quantopian and you can still copy & paste it
 to your backtest IDE to see how it performs in the testing.
 
-`algo.py` is the output of the conversion following
+[algo.py](./algo.py) is the output of the conversion following
 [the migration document](../../migration.md) ready for
 live trading. It comes with `Pipenv` files so if you have
 `pipenv` installed in your environment, you can immediately
