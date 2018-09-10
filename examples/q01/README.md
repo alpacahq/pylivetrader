@@ -7,9 +7,9 @@ to your backtest IDE to see how it performs in the testing.
 
 [algo.py](./algo.py) is the output of the conversion following
 [the migration document](../../migration.md) ready for
-live trading. It comes with `Pipenv` files so if you have
-`pipenv` installed in your environment, you can immediately
-start.
+live trading. It comes with [Pipfile](./Pipefile) files so if you have
+[pipenv](https://pipenv.readthedocs.io/) installed in your
+environment, you can immediately start.
 
 
 ## How to Run your Algorithm
