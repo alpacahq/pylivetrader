@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  build-python35:
     docker:
       - image: circleci/python:3.5
     steps:
@@ -17,5 +17,50 @@ jobs:
           key: deps-{{ checksum "setup.py" }}
           paths:
             - venv
-      - run: python3 setup.py flake8
-      - run: python3 setup.py test
+      - run: python3 setup.py flake8 test
+
+  build-python36:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - restore_cache:
+          key: deps-{{ checksum "setup.py" }}
+      - run:
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip3 install setuptools --upgrade
+            python3 setup.py develop
+      - save_cache:
+          key: deps-{{ checksum "setup.py" }}
+          paths:
+            - venv
+      - run: python3 setup.py flake8 test
+
+  build-python37:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - restore_cache:
+          key: deps-{{ checksum "setup.py" }}
+      - run:
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip3 install setuptools --upgrade
+            python3 setup.py develop
+      - save_cache:
+          key: deps-{{ checksum "setup.py" }}
+          paths:
+            - venv
+      - run: python3 setup.py flake8 test
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build-python35
+      - build-python36
+      - build-python37
