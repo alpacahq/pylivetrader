@@ -10,7 +10,7 @@ VERSION = run_path(
     str(Path(__file__).parent) + '/pylivetrader/_version.py')['VERSION']
 
 
-with open('README.md') as readme_file:
+with open(str(Path(__file__).parent) + '/README.md') as readme_file:
     README = readme_file.read()
 
 

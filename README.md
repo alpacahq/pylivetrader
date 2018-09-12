@@ -74,3 +74,20 @@ key_id: {your api key id}
 secret: {your api secret key}
 $ pylivetrader run -f algo.py --backend-config config.yaml
 ```
+
+## Docker
+
+If you are already familiar with Docker, it is a good idea to
+try our [docker image `alpacamarkets/pylivetrader`](https://hub.docker.com/r/alpacamarkets/pylivetrader/).
+This has installed pylivetrader so you can start right away without
+worrying about your python environment.  See more details in the
+`dockerfiles` directory.
+
+If your algorithm file is called `algo.py`, this could be it.
+
+```sh
+docker run -v $PWD:/work -w /work alpacamarkets/pylivetrader pylivetrader run -f algo.py
+```
+
+Make sure you set up environment variables for the  backend
+(use `-e KEY=VAL` for docker command).
