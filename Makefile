@@ -1,8 +1,5 @@
-image:
-	docker build -t pylivetrader .
-
 shell:
-	docker run -it --rm -v $(PWD):/w -w /w pylivetrader bash
+	docker run -it --rm -v $(PWD):/w -w /w python:3.6-stretch bash
 
 lint:
 	python setup.py flake8

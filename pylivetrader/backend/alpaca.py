@@ -377,7 +377,11 @@ class Backend(BaseBackend):
                 agged = intra_bars.get(symbol)
                 if agged is not None and len(
                         agged.index) > 0 and agged.index[-1] not in df.index:
-                    assert agged.index[-1] > df.index[-1]
+                    if not (agged.index[-1] > df.index[-1]):
+                        log.warn(
+                            ('agged.index[-1] = {}, df.index[-1] = {} '
+                             'for {}').format(
+                                agged.index[-1], df.index[-1], symbol))
                     df = df.append(agged.iloc[-1])
             df.columns = pd.MultiIndex.from_product([[asset, ], df.columns])
             dfs.append(df)
