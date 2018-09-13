@@ -16,19 +16,23 @@ log = Logger('Realtime Clock')
 
 class FaketimeClock(object):
 
-    def __init__(self,
-                 calendar=None,
-                 before_trading_start_minute=(pd.Timestamp('8:45').time(), 'America/New_York'),
-                 minute_emission=True,
-                 time_skew=None,
-                 init_time=None,
-                ):
+    def __init__(
+        self,
+        calendar=None,
+        before_trading_start_minute=(
+            pd.Timestamp('8:45').time(),
+            'America/New_York'),
+        minute_emission=True,
+        time_skew=None,
+        init_time=None,
+    ):
         self.calendar = calendar or get_calendar('NYSE')
         self.before_trading_start_minute = before_trading_start_minute
         self.minute_emission = minute_emission
         self._last_emit = None
         self._before_trading_start_bar_yielded = False
-        self._current_time = init_time.floor('1min') if init_time is not None else pd.Timestamp.utcnow()
+        self._current_time = init_time.floor(
+            '1min') if init_time is not None else pd.Timestamp.utcnow()
 
     @property
     def now(self):
