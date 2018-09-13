@@ -32,7 +32,9 @@ def handle_data(context, data):
         order_target(context.asset, 0)
 ```
 
-You can run your algorithm from CLI tool named `pylivetrader`, simply like below. Then your algorithm just start running with broker API. You don't need to ready for bundle file in advance as zipline does.
+You can run your algorithm from the CLI tool named `pylivetrader`, simply
+like below. Then your algorithm starts running with broker API.
+You don't need the data bundle file in advance unlike zipline does.
 
 ```sh
 $ pylivetrader run -f algo.py --backend-config config.yaml
@@ -53,6 +55,8 @@ Install with pip.
 ```
 $ pip install pylivetrader
 ```
+
+Additionally, pylivetrader works well with [pipeline-live](https://github.com/alpacahq/pipeline-live).
 
 ## Supported Broker
 
