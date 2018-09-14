@@ -5,19 +5,41 @@ import pylivetrader.protocol as zp
 from pylivetrader.assets import Equity
 from pylivetrader.finance.order import (
     Order as ZPOrder,
-    ORDER_STATUS as ZP_ORDER_STATUS,
 )
 from pylivetrader.backend.base import BaseBackend
 import pandas as pd
+import numpy as np
+import string
+from trading_calendars import get_calendar
 
 from logbook import Logger
 
 log = Logger(__name__)
 
 
+def num_to_symbol(n):
+    buf = []
+    while n >= 0:
+        a = n % 26
+        b = n // 26 - 1
+        c = string.ascii_uppercase[a]
+        buf.append(c)
+        n = b
+    return ''.join(reversed(buf))
+
+
 class Backend(BaseBackend):
-    def __init__(self, proxy, cash=1e6):
-        self._proxy = proxy
+    '''This backend is a minimal simulator with
+    naive order filling for mainly smoke testing.
+    The price data comes from the actual backend data as
+    far as it can be fetched.
+    '''
+
+    def __init__(self, cash=1e6, size=50):
+        '''
+        paramters:
+            cash: initial cash balance
+        '''
         self._account = zp.Account()
         self._account.buying_power = cash
         self._account.total_position_value = 0
@@ -27,7 +49,11 @@ class Backend(BaseBackend):
         self._order_seq = 0
         self._orders = {}
         self._clock = None
-        self._real_bars = {'1d': {}, '1m': {}}
+        self._size = size
+        self._cal = get_calendar('NYSE')
+        self._fake_bars = {
+            '1d': {}, '1m': {},
+        }
 
     def set_clock(self, clock):
         self._clock = clock
@@ -64,10 +90,11 @@ class Backend(BaseBackend):
         self._positions[order.asset] = pos
 
     def _process_orders(self):
+        filled = []
         for order in self._orders.values():
             asset = order.asset
             price_df = self.get_bars([asset], '1m')[asset]
-            price_df[order.dt:]
+            price_df = price_df[order.dt:]
             if order.amount > 0:
                 max_price = price_df.high.max()
                 price = price_df.close.values[-1]
@@ -75,17 +102,21 @@ class Backend(BaseBackend):
                     # STOP LIMIT
                     if price <= order.limit and max_price >= order.stop:
                         self._fill(order, price)
+                        filled.append(order)
                 elif order.limit is not None:
                     # LIMIT
                     if price <= order.limit:
                         self._fill(order, price)
+                        filled.append(order)
                 elif order.stop is not None:
                     # STOP
                     if max_price >= order.stop:
                         self._fill(order, price)
+                        filled.append(order)
                 else:
                     # MARKET
                     self._fill(order, price)
+                    filled.append(order)
             else:
                 min_price = price_df.low.min()
                 price = price_df.close.values[-1]
@@ -93,25 +124,28 @@ class Backend(BaseBackend):
                     # STOP LIMIT
                     if price >= order.limit and min_price <= order.stop:
                         self._fill(order, price)
+                        filled.append(order)
                 elif order.limit is not None:
                     # LIMIT
                     if price >= order.limit:
                         self._fill(order, price)
+                        filled.append(order)
                 elif order.stop is not None:
                     # STOP
                     if min_price <= order.stop:
                         self._fill(order, price)
+                        filled.append(order)
                 else:
                     # MARKET
                     self._fill(order, price)
+                    filled.append(order)
+        for order in filled:
+            del self._orders[order.id]
         self._portfolio.positions_value = sum([
             p.cost_basis * p.amount for p in self._positions.values()
         ])
         self._portfolio.portfolio_value = self._portfolio.cash + \
             self._portfolio.positions_value
-
-    def get_equities(self):
-        return self._proxy.get_equities()
 
     @property
     def positions(self):
@@ -145,6 +179,8 @@ class Backend(BaseBackend):
         return [self.order(*order) for order in args]
 
     def order(self, asset, amount, style):
+        if amount == 0:
+            return
         limit_price = style.get_limit_price(amount > 0) or None
         stop_price = style.get_stop_price(amount > 0) or None
         self._order_seq += 1
@@ -178,35 +214,71 @@ class Backend(BaseBackend):
             return df[_field].values[-1]
 
         if isinstance(assets, Asset):
-            df = self._get_real_bars([assets], '1m')[assets][:now]
+            df = self.get_bars([assets], '1m')[assets][:now]
             return _get_for_symbol(df, field)
 
-        dfs = self._get_real_bars(assets, '1m')
+        dfs = self.get_bars(assets, '1m')
         return [
             _get_for_symbol(dfs[asset][:now], field) for asset in assets
         ]
 
+    def get_equities(self):
+        return [
+            Equity(
+                sid=i + 1,
+                symbol=num_to_symbol(i),
+                asset_name='{}'.format(num_to_symbol(i)),
+                exchange='NYSE',
+            ) for i in range(self._size)
+        ]
+
     def get_bars(self, assets, data_frequency, bar_count=500):
         now = self.now
-        real_bars = self._get_real_bars(assets, data_frequency)
+
+        self._populate_missing(assets, data_frequency)
+
         items = []
         for asset in assets:
-            df = real_bars[asset][:now].iloc[-bar_count:]
+            df = self._fake_bars[data_frequency][asset]
+            df = df[df.index <= now]
+            df = df.iloc[-bar_count:]
             df.columns = pd.MultiIndex.from_product([[asset, ], df.columns])
             items.append(df)
         return pd.concat(items, axis=1)
 
-    def _get_real_bars(self, assets, data_frequency):
+    def _populate_missing(self, assets, data_frequency):
         missing = []
         for asset in assets:
-            if asset not in self._real_bars[data_frequency]:
+            if asset not in self._fake_bars[data_frequency]:
                 missing.append(asset)
 
-        if missing:
-            data = self._proxy.get_bars(
-                missing, data_frequency, bar_count=3000)
-            for asset in missing:
-                df = data[asset]
-                self._real_bars[data_frequency][asset] = df
-        return {asset: self._real_bars[data_frequency][asset]
-                for asset in assets}
+        if len(missing) == 0:
+            return
+
+        near_future = pd.Timestamp.now(
+            tz='America/New_York') + pd.Timedelta('3days')
+        for asset in missing:
+            if data_frequency == '1m':
+                mask = self._cal.all_minutes
+                end = near_future
+            else:
+                mask = self._cal.all_sessions
+                end = near_future.floor('1D')
+        mask = mask[mask <= end]
+        if len(mask) >= 10000:
+            mask = mask[-10000:]
+        mask = mask.tz_convert('America/New_York')
+
+        for asset in missing:
+            scale = asset.sid
+            x = np.linspace(0, len(mask), len(mask))
+            ts = np.abs(np.sin(x)) + 1.0
+            df = pd.DataFrame({
+                'open': ts * scale,
+                'high': ts * scale + 0.5,
+                'low': ts * scale - 0.5,
+                'close': ts * scale + 0.1,
+                'volume': (ts * scale * 1e6).astype(int),
+            }, index=mask)
+
+            self._fake_bars[data_frequency][asset] = df

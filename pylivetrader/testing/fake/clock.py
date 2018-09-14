@@ -1,5 +1,3 @@
-from time import sleep
-
 from logbook import Logger
 import pandas as pd
 from trading_calendars import get_calendar
