@@ -12,7 +12,8 @@ def noop(*args, **kwargs):
 
 
 def run_smoke(algo):
-    be = backend.Backend()
+    fc = clock.FaketimeClock()
+    be = backend.Backend(clock=fc)
 
     a = Algorithm(
         initialize=getattr(algo, 'initialize', noop),
@@ -61,9 +62,9 @@ def run_smoke(algo):
             patch('pylivetrader.executor.executor.RealtimeClock') as rc:
         def make_clock(*args, **kwargs):
             prev_open = cal.previous_open(pd.Timestamp.now())
-            fc = clock.FaketimeClock(
-                init_time=prev_open - pd.Timedelta('1hour'))
-            be.set_clock(fc)
+            fc.configure(
+                current_time=prev_open - pd.Timedelta('1hour')
+            )
             return fc
         rc.side_effect = make_clock
 

@@ -1,4 +1,3 @@
-from logbook import Logger
 import pandas as pd
 from trading_calendars import get_calendar
 
@@ -7,9 +6,6 @@ SESSION_START = 1
 SESSION_END = 2
 MINUTE_END = 3
 BEFORE_TRADING_START_BAR = 4
-
-
-log = Logger('Realtime Clock')
 
 
 class FaketimeClock(object):
@@ -22,15 +18,28 @@ class FaketimeClock(object):
             'America/New_York'),
         minute_emission=True,
         time_skew=None,
-        init_time=None,
     ):
         self.calendar = calendar or get_calendar('NYSE')
         self.before_trading_start_minute = before_trading_start_minute
         self.minute_emission = minute_emission
         self._last_emit = None
         self._before_trading_start_bar_yielded = False
-        self._current_time = init_time.floor(
-            '1min') if init_time is not None else pd.Timestamp.utcnow()
+        self._current_time = pd.Timestamp.utcnow()
+
+    def configure(self,
+                  calendar=None,
+                  before_trading_start_minute=None,
+                  minute_emission=None,
+                  current_time=None,
+                  ):
+        if calendar is not None:
+            self._calendar = calendar
+        if before_trading_start_minute is not None:
+            self.before_trading_start_minute = before_trading_start_minute
+        if minute_emission is not None:
+            self.minute_emission = minute_emission
+        if current_time is not None:
+            self._current_time = current_time
 
     @property
     def now(self):
