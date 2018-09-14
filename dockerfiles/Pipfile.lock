@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "efef9543a77167367e3d1623369f980a1fe00f9e7276ea01ba91c111e75ad4e2"
+            "sha256": "a52c0cfccedbc91280ff394aff9ced62ba3cdb65445acb915896b469e4ddb782"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -329,11 +329,10 @@
         },
         "pandas-datareader": {
             "hashes": [
-                "sha256:14f4c64b34100d60753fcf04b4681322da4625d48e90efcd862a93aeacbc3118",
-                "sha256:47681336a3f6e6953b024bd73f8bb005f36e8df831ccce336e9fc601c587e3db"
+                "sha256:6a5ad8c9ca27af148d06ac8eb526914cc12d04ae1d93af423d173279e2226c46",
+                "sha256:7dee3fe6fa483c8c2ee4f1af91a65b542c5446d75a6fc25c832cad1ffca8ef0b"
             ],
-            "markers": "python_version != '3.1.*' and python_version >= '2.7' and python_version != '3.0.*' and python_version != '3.2.*' and python_version != '3.3.*'",
-            "version": "==0.6.0"
+            "version": "==0.7.0"
         },
         "patsy": {
             "hashes": [
@@ -352,11 +351,11 @@
         },
         "pylivetrader": {
             "hashes": [
-                "sha256:5862b5a4f9a20eedf739a9685eb46a1eff645d0c34dd7cd6e96b2d183cd9b529",
-                "sha256:774d215d1a777d1f05c3e5ce75be77a8039dcee456dac309807322538ab1c02e"
+                "sha256:4c7198bc5b9dfcb7c2c27bd5ca63c757631b27550b96eb3805bf7ac7331f79a2",
+                "sha256:ccef11a3eecb7290a9c964edf4f2c7f4906271ad17a1c9f2e85e25a9e7937fd4"
             ],
             "index": "pypi",
-            "version": "==0.0.6"
+            "version": "==0.0.7"
         },
         "python-dateutil": {
             "hashes": [
