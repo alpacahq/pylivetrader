@@ -95,3 +95,69 @@ docker run -v $PWD:/work -w /work alpacamarkets/pylivetrader pylivetrader run -f
 
 Make sure you set up environment variables for the  backend
 (use `-e KEY=VAL` for docker command).
+
+## Smoke Test
+
+pylivetrader provides a facility for smoke testing. This helps catch
+issues such as typos, program errors and simple oversights. The following
+is an example of smoke testing.
+
+```py
+import algo
+
+from pylivetrader.testing.smoke import harness
+
+
+def before_run(context, backend):
+    '''This hook is called before algorithm starts.'''
+
+    # Populate existing position
+    backend.set_position(
+        'A', 10, 200,
+    )
+
+    # modify some fields of context after `initialize(context)` is called
+    _init = context._initialize
+    def wrapper(ctx):
+        _init(ctx)
+        ctx.age[ctx.symbol('A')] = 3
+        ctx.age[ctx.symbol('B')] = 2
+
+    context._initialize = wrapper
+
+def test_algo():
+    pipeline = harness.DefaultPipelineHooker()
+
+    # run the algorithm under the simulation environment
+    harness.run_smoke(algo,
+        before_run_hook=before_run,
+        pipeline_hook=pipeline,
+    )
+
+
+if __name__ == '__main__':
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    test_algo()
+```
+
+This exercises the algorithm code by harnessing synthesic backend and price data.
+The `pylivetrader.testing.smoke` package provides the backend and simulator
+clock classes so that it simulates a market day from open to close.
+
+By default, the backend creates a universe with 50 stocks ('A' .. 'AX').
+For each symbol, you can query synthesic historical price, and orders
+are managed within this simulator without having to set up a real remote
+backend API. Additionally, you can hook up a couple of code injection
+points such as `before_run_hook` and `pipeline_hook`. In this example,
+the setup code creates a pre-populated position in the backend so you can
+test the algorithm code path that accepts existing positions.
+
+A `DefaultPipelineHooker` instance can return a synthesic pipeline result
+with the same column names/types, inferred from the pipeline object
+given in the `attach_pipeline` API.
+
+Again, the purpose of this smoke testing is to actually exercise various
+code path to make sure there is no easy mistakes. This code works well
+with standard test framework such as `pytest` and you can easily report
+line coverage using those frameworks too.
