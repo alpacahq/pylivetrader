@@ -85,6 +85,7 @@ class Backend(BaseBackend):
         self._order_seq = 0
         self._orders = {}
         self._clock = clock
+        self._last_process_time = None
 
         self._data_proxy = FakeDataBackend(size=size, clock=clock)
 
@@ -95,6 +96,8 @@ class Backend(BaseBackend):
         return pd.Timestamp.now(tz='America/New_York')
 
     def _fill(self, order, price):
+        '''Fill the order at this price and delete the order
+        from the pending list.'''
         del self._orders[order.id]
         pos = self._positions.pop(order.asset, None)
         if pos is None:
@@ -121,6 +124,8 @@ class Backend(BaseBackend):
         self._positions[order.asset] = pos
 
     def _process_orders(self):
+        if self._last_process_time == self.now:
+            return
         # materialize the list so that _fill() can delete entry.
         for order in list(self._orders.values()):
             asset = order.asset
@@ -134,6 +139,7 @@ class Backend(BaseBackend):
             p.cost_basis * p.amount for p in self._positions.values()
         ])
         self._portfolio.portfolio_value = self._portfolio.cash + posval
+        self._last_process_time = self.now
 
     def set_position(self, symbol, amount, cost_basis,
                      last_sale_price=None, last_sale_date=None):
@@ -161,6 +167,7 @@ class Backend(BaseBackend):
 
     @property
     def orders(self):
+        self._process_orders()
         return self._orders
 
     def batch_order(self, args):
@@ -202,6 +209,9 @@ class Backend(BaseBackend):
 
 
 class FakeDataBackend:
+    '''A data backend that generates synthesic sin wave price data
+    for a synthesically generated fixed universe.
+    '''
 
     def __init__(self, size=50, clock=None):
         self._size = size
@@ -212,6 +222,7 @@ class FakeDataBackend:
         }
 
     def _populate_missing(self, assets, data_frequency):
+        '''Populates cache bars that are not filled yet.'''
         missing = []
         for asset in assets:
             if asset not in self._fake_bars[data_frequency]:
@@ -252,7 +263,7 @@ class FakeDataBackend:
             Equity(
                 sid=i + 1,
                 symbol=_num_to_symbol(i),
-                asset_name='{}'.format(_num_to_symbol(i)),
+                asset_name='Test {}'.format(_num_to_symbol(i)),
                 exchange='NYSE',
             ) for i in range(self._size)
         ]

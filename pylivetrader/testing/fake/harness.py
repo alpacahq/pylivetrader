@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from unittest.mock import patch
 
@@ -6,11 +7,42 @@ from pylivetrader.misc.api_context import LiveTraderAPI
 from pylivetrader.testing.fake import clock, backend
 
 
+def mock_data(name, dtype, index):
+    if dtype == np.dtype('bool'):
+        return [True] * len(index)
+    elif dtype == np.dtype('float'):
+        return [0.5] * len(index)
+    elif dtype == np.dtype('object'):
+        return ['data'] * len(index)
+    elif dtype == np.dtype('int'):
+        return [1] * len(index)
+
+
+class DefaultPipelineHooker:
+
+    def __init__(self):
+        pass
+
+    def output(self, context, name):
+
+        pipe = context._pipelines[name]
+
+        index = [
+            context.symbol('A'),
+            context.symbol('Z'),
+        ]
+        fakedata = {
+            name: mock_data(name, c.dtype, index)
+            for name, c in pipe.columns.items()
+        }
+        return pd.DataFrame(fakedata, index=index)
+
+
 def noop(*args, **kwargs):
     pass
 
 
-def run_smoke(algo):
+def run_smoke(algo, before_run_hook=None, pipeline_hook=None):
     fake_clock = clock.FaketimeClock()
     # fake_clock.rollback(1)
     be = backend.Backend(clock=fake_clock)
@@ -22,30 +54,11 @@ def run_smoke(algo):
         backend=be,
     )
 
-    def _pipeline_output(name):
-        import numpy as np
+    if pipeline_hook is not None:
+        def _pipeline_output(name):
+            return pipeline_hook.output(a, name)
 
-        def mock_data(name, dtype, index):
-            if dtype == np.dtype('bool'):
-                return [True] * len(index)
-            elif dtype == np.dtype('float'):
-                return [0.5] * len(index)
-            elif dtype == np.dtype('object'):
-                return ['data'] * len(index)
-            elif dtype == np.dtype('int'):
-                return [1] * len(index)
-        index = [
-            a.symbol('A'),
-            a.symbol('Z'),
-        ]
-        pipe = a._pipelines[name]
-        fakedata = {
-            name: mock_data(name, c.dtype, index)
-            for name, c in pipe.columns.items()
-        }
-        return pd.DataFrame(fakedata, index=index)
-
-    a.pipeline_output = _pipeline_output
+        a.pipeline_output = _pipeline_output
 
     with LiveTraderAPI(a), \
             patch('pylivetrader.executor.executor.RealtimeClock') as rc:
@@ -54,7 +67,6 @@ def run_smoke(algo):
             return fake_clock
         rc.side_effect = make_clock
 
-        be.set_position(
-            'A', 10, 200,
-        )
+        if before_run_hook is not None:
+            before_run_hook(a, be)
         a.run()

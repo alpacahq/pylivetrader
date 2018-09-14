@@ -194,6 +194,7 @@ class Algorithm:
             self._initialize(self, *args, **kwargs)
             self._state_store.save(
                 self, self._algoname, self._context_persistence_excludes)
+        self.initialized = True
 
     def handle_data(self, data):
         if self._handle_data:
@@ -230,7 +231,6 @@ class Algorithm:
 
         if not self.initialized:
             self.initialize()
-            self.initialized = True
 
         self.executor = AlgorithmExecutor(
             self,
@@ -281,7 +281,7 @@ class Algorithm:
             # Arbitrary limit of 100 billion (US) shares will never be
             # exceeded except by a buggy algorithm.
             raise OverflowError("Can't order more than %d shares" %
-                                self.max_shares)
+                                self._max_shares)
 
         o = self._backend.order(asset, amount, style)
         if o:
