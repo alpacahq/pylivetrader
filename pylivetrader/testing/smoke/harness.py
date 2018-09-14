@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from pylivetrader.algorithm import Algorithm
 from pylivetrader.misc.api_context import LiveTraderAPI
-from pylivetrader.testing.fake import clock, backend
+from . import clock, backend
 
 
 def mock_data(name, dtype, index):

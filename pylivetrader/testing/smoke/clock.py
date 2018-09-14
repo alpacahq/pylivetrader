@@ -9,6 +9,9 @@ BEFORE_TRADING_START_BAR = 4
 
 
 class FaketimeClock(object):
+    '''A replacement for Executor clock. This class simulates past
+    clock and advances fast without sleep.
+    '''
 
     def __init__(
         self,
