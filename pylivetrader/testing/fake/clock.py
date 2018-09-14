@@ -19,12 +19,38 @@ class FaketimeClock(object):
         minute_emission=True,
         time_skew=None,
     ):
-        self.calendar = calendar or get_calendar('NYSE')
+        if calendar is None:
+            calendar = get_calendar('NYSE')
+        self.calendar = calendar
         self.before_trading_start_minute = before_trading_start_minute
         self.minute_emission = minute_emission
         self._last_emit = None
         self._before_trading_start_bar_yielded = False
-        self._current_time = pd.Timestamp.utcnow()
+
+        now = pd.Timestamp.utcnow()
+        prev_close = calendar.previous_close(now)
+
+        current = self._set_before_trading_start(prev_close)
+        self._current_time = current
+        self._fake_end = prev_close
+
+    def _set_before_trading_start(self, t):
+        start_minute = self.before_trading_start_minute
+        current = t.tz_convert(start_minute[1])
+        current = current.replace(
+            hour=start_minute[0].hour,
+            minute=start_minute[0].minute
+        ) - pd.Timedelta('1min')
+        return current.tz_convert('utc')
+
+    def rollback(self, days):
+        current = self._current_time
+        cal = self.calendar
+        for i in range(days):
+            current = cal.previous_open(current)
+            current = self._set_before_trading_start(current)
+        self._current_time = current
+        self._before_trading_start_bar_yielded = False
 
     def configure(self,
                   calendar=None,
@@ -42,11 +68,17 @@ class FaketimeClock(object):
             self._current_time = current_time
 
     @property
+    def end_time(self):
+        return self._fake_end
+
+    @property
     def now(self):
         return self._current_time.tz_convert('America/New_York')
 
     def _next(self):
         self._current_time += pd.Timedelta('1min')
+        if self._current_time > self._fake_end:
+            raise StopIteration
         return self._current_time
 
     def __iter__(self):

@@ -16,6 +16,8 @@ from logbook import Logger
 
 log = Logger(__name__)
 
+MAX_FAKE_BARS = 3000
+
 
 def _num_to_symbol(n):
     buf = []
@@ -71,6 +73,8 @@ class Backend(BaseBackend):
         '''
         paramters:
             cash: initial cash balance
+            size: the number of stocks in universe
+            clock: soft clock
         '''
         self._account = zp.Account()
         self._account.buying_power = cash
@@ -216,18 +220,17 @@ class FakeDataBackend:
         if len(missing) == 0:
             return
 
-        near_future = pd.Timestamp.now(
-            tz='America/New_York') + pd.Timedelta('3days')
+        fake_end = self._clock.end_time
         for asset in missing:
             if data_frequency == '1m':
                 mask = self._cal.all_minutes
-                end = near_future
+                end = fake_end
             else:
                 mask = self._cal.all_sessions
-                end = near_future.floor('1D')
+                end = fake_end.floor('1D')
         mask = mask[mask <= end]
-        if len(mask) >= 10000:
-            mask = mask[-10000:]
+        if len(mask) >= MAX_FAKE_BARS:
+            mask = mask[-MAX_FAKE_BARS:]
         mask = mask.tz_convert('America/New_York')
 
         for asset in missing:

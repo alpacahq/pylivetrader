@@ -1,5 +1,4 @@
 import pandas as pd
-from trading_calendars import get_calendar
 from unittest.mock import patch
 
 from pylivetrader.algorithm import Algorithm
@@ -12,8 +11,9 @@ def noop(*args, **kwargs):
 
 
 def run_smoke(algo):
-    fc = clock.FaketimeClock()
-    be = backend.Backend(clock=fc)
+    fake_clock = clock.FaketimeClock()
+    # fake_clock.rollback(1)
+    be = backend.Backend(clock=fake_clock)
 
     a = Algorithm(
         initialize=getattr(algo, 'initialize', noop),
@@ -21,15 +21,6 @@ def run_smoke(algo):
         before_trading_start=getattr(algo, 'before_trading_start', noop),
         backend=be,
     )
-    on_dt_changed = a.on_dt_changed
-
-    def _on_dt_changed(dt):
-        tm = dt.tz_convert('America/New_York')
-        if tm.hour == 16 and tm.minute == 0:
-            raise StopIteration()
-        on_dt_changed(dt)
-
-    a.on_dt_changed = _on_dt_changed
 
     def _pipeline_output(name):
         import numpy as np
@@ -56,22 +47,14 @@ def run_smoke(algo):
 
     a.pipeline_output = _pipeline_output
 
-    cal = get_calendar('NYSE')
-
     with LiveTraderAPI(a), \
             patch('pylivetrader.executor.executor.RealtimeClock') as rc:
         def make_clock(*args, **kwargs):
-            prev_open = cal.previous_open(pd.Timestamp.now())
-            fc.configure(
-                current_time=prev_open - pd.Timedelta('1hour')
-            )
-            return fc
+            # may want to reconfigure clock
+            return fake_clock
         rc.side_effect = make_clock
 
         be.set_position(
             'A', 10, 200,
         )
-        try:
-            a.run()
-        except StopIteration:
-            pass
+        a.run()
