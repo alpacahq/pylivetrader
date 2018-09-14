@@ -119,8 +119,8 @@ class FaketimeClock(object):
                 self._before_trading_start_bar_yielded = True
                 yield server_time, BEFORE_TRADING_START_BAR
             elif server_time < session_open:
-                pass
                 # sleep(1)
+                pass
             elif (session_open <= server_time < session_close):
                 if (self._last_emit is None or
                         server_time - self._last_emit >=
