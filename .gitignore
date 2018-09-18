@@ -9,3 +9,4 @@ dist
 .envrc
 .vscode
 .coverage
+.python-version
