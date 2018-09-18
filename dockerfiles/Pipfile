@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 pandas = "==0.22.0"
 alpaca-trade-api = "==0.18"
-pylivetrader = "==0.0.7"
+pylivetrader = "==0.0.8"
 pipeline-live = "==0.1.4"
 
 [dev-packages]

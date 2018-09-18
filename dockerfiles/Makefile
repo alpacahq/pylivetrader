@@ -1,3 +1,5 @@
+TAG := $(shell grep pylivetrader Pipfile | sed  -E 's/pylivetrader = "==([0-9.]+)"/\1/')
+
 ifeq ($(TAG),)
 	error "TAG is not specified"
 endif
