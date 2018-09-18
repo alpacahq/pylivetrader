@@ -265,6 +265,8 @@ class FakeDataBackend:
                 symbol=_num_to_symbol(i),
                 asset_name='Test {}'.format(_num_to_symbol(i)),
                 exchange='NYSE',
+                start_date=pd.Timestamp('1970-01-01', tz='utc'),
+                end_date=pd.Timestamp('2050-01-01', tz='utc'),
             ) for i in range(self._size)
         ]
 
