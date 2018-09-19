@@ -16,12 +16,17 @@
 
 
 from pathlib import Path
+import os
 import click
 
 from pylivetrader.misc import configloader
 from pylivetrader.misc.api_context import LiveTraderAPI
 from pylivetrader.algorithm import Algorithm
-from pylivetrader.loader import get_functions_by_path
+from pylivetrader.loader import (
+    get_algomodule_by_path,
+    get_api_functions,
+)
+from pylivetrader.shell import start_shell
 
 
 @click.group()
@@ -31,60 +36,68 @@ def main():
     StreamHandler(sys.stdout).push_application()
 
 
-@click.command()
-@click.option(
-    '-f', '--algofile',
-    default=None,
-    type=click.Path(
-        exists=True, file_okay=True, dir_okay=False,
-        readable=True, resolve_path=True),
-    help='Path to the file taht contains algorithm to run.')
-@click.option(
-    '-b', '--backend',
-    default='alpaca',
-    show_default=True,
-    help='Broker backend to run algorithm with.')
-@click.option(
-    '--backend-config',
-    type=click.Path(
-        exists=True, file_okay=True, dir_okay=False,
-        readable=True, resolve_path=True),
-    default=None,
-    help='Path to broker backend config file.')
-@click.option(
-    '--data-frequency',
-    type=click.Choice({'daily', 'minute'}),
-    default='minute',
-    show_default=True,
-    help='The data frequency of the live trade.')
-@click.option(
-    '-s', '--statefile',
-    default=None,
-    type=click.Path(writable=True),
-    help='Path to the state file. Use <algofile>-state.pkl by default.')
-@click.option(
-    '-z', '--zipline',
-    default=False,
-    is_flag=True,
-    help='Run with zipline algofile in magic translation (pre-alpha).'
-         'With current translator, line # information will be lost and makes '
-         'it hard to debug algorithm. We recommend manual translation.'
-    )
-@click.pass_context
-def run(ctx,
+def algo_parameters(f):
+    opts = [
+        click.option(
+            '-f', '--file',
+            default=None,
+            type=click.Path(
+                exists=True, file_okay=True, dir_okay=False,
+                readable=True, resolve_path=True),
+            help='Path to the file taht contains algorithm to run.'),
+        click.option(
+            '-b', '--backend',
+            default='alpaca',
+            show_default=True,
+            help='Broker backend to run algorithm with.'),
+        click.option(
+            '--backend-config',
+            type=click.Path(
+                exists=True, file_okay=True, dir_okay=False,
+                readable=True, resolve_path=True),
+            default=None,
+            help='Path to broker backend config file.'),
+        click.option(
+            '--data-frequency',
+            type=click.Choice({'daily', 'minute'}),
+            default='minute',
+            show_default=True,
+            help='The data frequency of the live trade.'),
+        click.option(
+            '-s', '--statefile',
+            default=None,
+            type=click.Path(writable=True),
+            help='Path to the state file. Defaults to <algofile>-state.pkl.'),
+        click.argument('algofile', nargs=-1),
+    ]
+    for opt in opts:
+        f = opt(f)
+    return f
+
+
+def process_algo_params(
+        ctx,
+        file,
         algofile,
         backend,
         backend_config,
         data_frequency,
-        statefile,
-        zipline):
+        statefile):
+    if len(algofile) > 0:
+        algofile = algofile[0]
+    elif file:
+        algofile = file
+    else:
+        algofile = None
+
     if algofile is None or algofile == '':
         ctx.fail("must specify algo file with '-f' ")
 
     if not (Path(algofile).exists() and Path(algofile).is_file()):
         ctx.fail("couldn't find algofile '{}'".format(algofile))
 
-    functions = get_functions_by_path(algofile, use_translate=zipline)
+    algomodule = get_algomodule_by_path(algofile)
+    functions = get_api_functions(algomodule)
 
     backend_options = None
     if backend_config is not None:
@@ -98,10 +111,31 @@ def run(ctx,
         statefile=statefile,
         **functions,
     )
+    ctx.algorithm = algorithm
+    ctx.algomodule = algomodule
+    return ctx
+
+
+@click.command()
+@algo_parameters
+@click.pass_context
+def run(ctx, **kwargs):
+    ctx = process_algo_params(ctx, **kwargs)
+    algorithm = ctx.algorithm
+    with LiveTraderAPI(algorithm):
+        algorithm.run()
+
+
+@click.command()
+@algo_parameters
+@click.pass_context
+def shell(ctx, **kwargs):
+    ctx = process_algo_params(ctx, **kwargs)
+    algorithm = ctx.algorithm
+    algomodule = ctx.algomodule
 
     with LiveTraderAPI(algorithm):
-
-        algorithm.run()
+        start_shell(algorithm, algomodule)
 
 
 @click.command()
@@ -112,14 +146,14 @@ def version():
 
 def extract_filename(algofile):
     algofilename = algofile
-    if '/' in algofilename:
-        algofilename = algofilename.split('/')[-1]
+    algofilename = os.path.basename(algofilename)
     if '.py' in algofilename:
         algofilename = algofilename[:-3]
     return algofilename
 
 
 main.add_command(run)
+main.add_command(shell)
 main.add_command(version)
 
 

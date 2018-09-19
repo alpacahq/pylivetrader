@@ -422,7 +422,7 @@ class Algorithm:
         Raises:
             AssetNotFound: When could not resolve the ``Asset`` by ``symbol``.
         '''
-        raise [self.symbol(idendifier, **kwargs) for idendifier in args]
+        return [self.symbol(idendifier, **kwargs) for idendifier in args]
 
     @api_method
     def sid(self, sid):
