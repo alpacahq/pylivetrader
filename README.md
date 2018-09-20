@@ -90,8 +90,8 @@ The options are the same as `run`.
 ## State Management
 
 One of the things you need to understand in live trading is that things can
-happen you may need to restart the script or the program dies in the middle
-of process due to some external errors. There are couple of things you need
+happen and you may need to restart the script or the program dies in the middle
+of process due to some external errors. There are couple of things
 to know in advance.
 
 First, pylivetrader saves the property fields to the disk that you add to
