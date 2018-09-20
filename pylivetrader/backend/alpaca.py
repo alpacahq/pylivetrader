@@ -429,7 +429,7 @@ class Backend(BaseBackend):
                 mask = self._cal.minutes_in_range(
                     df.index[0], df.index[-1],
                 ).tz_convert(NY)
-                df = df.reindex(mask)
+                df = df.reindex(mask, method='ffill')
 
             if limit is not None:
                 df = df.iloc[-limit:]
