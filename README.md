@@ -58,6 +58,56 @@ $ pip install pylivetrader
 
 Additionally, pylivetrader works well with [pipeline-live](https://github.com/alpacahq/pipeline-live).
 
+## Command Reference
+
+### run
+
+`pylivetrader run` starts live trading using your algorithm script. It starts
+by calling the `initialize()` function if any, and waits until the market opens.
+It calls the `before_trading_start` function if it is 8:45 ET (45 minutes
+before the session starts) or if it starts after that. Once the session
+starts, it calls the `handle_data()` function every minute until the
+session ends, or any functions that are registered by `schedule_function` API.
+
+The options are as follows.
+
+- `-f` or `--file`: the file path to the algorithm source
+- `-b` or `--backend`: the name of backend to use
+- `--backend-config`: the yaml file for backend parameters
+- `-s` or `--statefile`: the file path to the persisted state file (look for the State Management section below)
+
+### shell
+
+`pylivetrader shell` goes into the IPython interactive shell mode as if you are
+in the algorithm script namespace. It means, you can call Algorithm API
+such as `symbol()` and `data.history()` so you can check the behavior
+of each operation. At the start of shell, nothing has been called, so you
+may want to initialize the context by `initialize(context)` which would
+execute your `initialize()` function.
+
+The options are the same as `run`.
+
+## State Management
+
+One of the things you need to understand in live trading is that things can
+happen you may need to restart the script or the program dies in the middle
+of process due to some external errors. There are couple of things you need
+to know in advance.
+
+First, pylivetrader saves the property fields to the disk that you add to
+the `context` object. It is stored in the pickle format and will be
+restored on the next startup.
+
+Second, because the context properties are restored, you may need to
+take care of the extra steps. Often an algorithm is written under
+the assumption that `initialize()` is called only once and
+`before_start_trading()` is called once every morning. If you are
+to restart the program in the middle of day, these functions are
+called again, with the restored context object. Therefore, you
+might need to check if the fields are from the other session
+or in the same session to make sure you don't override the
+indermediate states in the day.
+
 ## Supported Broker
 
 ### Alpaca
