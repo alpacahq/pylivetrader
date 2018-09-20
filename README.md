@@ -85,6 +85,10 @@ of each operation. At the start of shell, nothing has been called, so you
 may want to initialize the context by `initialize(context)` which would
 execute your `initialize()` function.
 
+```
+$ pylivetrader shell algo.py
+```
+
 The options are the same as `run`.
 
 ## State Management
