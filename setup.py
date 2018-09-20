@@ -51,6 +51,7 @@ setup(
         'trading_calendars',
         'click',
         'PyYAML',
+        'ipython',
         # supoort alpaca backend by default
         'alpaca-trade-api>=0.18',
     ],

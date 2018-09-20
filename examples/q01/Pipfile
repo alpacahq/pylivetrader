@@ -8,6 +8,7 @@ pandas = "==0.22"
 alpaca-trade-api = "*"
 pipeline-live = "*"
 pylivetrader = "==0.0.6"
+ipython = "*"
 
 [dev-packages]
 pytest = "*"

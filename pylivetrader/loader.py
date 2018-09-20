@@ -16,6 +16,7 @@
 import ast
 import astor
 from six import exec_
+import os
 
 from pylivetrader import api
 
@@ -24,35 +25,7 @@ from logbook import Logger
 log = Logger('loader')
 
 
-def get_functions_by_path(path, use_translate=False):
-
-    with open(path, 'r') as f:
-        file = f.read()
-
-        filename = path
-        if '/' in filename:
-            filename = path.split('/')[-1]
-
-        return get_functions(file, filename, use_translate)
-
-
-def get_functions(script, filename=None, use_translate=False):
-
-    if filename is None:
-        filename = '<script>'
-
-    # With translate, file will be rewrited and lost line # information
-    if use_translate:
-        script = translate(script)
-
-    code = compile(script, filename, 'exec')
-
-    ns = {}
-    for name in api.__all__:
-        ns[name] = getattr(api, name)
-
-    exec_(code, ns)
-
+def get_api_functions(ns):
     api_methods = {
         'initialize',
         'handle_data',
@@ -67,6 +40,33 @@ def get_functions(script, filename=None, use_translate=False):
         out[m] = ns.get(m, noop)
 
     return out
+
+
+def get_algomodule_by_path(path):
+    with open(path, 'r') as f:
+        file = f.read()
+        filename = os.path.basename(path)
+
+        return get_algomodule(file, filename)
+
+
+def get_algomodule(script, filename=None):
+    if filename is None:
+        filename = '<script>'
+
+    code = compile(script, filename, 'exec')
+
+    ns = {}
+    for name in api.__all__:
+        ns[name] = getattr(api, name)
+
+    exec_(code, ns)
+
+    return ns
+
+
+def get_functions(script, filename=None):
+    return get_api_functions(get_algomodule(script))
 
 
 def translate(script):
