@@ -50,7 +50,7 @@ secret: BROKER_SECRET
 
 ## Installation
 
-Install with pip.
+Install with pip. **pylivetrader currently supports Python 3.5.1+**
 
 ```
 $ pip install pylivetrader
