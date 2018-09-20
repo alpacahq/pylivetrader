@@ -23,7 +23,6 @@ class Asset:
 
     def __init__(self, sid, exchange, symbol="", asset_name="", **kwargs):
         self.sid = sid
-        self.sid_hash = hash(sid)
         self.exchange = exchange
         self.symbol = symbol
         self.asset_name = asset_name
@@ -35,7 +34,7 @@ class Asset:
         self.exchange_full = None
 
     def __hash__(self):
-        return self.sid_hash
+        return hash(self.sid)
 
     def __str__(self):
         if self.symbol:
@@ -48,8 +47,8 @@ class Asset:
         return self.symbol < other.symbol
 
     def __eq__(self, other):
-        if hasattr(other, 'sid_hash'):
-            return self.sid_hash == other.sid_hash
+        if hasattr(other, 'sid'):
+            return self.sid == other.sid
         return False
 
     def __repr__(self):
