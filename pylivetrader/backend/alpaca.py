@@ -352,9 +352,7 @@ class Backend(BaseBackend):
             symbol_bars_minute = self._symbol_bars(
                 symbols, 'minute', limit=1000)
             for symbol, df in symbol_bars_minute.items():
-                mask = (df.index.time >= pd.Timestamp('9:30').time()) & (
-                    df.index.time < pd.Timestamp('16:00').time())
-                agged = df[mask].resample('1D').agg(dict(
+                agged = df.resample('1D').agg(dict(
                     open='first',
                     high='max',
                     low='min',
@@ -429,7 +427,7 @@ class Backend(BaseBackend):
                 mask = self._cal.minutes_in_range(
                     df.index[0], df.index[-1],
                 ).tz_convert(NY)
-                df = df.reindex(mask, method='ffill')
+                df = df.reindex(mask)
 
             if limit is not None:
                 df = df.iloc[-limit:]
