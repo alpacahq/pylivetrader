@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d6b97fdade980f44da02542a9adb4d999b5d6b69f05c676275bd1dec0c23917d"
+            "sha256": "a95bbe1805df663cd6238c4954b83618d1e6ae12376d5310089369affbc3b708"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -90,10 +90,11 @@
         },
         "click": {
             "hashes": [
-                "sha256:29f99fc6125fbc931b758dc053b3114e55c77a6e4c6c3a2674a2dc986016381d",
-                "sha256:f15516df478d5a56180fbf80e68f206010e6d160fc39fa508b65e035fd75130b"
+                "sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13",
+                "sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"
             ],
-            "version": "==6.7"
+            "markers": "python_version != '3.0.*' and python_version != '3.1.*' and python_version >= '2.7' and python_version != '3.2.*' and python_version != '3.3.*'",
+            "version": "==7.0"
         },
         "contextlib2": {
             "hashes": [
@@ -396,10 +397,10 @@
         },
         "pickleshare": {
             "hashes": [
-                "sha256:84a9257227dfdd6fe1b4be1319096c20eb85ff1e82c7932f36efccfe1b09737b",
-                "sha256:c9a2541f25aeabc070f12f452e1f2a8eae2abd51e1cd19e8430402bdf4c1d8b5"
+                "sha256:87683d47965c1da65cdacaf31c8441d12b8044cdec9aca500cd78fc2c683afca",
+                "sha256:9649af414d74d4df115d5d718f82acb59c9d418196b7b4290ed47a12ce62df56"
             ],
-            "version": "==0.7.4"
+            "version": "==0.7.5"
         },
         "pipeline-live": {
             "hashes": [
@@ -433,11 +434,11 @@
         },
         "pylivetrader": {
             "hashes": [
-                "sha256:981e21ee685cdc089075e95566da089030ebedc39f26245b6f124bc942452922",
-                "sha256:aa6854daf2b9324840927e0bca2a354c265364bbdf052f22e1a71b062838171f"
+                "sha256:22adeb4e56e8f983a5420893d1e133365a833797a13d5676175573029ded52fe",
+                "sha256:ff8046a66de3186c265f2b098fe0633434aa7a81657a386814d6efe6d0de02af"
             ],
             "index": "pypi",
-            "version": "==0.0.11"
+            "version": "==0.0.12"
         },
         "python-dateutil": {
             "hashes": [
