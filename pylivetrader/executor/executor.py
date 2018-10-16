@@ -16,6 +16,7 @@
 
 import datetime
 from contextlib import ExitStack
+from logbook import Logger
 
 from pylivetrader.executor.realtimeclock import (
     RealtimeClock,
@@ -23,6 +24,8 @@ from pylivetrader.executor.realtimeclock import (
 )
 from pylivetrader.data.bardata import BarData
 from pylivetrader.misc.api_context import LiveTraderAPI
+
+log = Logger('Executor')
 
 
 class AlgorithmExecutor:
@@ -89,11 +92,15 @@ class AlgorithmExecutor:
 
             # runs forever
             for dt, action in self.clock:
-                if action == BAR:
-                    every_bar(dt)
-                elif action == SESSION_START:
-                    once_a_day(dt)
-                elif action == BEFORE_TRADING_START_BAR:
-                    algo.on_dt_changed(dt)
-                    self.current_data.datetime = dt
-                    algo.before_trading_start(self.current_data)
+                try:
+                    if action == BAR:
+                        every_bar(dt)
+                    elif action == SESSION_START:
+                        once_a_day(dt)
+                    elif action == BEFORE_TRADING_START_BAR:
+                        algo.on_dt_changed(dt)
+                        self.current_data.datetime = dt
+                        algo.before_trading_start(self.current_data)
+                except Exception as exc:
+                    log.exception(exc)
+                    log.warning('Continue execution')
