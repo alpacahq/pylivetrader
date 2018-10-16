@@ -216,7 +216,7 @@ class Algorithm:
 
         self._in_before_trading_start = False
 
-    def run(self):
+    def run(self, retry=True):
 
         log.info(
             "livetrader start running with "
@@ -237,7 +237,7 @@ class Algorithm:
             self.data_portal,
         )
 
-        return self.executor.run()
+        return self.executor.run(retry=retry)
 
     @api_method
     def get_environment(self, field='platform'):

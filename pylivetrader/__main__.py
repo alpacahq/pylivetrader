@@ -68,6 +68,12 @@ def algo_parameters(f):
             default=None,
             type=click.Path(writable=True),
             help='Path to the state file. Defaults to <algofile>-state.pkl.'),
+        click.option(
+            '-r', '--retry',
+            default=True,
+            type=bool,
+            show_default=True,
+            help='True to continue running in general exception'),
         click.argument('algofile', nargs=-1),
     ]
     for opt in opts:
@@ -82,7 +88,8 @@ def process_algo_params(
         backend,
         backend_config,
         data_frequency,
-        statefile):
+        statefile,
+        retry):
     if len(algofile) > 0:
         algofile = algofile[0]
     elif file:
@@ -113,6 +120,7 @@ def process_algo_params(
     )
     ctx.algorithm = algorithm
     ctx.algomodule = algomodule
+    ctx.retry = retry
     return ctx
 
 
@@ -123,7 +131,7 @@ def run(ctx, **kwargs):
     ctx = process_algo_params(ctx, **kwargs)
     algorithm = ctx.algorithm
     with LiveTraderAPI(algorithm):
-        algorithm.run()
+        algorithm.run(retry=ctx.retry)
 
 
 @click.command()

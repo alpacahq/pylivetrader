@@ -50,7 +50,7 @@ secret: BROKER_SECRET
 
 ## Installation
 
-Install with pip. **pylivetrader currently supports Python 3.5.1+**
+Install with pip. **pylivetrader currently supports Python 3.5, 3.6 and 3.7+**
 
 ```
 $ pip install pylivetrader
@@ -75,6 +75,7 @@ The options are as follows.
 - `-b` or `--backend`: the name of backend to use
 - `--backend-config`: the yaml file for backend parameters
 - `-s` or `--statefile`: the file path to the persisted state file (look for the State Management section below)
+- `-r` or `--retry`: the algorithm runner continues execution in the event a general exception is raised
 
 ### shell
 

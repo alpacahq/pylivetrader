@@ -16,6 +16,7 @@
 
 import datetime
 from contextlib import ExitStack
+from logbook import Logger
 
 from pylivetrader.executor.realtimeclock import (
     RealtimeClock,
@@ -23,6 +24,8 @@ from pylivetrader.executor.realtimeclock import (
 )
 from pylivetrader.data.bardata import BarData
 from pylivetrader.misc.api_context import LiveTraderAPI
+
+log = Logger('Executor')
 
 
 class AlgorithmExecutor:
@@ -49,10 +52,28 @@ class AlgorithmExecutor:
             time_skew=self.algo._backend.time_skew,
         )
 
-    def run(self):
+    def run(self, retry=True):
 
         algo = self.algo
 
+        def handle_retry(func):
+
+            # decorator to log but swallow exception
+            # if it is turned on. This is applied
+            # only for periodic event. before_trading_start
+            # is too critical to skip exception.
+            def wrapper(*args, **kwargs):
+                try:
+                    func(*args, **kwargs)
+                except Exception as exc:
+                    if not retry:
+                        raise
+                    log.exception(exc)
+                    log.warning('Continuing execution')
+
+            return wrapper
+
+        @handle_retry
         def every_bar(dt_to_use, current_data=self.current_data,
                       handle_data=algo.event_manager.handle_data):
 
