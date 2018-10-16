@@ -52,10 +52,28 @@ class AlgorithmExecutor:
             time_skew=self.algo._backend.time_skew,
         )
 
-    def run(self):
+    def run(self, retry=True):
 
         algo = self.algo
 
+        def handle_retry(func):
+
+            # decorator to log but swallow exception
+            # if it is turned on. This is applied
+            # only for periodic event. before_trading_start
+            # is too critical to skip exception.
+            def wrapper(*args, **kwargs):
+                try:
+                    func(*args, **kwargs)
+                except Exception as exc:
+                    if not retry:
+                        raise
+                    log.exception(exc)
+                    log.warning('Continuing execution')
+
+            return wrapper
+
+        @handle_retry
         def every_bar(dt_to_use, current_data=self.current_data,
                       handle_data=algo.event_manager.handle_data):
 
@@ -92,15 +110,11 @@ class AlgorithmExecutor:
 
             # runs forever
             for dt, action in self.clock:
-                try:
-                    if action == BAR:
-                        every_bar(dt)
-                    elif action == SESSION_START:
-                        once_a_day(dt)
-                    elif action == BEFORE_TRADING_START_BAR:
-                        algo.on_dt_changed(dt)
-                        self.current_data.datetime = dt
-                        algo.before_trading_start(self.current_data)
-                except Exception as exc:
-                    log.exception(exc)
-                    log.warning('Continue execution')
+                if action == BAR:
+                    every_bar(dt)
+                elif action == SESSION_START:
+                    once_a_day(dt)
+                elif action == BEFORE_TRADING_START_BAR:
+                    algo.on_dt_changed(dt)
+                    self.current_data.datetime = dt
+                    algo.before_trading_start(self.current_data)
