@@ -249,12 +249,18 @@ class Backend(BaseBackend):
 
         zp_order_id = self._new_order_id()
 
-        try:
-            log.debug('submitting {} order (qty {}) for {}'.format(
+        log.debug(
+            ('submitting {} order for {} - '
+             'qty:{}, side:{}, limit_price:{}, stop_price:{}').format(
                 order_type,
+                symbol,
                 qty,
-                symbol
-            ))
+                side,
+                limit_price,
+                stop_price
+            )
+        )
+        try:
             order = self._api.submit_order(
                 symbol=symbol,
                 qty=qty,
