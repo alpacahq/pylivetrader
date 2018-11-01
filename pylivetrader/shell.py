@@ -1,4 +1,4 @@
-from IPython.frontend.terminal.embed import InteractiveShellEmbed
+from IPython.terminal.embed import InteractiveShellEmbed
 from pylivetrader.data.bardata import BarData
 import pandas as pd
 
