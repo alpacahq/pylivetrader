@@ -402,3 +402,6 @@ def test_open_orders():
     orders = algo.get_open_orders(a1)
     assert len(orders) == 2
     assert orders[0].id == 'o01'
+
+    a0 = algo.symbol('ASSET0')
+    assert len(algo.get_open_orders(a0)) == 0

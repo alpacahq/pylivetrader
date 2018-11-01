@@ -624,7 +624,7 @@ class Algorithm:
 
         if asset is None:
             return omap
-        return omap[asset]
+        return omap.get(asset, [])
 
     @api_method
     def get_order(self, order_id):
