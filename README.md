@@ -1,3 +1,6 @@
+[![PyPI version](https://badge.fury.io/py/pylivetrader.svg)](https://badge.fury.io/py/pylivetrader)
+[![CircleCI](https://circleci.com/gh/alpacahq/alpaca-trade-api-python.svg?style=shield)](https://circleci.com/gh/alpacahq/alpaca-trade-api-python)
+
 # pylivetrader
 
 pylivetrader is a simple python live trading framework with zipline interface.
