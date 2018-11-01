@@ -604,22 +604,27 @@ class Algorithm:
 
     @api_method
     def get_open_orders(self, asset=None):
+        '''
+        If asset is unspecified or None, returns a dictionary keyed by
+        asset ID. The dictionary contains a list of orders for each ID,
+        oldest first. If an asset is specified, returns a list of open
+        orders for that asset, oldest first.
+        '''
         orders = self._backend.orders
 
-        assets = set([
-            order.asset
-            for id, order in orders.items()
-            if order.open
-        ])
+        omap = {}
+        orders = sorted([
+            o for o in orders.values() if o.open
+        ], key=lambda o: o.dt)
+        for order in orders:
+            key = order.asset
+            if key not in omap:
+                omap[key] = []
+            omap[key].append(order.to_api_obj())
 
-        return {
-            asset: [
-                order.to_api_obj()
-                for id, order in orders.items()
-                if order.asset == asset and order.open
-            ]
-            for asset in assets
-        }
+        if asset is None:
+            return omap
+        return omap[asset]
 
     @api_method
     def get_order(self, order_id):

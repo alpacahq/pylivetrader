@@ -30,6 +30,8 @@ from pylivetrader.algorithm import Algorithm
 from pylivetrader.executor.executor import AlgorithmExecutor
 from pylivetrader.misc.api_context import LiveTraderAPI
 from pylivetrader.loader import get_functions
+from pylivetrader.finance.order import Order as ZPOrder
+
 
 from unittest.mock import Mock
 
@@ -357,3 +359,46 @@ def test_backend_param():
 
     with pytest.raises(RuntimeError):
         Algorithm(backend='foo.does.not.exist')
+
+
+def test_open_orders():
+    algo = get_algo('')
+
+    a1 = algo.symbol('ASSET1')
+    a2 = algo.symbol('ASSET2')
+    algo._backend.orders = {
+        'o01': ZPOrder(
+            dt=pd.Timestamp('2018-10-31 09:40:00-0400'),
+            asset=a1,
+            amount=2,
+            id='o01',
+        ),
+        'o02': ZPOrder(
+            dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
+            asset=a1,
+            amount=5,
+            id='o02',
+        ),
+        'o03': ZPOrder(
+            dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
+            asset=a2,
+            amount=3,
+            id='o03',
+        ),
+        'o04': ZPOrder(
+            dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
+            asset=a2,
+            amount=0,
+            id='o04',
+        ),
+    }
+
+    orders = algo.get_open_orders()
+    assert len(orders[a1]) == 2
+    assert orders[a1][0].dt < orders[a1][1].dt
+    assert orders[a1][0].id == 'o01'
+    assert len(orders[a2]) == 1
+
+    orders = algo.get_open_orders(a1)
+    assert len(orders) == 2
+    assert orders[0].id == 'o01'
