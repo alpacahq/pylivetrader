@@ -249,6 +249,17 @@ class Backend(BaseBackend):
 
         zp_order_id = self._new_order_id()
 
+        log.debug(
+            ('submitting {} order for {} - '
+             'qty:{}, side:{}, limit_price:{}, stop_price:{}').format(
+                order_type,
+                symbol,
+                qty,
+                side,
+                limit_price,
+                stop_price
+            )
+        )
         try:
             order = self._api.submit_order(
                 symbol=symbol,
@@ -263,7 +274,10 @@ class Backend(BaseBackend):
             zp_order = self._order2zp(order)
             return zp_order
         except APIError as e:
-            log.warning('order is rejected {}'.format(e))
+            log.warning('order for symbol {} is rejected {}'.format(
+                symbol,
+                e
+            ))
             return None
 
     @property
