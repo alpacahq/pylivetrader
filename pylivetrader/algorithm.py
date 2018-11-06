@@ -610,11 +610,11 @@ class Algorithm:
         oldest first. If an asset is specified, returns a list of open
         orders for that asset, oldest first.
         '''
-        orders = self._backend.orders
+        orders = self._backend.all_orders('open')
 
         omap = {}
         orders = sorted([
-            o for o in orders.values() if o.open
+            o for o in orders.values()
         ], key=lambda o: o.dt)
         for order in orders:
             key = order.asset
