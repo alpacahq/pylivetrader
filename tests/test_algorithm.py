@@ -30,7 +30,6 @@ from pylivetrader.algorithm import Algorithm
 from pylivetrader.executor.executor import AlgorithmExecutor
 from pylivetrader.misc.api_context import LiveTraderAPI
 from pylivetrader.loader import get_functions
-from pylivetrader.finance.order import Order as ZPOrder
 
 
 from unittest.mock import Mock
