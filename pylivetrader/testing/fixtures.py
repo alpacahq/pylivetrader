@@ -6,6 +6,7 @@ from pylivetrader.assets import AssetFinder
 from pylivetrader.assets import Equity
 from pylivetrader.misc.pd_utils import normalize_date
 from trading_calendars import get_calendar
+from .entity import Order
 
 
 def get_fixture_data_portal(**kwargs):
@@ -51,6 +52,8 @@ class Backend:
         for i, asset in enumerate(self.get_equities()):
             bars = create_bars(days, i)
             self._daily_bars[asset] = bars
+
+        self._api = REST()
 
     def get_equities(self):
         return [
@@ -112,30 +115,32 @@ class Backend:
     def time_skew(self):
         return pd.Timedelta('0s')
 
-    def all_orders(status=None):
-        return [{
-        'o01': ZPOrder(
-            dt=pd.Timestamp('2018-10-31 09:40:00-0400'),
-            asset=a1,
-            amount=2,
-            id='o01',
-        ),
-        'o02': ZPOrder(
-            dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
-            asset=a1,
-            amount=5,
-            id='o02',
-        ),
-        'o03': ZPOrder(
-            dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
-            asset=a2,
-            amount=3,
-            id='o03',
-        ),
-        'o04': ZPOrder(
-            dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
-            asset=a2,
-            amount=0,
-            id='o04',
-        ),
-    }]
+
+class REST:
+
+    def list_orders(self, status=None, limit=None, after=None, until=None,
+                    direction=None, params=None):
+        a1 = 'ASSET1'
+        a2 = 'ASSET2'
+        return [
+            Order({
+                'submitted_at': '2018-10-31 09:40:00-0400',
+                'symbol': a1,
+                'qty': 2
+            }),
+            Order({
+                'submitted_at': '2018-10-31 09:45:00-0400',
+                'symbol': a1,
+                'qty': 5
+            }),
+            Order({
+                'submitted_at': '2018-10-31 09:45:00-0400',
+                'symbol': a2,
+                'qty': 3
+            }),
+            Order({
+                'submitted_at': '2018-10-31 09:45:00-0400',
+                'symbol': a2,
+                'qty': 0
+            })
+        ]
