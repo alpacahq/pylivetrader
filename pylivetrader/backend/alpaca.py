@@ -28,7 +28,7 @@ from trading_calendars.calendar_utils import (
     global_calendar_dispatcher as default_calendar,
 )
 import uuid
-from datetime import datetime
+from datetime import timedelta
 
 from .base import BaseBackend
 
@@ -289,18 +289,24 @@ class Backend(BaseBackend):
         }
 
     def all_orders(self, status=None):
-        until = datetime.now().isoformat()
+        until = pd.Timestamp.utcnow().isoformat()
         all_orders = {}
-        orders = self._api.list_orders(status, 500, until=until)
-        while(orders):
+        batch_size = 500
+        orders = self._api.list_orders(status, batch_size, until=until)
+        while(True):
             batch_orders = {
                 o.client_order_id: self._order2zp(o)
                 for o in orders
             }
             # get the timestamp of the earliest order in the batch
-            until = orders[-1].submitted_at
+            # add 1 second to avoid orders being dropped at batch limit
+            until = pd.Timestamp(
+                orders[-1].submitted_at + timedelta(seconds=1)
+            ).isoformat()
             all_orders = {**all_orders, **batch_orders}
-            orders = self._api.list_orders(status, 500, until=until)
+            orders = self._api.list_orders(status, batch_size, until=until)
+            if len(orders) < batch_size:
+                break
         return all_orders
 
     def cancel_order(self, zp_order_id):
