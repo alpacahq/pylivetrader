@@ -364,34 +364,8 @@ def test_backend_param():
 def test_open_orders():
     algo = get_algo('')
 
-    a1 = algo.symbol('ASSET1')
-    a2 = algo.symbol('ASSET2')
-    algo._backend.orders = {
-        'o01': ZPOrder(
-            dt=pd.Timestamp('2018-10-31 09:40:00-0400'),
-            asset=a1,
-            amount=2,
-            id='o01',
-        ),
-        'o02': ZPOrder(
-            dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
-            asset=a1,
-            amount=5,
-            id='o02',
-        ),
-        'o03': ZPOrder(
-            dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
-            asset=a2,
-            amount=3,
-            id='o03',
-        ),
-        'o04': ZPOrder(
-            dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
-            asset=a2,
-            amount=0,
-            id='o04',
-        ),
-    }
+    a1 = 'ASSET1'
+    a2 = 'ASSET2'
 
     orders = algo.get_open_orders()
     assert len(orders[a1]) == 2
