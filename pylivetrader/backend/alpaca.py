@@ -292,18 +292,15 @@ class Backend(BaseBackend):
         all_orders = {}
         batch_size = 500
         orders = self._api.list_orders(status, batch_size, until=until)
-        while True:
+        while len(orders) > 0:
             batch_orders = {
                 o.client_order_id: self._order2zp(o)
                 for o in orders
             }
             # get the timestamp of the earliest order in the batch
-            # add 1 second to avoid orders being dropped at batch limit
             until = pd.Timestamp(orders[-1].submitted_at).isoformat()
             all_orders.update(batch_orders)
             orders = self._api.list_orders(status, batch_size, until=until)
-            if len(orders) < batch_size:
-                break
         return all_orders
 
     def cancel_order(self, zp_order_id):
