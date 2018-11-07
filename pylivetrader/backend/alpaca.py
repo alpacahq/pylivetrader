@@ -28,7 +28,6 @@ from trading_calendars.calendar_utils import (
     global_calendar_dispatcher as default_calendar,
 )
 import uuid
-from datetime import timedelta
 
 from .base import BaseBackend
 
