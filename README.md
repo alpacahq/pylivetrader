@@ -116,7 +116,7 @@ might need to check if the fields are from the other session
 or in the same session to make sure you don't override the
 indermediate states in the day.
 
-## Supported Broker
+## Supported Brokers
 
 ### Alpaca
 
@@ -134,6 +134,7 @@ Configuration by config file. Either yaml or json.
 $ cat config.yaml
 key_id: {your api key id}
 secret: {your api secret key}
+base_url: https://api.alpaca.markets/
 $ pylivetrader run -f algo.py --backend-config config.yaml
 ```
 
