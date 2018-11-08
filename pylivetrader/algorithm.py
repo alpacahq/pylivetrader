@@ -610,7 +610,7 @@ class Algorithm:
         oldest first. If an asset is specified, returns a list of open
         orders for that asset, oldest first.
         '''
-        return get_all_orders('open')
+        return self.get_all_orders('open')
 
     @api_method
     def get_all_orders(self, asset=None, before=None, status='all'):
