@@ -613,7 +613,7 @@ class Algorithm:
         return get_all_orders('open')
 
     @api_method
-    def get_all_orders(self, asset=None, before=None, status=None):
+    def get_all_orders(self, asset=None, before=None, status='all'):
         '''
         If asset is unspecified or None, returns a dictionary keyed by
         asset ID. The dictionary contains a list of orders for each ID,

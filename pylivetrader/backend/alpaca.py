@@ -287,7 +287,7 @@ class Backend(BaseBackend):
             for o in self._api.list_orders('all')
         }
 
-    def all_orders(self, before=None, status=None):
+    def all_orders(self, before=None, status='all'):
         until = pd.Timestamp.utcnow().isoformat() if before is None else before
         all_orders = {}
         batch_size = 500
