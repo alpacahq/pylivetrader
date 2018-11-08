@@ -610,7 +610,19 @@ class Algorithm:
         oldest first. If an asset is specified, returns a list of open
         orders for that asset, oldest first.
         '''
-        orders = self._backend.all_orders('open')
+        return get_all_orders('open')
+
+    @api_method
+    def get_all_orders(self, asset=None, before=None, status=None):
+        '''
+        If asset is unspecified or None, returns a dictionary keyed by
+        asset ID. The dictionary contains a list of orders for each ID,
+        oldest first. If an asset is specified, returns a list of open
+        orders for that asset, oldest first. Orders submitted after
+        before will not be returned. If provided, only orders of type
+        status (closed, open, filled, etc.) will be returned.
+        '''
+        orders = self._backend.all_orders(before, status)
 
         omap = {}
         orders = sorted([
