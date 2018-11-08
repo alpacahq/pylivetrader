@@ -113,7 +113,7 @@ class Backend:
     def time_skew(self):
         return pd.Timedelta('0s')
 
-    def all_orders(self, status=None):
+    def all_orders(self, asset=None, before=None, status='all'):
         a1 = 'ASSET1'
         a2 = 'ASSET2'
 
