@@ -620,7 +620,7 @@ class Algorithm:
         oldest first. If an asset is specified, returns a list of open
         orders for that asset, oldest first. Orders submitted after
         before will not be returned. If provided, only orders of type
-        status (closed, open, filled, etc.) will be returned.
+        status ('closed' or 'open') will be returned.
         '''
         orders = self._backend.all_orders(before, status)
 
