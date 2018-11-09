@@ -53,7 +53,7 @@ setup(
         'PyYAML',
         'ipython',
         # supoort alpaca backend by default
-        'alpaca-trade-api>=0.18',
+        'alpaca-trade-api>=0.20',
     ],
     tests_require=[
         'pytest',

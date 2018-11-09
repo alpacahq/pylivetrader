@@ -55,6 +55,10 @@ class BaseBackend(abc.ABC):
         pass
 
     @abstractmethod
+    def all_orders(self):
+        pass
+
+    @abstractmethod
     def get_last_traded_dt(self, asset):
         pass
 
