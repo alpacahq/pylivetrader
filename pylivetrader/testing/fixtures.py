@@ -5,6 +5,7 @@ from pylivetrader.data.data_portal import DataPortal
 from pylivetrader.assets import AssetFinder
 from pylivetrader.assets import Equity
 from pylivetrader.misc.pd_utils import normalize_date
+from pylivetrader.finance.order import Order as ZPOrder
 from trading_calendars import get_calendar
 
 
@@ -111,3 +112,28 @@ class Backend:
     @property
     def time_skew(self):
         return pd.Timedelta('0s')
+
+    def all_orders(self, asset=None, before=None, status='all'):
+        a1 = 'ASSET1'
+        a2 = 'ASSET2'
+
+        return {
+            'o01': ZPOrder(
+                dt=pd.Timestamp('2018-10-31 09:40:00-0400'),
+                asset=a1,
+                amount=2,
+                id='o01',
+            ),
+            'o02': ZPOrder(
+                dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
+                asset=a1,
+                amount=5,
+                id='o02',
+            ),
+            'o03': ZPOrder(
+                dt=pd.Timestamp('2018-10-31 09:45:00-0400'),
+                asset=a2,
+                amount=3,
+                id='o03',
+            ),
+        }
