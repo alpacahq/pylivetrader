@@ -282,10 +282,7 @@ class Backend(BaseBackend):
 
     @property
     def orders(self):
-        return {
-            o.client_order_id: self._order2zp(o)
-            for o in self._api.list_orders('all')
-        }
+        return self.all_orders()
 
     def all_orders(self, before=None, status='all'):
         until = pd.Timestamp.utcnow().isoformat() if before is None else before
