@@ -26,15 +26,15 @@ otherwise it will show you your live account's information.
 
 # Running An Example
 
-If you've saved your API information in `config.py`, you can
+If you've saved your API information in `config.yaml`, you can
 execute an example in pylivetrader like this:
 
 ```
-pylivetrader run -f path/to/example.py --backend-config config.py
+pylivetrader run path/to/example.py --backend-config config.yaml
 ```
 
 If you saved your API information to environment variables,
-you can omit `--backend-config config.py` from the command.
+you can omit `--backend-config config.yaml` from the command.
 
 ---
 
