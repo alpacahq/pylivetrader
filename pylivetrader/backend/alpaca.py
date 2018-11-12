@@ -282,19 +282,30 @@ class Backend(BaseBackend):
 
     @property
     def orders(self):
-        return self.all_orders()
+        return {
+            o.client_order_id: self._order2zp(o)
+            for o in self._api.list_orders('all')
+        }
 
-    def all_orders(self, before=None, status='all'):
-        until = pd.Timestamp.utcnow().isoformat() if before is None else before
+    def get_order(self, zp_order_id):
+        return self._api.get_order_by_client_order_id(zp_order_id)
+
+    def all_orders(self, before=None, status='all', days_back=None):
+        # Get all orders submitted days_back days before 'before'.
+        start = pd.Timestamp.utcnow().isoformat() if before is None else before
+        until = start
         all_orders = {}
         batch_size = 500
         orders = self._api.list_orders(status, batch_size, until=until)
         while len(orders) > 0:
-            batch_orders = {
-                o.client_order_id: self._order2zp(o)
-                for o in orders
-            }
-            # get the timestamp of the earliest order in the batch
+            batch_orders = {}
+            for order in batch_orders:
+                days_since_order = (start - order.submitted_at).days
+                if days_back is not None and days_since_order > days_back:
+                    all_orders.update(batch_orders)
+                    break
+                batch_orders[order.client_order_id] = self._order2zp(order)
+            # Get the timestamp of the earliest order in the batch.
             until = pd.Timestamp(orders[-1].submitted_at).isoformat()
             all_orders.update(batch_orders)
             orders = self._api.list_orders(status, batch_size, until=until)

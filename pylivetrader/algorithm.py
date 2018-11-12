@@ -613,7 +613,14 @@ class Algorithm:
         return self.get_all_orders(asset=asset, status='open')
 
     @api_method
-    def get_all_orders(self, asset=None, before=None, status='all'):
+    def get_recent_orders(self, days_back=2):
+        '''
+        Returns all orders from the past n days.
+        '''
+        return self.get_all_orders(days_back=days_back)
+
+    @api_method
+    def get_all_orders(self, asset=None, before=None, status='all', days_back=None):
         '''
         If asset is unspecified or None, returns a dictionary keyed by
         asset ID. The dictionary contains a list of orders for each ID,
@@ -622,7 +629,7 @@ class Algorithm:
         before will not be returned. If provided, only orders of type
         status ('closed' or 'open') will be returned.
         '''
-        orders = self._backend.all_orders(before, status)
+        orders = self._backend.all_orders(before, status, days_back)
 
         omap = {}
         orders = sorted([
@@ -640,9 +647,11 @@ class Algorithm:
 
     @api_method
     def get_order(self, order_id):
-        orders = self._backend.orders
-        if order_id in orders:
-            return orders[order_id].to_api_obj()
+        return self._backend.get_order(order_id)
+
+    @api_method
+    def get_recent_orders(self, days_back=2):
+        return self._backend.recent_orders
 
     @api_method
     def cancel_order(self, order_param):
