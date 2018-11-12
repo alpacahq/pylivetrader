@@ -302,11 +302,10 @@ class Backend(BaseBackend):
         start_session_label = self._cal.minute_to_session_label(start)
         reached_end_date = False
 
-        until = start
         all_orders = {}
         batch_size = 500
 
-        orders = self._api.list_orders(status, batch_size, until=until)
+        orders = self._api.list_orders(status, batch_size, until=start)
         while len(orders) > 0 and not reached_end_date:
             batch_orders = {}
             for order in orders:
