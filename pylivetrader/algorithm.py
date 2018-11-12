@@ -620,7 +620,12 @@ class Algorithm:
         return self.get_all_orders(days_back=days_back)
 
     @api_method
-    def get_all_orders(self, asset=None, before=None, status='all', days_back=None):
+    def get_all_orders(
+            self,
+            asset=None,
+            before=None,
+            status='all',
+            days_back=None):
         '''
         If asset is unspecified or None, returns a dictionary keyed by
         asset ID. The dictionary contains a list of orders for each ID,
@@ -648,10 +653,6 @@ class Algorithm:
     @api_method
     def get_order(self, order_id):
         return self._backend.get_order(order_id)
-
-    @api_method
-    def get_recent_orders(self, days_back=2):
-        return self._backend.recent_orders
 
     @api_method
     def cancel_order(self, order_param):
