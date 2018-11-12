@@ -293,8 +293,9 @@ class Backend(BaseBackend):
         )
 
     def all_orders(self, before=None, status='all', days_back=None):
-        # Get all orders submitted days_back days before `before`.
-        start = pd.Timestamp.utcnow().isoformat() if before is None else before
+        # Get all orders submitted days_back days before `before` or now.
+        now = pd.Timestamp.utcnow()
+        start = now.isoformat() if before is None else before.isoformat()
 
         # A session label refers to the market date that an order submitted
         # at a given minute would be executed on. We'll need to keep track of
