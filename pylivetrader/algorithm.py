@@ -652,7 +652,7 @@ class Algorithm:
 
     @api_method
     def get_order(self, order_id):
-        return self._backend.get_order(order_id)
+        return self._backend.get_order(order_id).to_api_obj()
 
     @api_method
     def cancel_order(self, order_param):
