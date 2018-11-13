@@ -287,20 +287,45 @@ class Backend(BaseBackend):
             for o in self._api.list_orders('all')
         }
 
-    def all_orders(self, before=None, status='all'):
-        until = pd.Timestamp.utcnow().isoformat() if before is None else before
+    def get_order(self, zp_order_id):
+        return self._order2zp(
+            self._api.get_order_by_client_order_id(zp_order_id)
+        )
+
+    def all_orders(self, before=None, status='all', days_back=None):
+        # Get all orders submitted days_back days before `before` or now.
+        now = pd.Timestamp.utcnow()
+        start = now.isoformat() if before is None else before.isoformat()
+
+        # A session label refers to the market date that an order submitted
+        # at a given minute would be executed on. We'll need to keep track of
+        # this if the function is bounded by days_back.
+        start_session_label = self._cal.minute_to_session_label(start)
+        reached_end_date = False
+
         all_orders = {}
         batch_size = 500
-        orders = self._api.list_orders(status, batch_size, until=until)
-        while len(orders) > 0:
-            batch_orders = {
-                o.client_order_id: self._order2zp(o)
-                for o in orders
-            }
-            # get the timestamp of the earliest order in the batch
-            until = pd.Timestamp(orders[-1].submitted_at).isoformat()
+
+        orders = self._api.list_orders(status, batch_size, until=start)
+        while len(orders) > 0 and not reached_end_date:
+            batch_orders = {}
+            for order in orders:
+                if days_back is not None:
+                    # Verify that the order is not too old.
+                    # `session_distance()` ignores holidays and weekends.
+                    days_since_order = self._cal.session_distance(
+                        self._cal.minute_to_session_label(order.submitted_at),
+                        start_session_label
+                    )
+                    if days_since_order > days_back:
+                        reached_end_date = True
+                        break
+                batch_orders[order.client_order_id] = self._order2zp(order)
             all_orders.update(batch_orders)
-            orders = self._api.list_orders(status, batch_size, until=until)
+            if not reached_end_date:
+                # Get the timestamp of the earliest order in the batch.
+                until = pd.Timestamp(orders[-1].submitted_at).isoformat()
+                orders = self._api.list_orders(status, batch_size, until=until)
         return all_orders
 
     def cancel_order(self, zp_order_id):
