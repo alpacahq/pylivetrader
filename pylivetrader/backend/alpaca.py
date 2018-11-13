@@ -300,7 +300,7 @@ class Backend(BaseBackend):
         # A session label refers to the market date that an order submitted
         # at a given minute would be executed on. We'll need to keep track of
         # this if the function is bounded by days_back.
-        start_session_label = self._cal.minute_to_session_label(start)
+        start_session_label = self._cal.minute_to_session_label(now)
         reached_end_date = False
 
         all_orders = {}
