@@ -1,9 +1,17 @@
-# This is an adaptation of Bruce Carroll's algorithm.
-#   Algorithm's initial publication:
-#   https://www.quantopian.com/posts/grahamfundmantals-algo-simple-screening-on-benjamin-graham-number-fundamentals
-# It finds the two sectors with the lowest average P/E ratio among their top companies.
-# Then, it buys stocks with low P/E and P/B ratios which do not have more current debt than current assets.
-# Fundamentals data has been sourced from IEX, which gets its information from published balance sheets.
+# This is an implementation of some of the stock-selection principles outlined here:
+# https://cabotwealth.com/daily/value-investing/benjamin-grahams-value-stock-criteria/
+# No guarantees are provided about the performance of these principles as described
+# or as implemented here. As with any strategy, you should validate its performance
+# with backtesting and forward testing before committing to its use.
+
+# This algorithm select stocks from several sectors that fit its criteria for being a
+# safe investment - it looks for companies who have relatively small PE and PB ratios,
+# positive earnings per share, a dividend of at least 1%, and manageable near-term and
+# long-term debt loads.
+
+# It weights its investments in the stocks it finds by market cap, but such that each
+# sector (with at least one acceptable stock) has an even amount of cash dedicated to it
+# overall. It rebalances its selections and cash allocations once every three months.
 
 from iexfinance.base import _IEXBase
 from iexfinance import Stock
@@ -13,11 +21,272 @@ import pandas as pd
 import numpy as np
 import json
 
+
 def get_sector(sector_name):
     collection = SectorCollection(sector_name)
     return collection.fetch()
 
-# Extend iexfinance to support the sector collection endpoint.
+
+def initialize(context):
+    # These are the sectors we're interested in trading.
+    # They can be individually commented out if you wish to avoid one sector
+    # or another.
+    context.sectors = [
+        'Basic Materials',
+        'Consumer Cyclical',
+        'Financial Services',
+        'Real Estate',
+        'Consumer Defensive',
+        'Healthcare',
+        'Utilities',
+        'Communication Services',
+        'Energy',
+        'Industrials',
+        'Technology'
+    ]
+
+    context.months_until_rebalance = 1
+    schedule_function(try_rebalance,
+                      date_rule=date_rules.month_start(),
+                      time_rule=time_rules.market_open())
+
+    try_rebalance(context, None)
+
+
+def try_rebalance(context, data):
+    # See if it's time to rebalance every month.
+    # We'll reevaluate our positions once every three months.
+    if context.months_until_rebalance == 1:
+        update_target_securities(context)
+        rebalance(context)
+        context.months_until_rebalance = 3
+    else:
+        context.months_until_rebalance -= 1
+
+
+def update_target_securities(context):
+    # In order to avoid overinvestment in large sectors, we'll be weighting each
+    # stock by its sector contribution. More on this below.
+    context.total_sector_contributions = 0
+
+    # First, we'll grab all the stocks in the sectors we want to trade within.
+    sector_fundamental_dfs = {}
+    for sector in context.sectors:
+        fundamental_df = build_sector_fundamentals(sector)
+        # fundamental_df = fundamental_df.sort_values(by=['market_cap'], ascending=False)
+        filtered_fundamental_df = filter_fundamental_df(fundamental_df)
+
+        # To weight by sector contribution, we'll first store each stock's
+        # contribution to its own sector's presence in our portfolio as a
+        # percentage.
+        sector_market_cap = filtered_fundamental_df['market_cap'].sum()
+        filtered_fundamental_df['sector_contribution'] = filtered_fundamental_df['market_cap'] / sector_market_cap
+
+        # We'll add up all these percentage values, and our portfolio's weight
+        # in a stock will be determined by its weight relative to the sum total
+        # of all sector contributions.
+        context.total_sector_contributions += filtered_fundamental_df['sector_contribution'].sum()
+        sector_fundamental_dfs[sector] = filtered_fundamental_df
+
+    # At this point, merge all our dataframes together, as we're done
+    # considering sectors.
+    context.all_sectors_fundamental_df = pd.concat(
+        list(sector_fundamental_dfs.values()))
+
+
+def rebalance(context):
+    # We want to purchase all stocks in our dataframe, if possible.
+    desired_stocks = context.all_sectors_fundamental_df.index.values
+    print(desired_stocks)
+
+    # Exit all positions we wish to drop before starting new ones.
+    for stock in context.portfolio.positions:
+        if stock not in desired_stocks:
+            pass
+            #order_target_percent(stock, 0)
+
+    # Rebalance all stocks to target weights.
+    for stock in desired_stocks:
+        # Determine how much of the portfolio should be allocated to this
+        # stock.
+        weight = get_weight(context, stock)
+        print('weight: {}'.format(weight))
+        if weight != 0:
+            try:
+                print('Buying {}'.format(stock))
+                #order_target_percent(symbol(stock), weight)
+            except BaseException:
+                print(
+                    'Error: Tried to purchase {} but there was an error.'.format(stock))
+                pass
+
+
+def get_weight(context, stock):
+    # As discussed above, we'll be weighting each stock by its contribution to
+    # its sector.
+    return context.all_sectors_fundamental_df.loc[stock]['sector_contribution'] / \
+        context.total_sector_contributions
+
+
+def filter_fundamental_df(fundamental_df):
+    # This is where we remove stocks that don't meet our investment criteria.
+    return fundamental_df[
+        (fundamental_df.current_ratio > 1.5) &
+        (fundamental_df.debt_to_liq_ratio < 1.1) &
+        (fundamental_df.pe_ratio < 9) &
+        (fundamental_df.pb_ratio < 1.2) &
+        (fundamental_df.dividend_yield > 1.0)
+    ]
+
+
+def build_sector_fundamentals(sector):
+    '''
+    In this method, for the given sector, we'll get the data we need for each stock
+    in the sector from IEX. Once we have the data, we'll check that the earnings
+    reports meet our criteria with `eps_good()`. We'll put stocks that meet those
+    requirements into a dataframe along with all the data about them we'll need.
+    '''
+    stocks = get_sector(sector)
+    if len(stocks) == 0:
+        raise ValueError("Invalid sector name: {}".format(sector))
+
+    # If we can't see its PE here, we're probably not interested in a stock.
+    # Omit it from batch queries.
+    stocks = [s for s in stocks if s['peRatio'] is not None]
+
+    # IEX doesn't like batch queries for more than 100 symbols at a time.
+    # We need to build our fundamentals info iteratively.
+    batch_idx = 0
+    batch_size = 99
+    fundamentals_dict = {}
+    while batch_idx < len(stocks):
+        symbol_batch = [s['symbol']
+                        for s in stocks[batch_idx:batch_idx + batch_size]]
+        stock_batch = Stock(symbol_batch)
+
+        # Pull all the data we'll need from IEX.
+        financials_json = stock_batch.get_financials()
+        quote_json = stock_batch.get_quote()
+        stats_json = stock_batch.get_key_stats()
+        earnings_json = stock_batch.get_earnings()
+
+        for symbol in symbol_batch:
+            # We'll filter based on earnings first to keep our fundamentals
+            # info a bit cleaner.
+            if not eps_good(earnings_json[symbol]):
+                continue
+
+            # Make sure we have all the data we'll need for our filters for
+            # this stock.
+            if not data_quality_good(
+                    symbol,
+                    financials_json,
+                    quote_json,
+                    stats_json):
+                continue
+
+            fundamentals_dict[symbol] = get_fundamental_data_for_symbol(
+                symbol,
+                financials_json,
+                quote_json,
+                stats_json
+            )
+
+        batch_idx += batch_size
+    # Transform all our data into a more filterable form - a dataframe - with
+    # a bit of pandas magic.
+    return pd.DataFrame.from_dict(fundamentals_dict).T
+
+
+def eps_good(earnings_reports):
+    # This method contains logic for filtering based on earnings reports.
+    if len(earnings_reports) < 4:
+        # The company must be very new. We'll skip it until it's had time to
+        # prove itself.
+        return False
+
+    # earnings_reports should contain the information about the last four
+    # quarterly reports.
+    for report in earnings_reports:
+        # We want to see consistent positive EPS.
+        try:
+            if not (report['actualEPS']):
+                return False
+            if report['actualEPS'] < 0:
+                return False
+        except KeyError:
+            # A KeyError here indicates that some data was missing or that a company is
+            # less than two years old. We don't mind skipping over new companies until
+            # they've had more time in the market.
+            return False
+    return True
+
+
+def data_quality_good(symbol, financials_json, quote_json, stats_json):
+    # This method makes sure that we're not going to be investing in
+    # securities we don't have accurate data for.
+
+    if len(financials_json[symbol]
+           ) < 1 or quote_json[symbol]['latestPrice'] is None:
+        # No recent data was found. This can sometimes happen in case of recent
+        # markert suspensions.
+        return False
+
+    try:
+        if not (
+            quote_json[symbol]['marketCap'] and
+            stats_json[symbol]['priceToBook'] and
+            stats_json[symbol]['sharesOutstanding'] and
+            financials_json[symbol][0]['totalAssets'] and
+            financials_json[symbol][0]['currentAssets'] and
+            quote_json[symbol]['latestPrice']
+        ):
+            # Ignore companies IEX cannot report all necessary data for, or
+            # thinks are untradable.
+            return False
+    except KeyError:
+        # A KeyError here indicates that some data we need to evaluate this
+        # stock was missing.
+        return False
+
+    return True
+
+
+def get_fundamental_data_for_symbol(
+        symbol,
+        financials_json,
+        quote_json,
+        stats_json):
+    fundamentals_dict_for_symbol = {}
+
+    financials = financials_json[symbol][0]
+
+    # Calculate PB ratio.
+    fundamentals_dict_for_symbol['pb_ratio'] = stats_json[symbol]['priceToBook']
+
+    # Find the "Current Ratio" - current assets to current debt.
+    current_debt = financials['currentDebt'] if financials['currentDebt'] else 1
+    fundamentals_dict_for_symbol['current_ratio'] = financials['currentAssets'] / current_debt
+
+    # Find the ratio of long term debt to short-term liquiditable assets.
+    total_debt = financials['totalDebt'] if financials['totalDebt'] else 0
+    fundamentals_dict_for_symbol['debt_to_liq_ratio'] = total_debt / \
+        financials['currentAssets']
+
+    # Store other information for this stock so we can filter on the data
+    # later.
+    fundamentals_dict_for_symbol['pe_ratio'] = quote_json[symbol]['peRatio']
+    fundamentals_dict_for_symbol['market_cap'] = quote_json[symbol]['marketCap']
+    fundamentals_dict_for_symbol['dividend_yield'] = stats_json[symbol]['dividendYield']
+
+    return fundamentals_dict_for_symbol
+
+
+def handle_data(context, data):
+    try_rebalance(context, data)
+
+
+# We extend iexfinance a bit to support the sector collection endpoint.
 class SectorCollection(_IEXBase):
 
     def __init__(self, sector, **kwargs):
@@ -27,157 +296,5 @@ class SectorCollection(_IEXBase):
 
     @property
     def url(self):
-        return '/stock/market/collection/sector?collectionName={}'.format(self.sector)
-
-# These are the sectors we're interested in trading.
-# They can be individually commented out if you wish to avoid one sector or another.
-sectors = [
-    'Basic Materials',
-    'Consumer Cyclical',
-    'Financial Services',
-    'Real Estate',
-    'Consumer Defensive',
-    'Healthcare',
-    'Utilities',
-    'Communication Services',
-    'Energy',
-    'Industrials',
-    'Technology'
-]
-
-def initialize(context):
-    # Rebalance monthly on the first day of the month at market open.
-    schedule_function(rebalance,
-                      date_rule=date_rules.month_start(),
-                      time_rule=time_rules.market_open())
-
-def before_trading_start(context, data):
-    # Update our target securities before market open in case it's time to rebalance when the market does open.
-
-    # We want to buy the top 50 stocks - by market cap - in the 2 sectors we think are best.
-    num_stocks = 50
-    num_sectors_to_buy = 2
-
-    sector_pe_ratios = {}
-    sector_fundamental_dfs = {}
-    for sector in sectors:
-        fundamental_df = build_sector_fundamentals(sector)
-        # We want to buy in the sectors with the highest average PE of their top companies.
-        fundamental_df = fundamental_df.sort_values(by=['market_cap'], ascending=False)
-        filtered_fundamental_df = get_filtered_fundamental_df(fundamental_df)
-        sector_fundamental_dfs[sector] = filtered_fundamental_df
-        sector_pe_ratios[sector] = filtered_fundamental_df['pe_ratio'][:num_stocks].mean()
-
-    # Find the stocks for the sectors with the highest PE ratios.
-    sector_pe_ratios = [(k, sector_pe_ratios[k]) for k in sorted(
-            sector_pe_ratios,
-            key=sector_pe_ratios.get,
-            reverse=True
-        )]
-    context.stocks = []
-    for i in range(0, num_sectors_to_buy):
-        sector = sector_pe_ratios[i][0]
-        # Get a list of the top stocks (by market cap) for the sector.
-        sector_stocks = list(sector_fundamental_dfs[sector][:num_stocks].index.values)
-        context.stocks += sector_stocks
-
-def get_filtered_fundamental_df(fundamental_df):
-    # This is where we remove stocks that don't meet our criteria.
-    return fundamental_df[
-        (fundamental_df.quick_ratio >= 1) & \
-        (fundamental_df.pe_ratio < 15) & \
-        (fundamental_df.pb_ratio < 1.5)
-    ]
-
-def rebalance(context):
-    # Exit all positions we wish to drop before starting new ones.
-    for stock in context.portfolio.positions:
-        if stock not in context.stocks:
-            order_target_percent(stock, 0)
-
-    # Rebalance all stocks to target weights.
-    for stock in context.stocks:
-        # Determine how much of the portfolio should be allocated to this stock.
-        weight = get_weight(context, stock)
-        if weight != 0:
-            try:
-                order_target_percent(symbol(stock), weight)
-            except:
-                print('Error: Tried to purchase {} but there was an error.'.format(stock))
-                pass
-
-def build_sector_fundamentals(sector):
-    stocks = get_sector(sector)
-    if len(stocks) == 0:
-        raise ValueError("Invalid sector name: {}".format(sector))
-
-    # If we can't see its PE here, we're probably not interested in a stock. Omit it from batch queries.
-    stocks = [s for s in stocks if s['peRatio'] is not None]
-
-    # IEX doesn't like batch queries for more than 100 symbols at a time.
-    # We need to build our fundamentals info iteratively.
-    batch_idx = 0
-    batch_size = 99
-    fundamentals_dict = {}
-    while batch_idx < len(stocks):
-        symbol_batch = [s['symbol'] for s in stocks[batch_idx:batch_idx+batch_size]]
-        stock_batch = Stock(symbol_batch)
-
-        # Pull all the data we'll need from IEX.
-        financials_json = stock_batch.get_financials()
-        quote_json = stock_batch.get_quote()
-        stats_json = stock_batch.get_key_stats()
-
-        for symbol in symbol_batch:
-            fundamentals_dict[symbol] = {}
-
-            if len(financials_json[symbol]) < 1 or quote_json[symbol]['latestPrice'] is None:
-                # No recent data was found. This can sometimes happen in case of recent markert suspensions.
-                continue
-
-            # Use only the most recent financial report for this stock.
-            financials = financials_json[symbol][0]
-            if financials['totalAssets'] is None or financials['currentAssets'] is None:
-                # Ignore companies who reported no assets on their balance sheet.
-                continue
-
-            if stats_json[symbol]['sharesOutstanding'] == 0:
-                # Company may have recently gone private, or there may be some other issue.
-                continue
-
-            if quote_json[symbol]['marketCap'] is None or quote_json[symbol]['marketCap'] == 0:
-                # Ignore companies IEX cannot report market cap for.
-                continue
-
-            # Calculate PB ratio.
-            book_value = financials['totalAssets'] - financials['totalLiabilities'] \
-                                        if financials['totalLiabilities'] else financials['totalAssets']
-            book_value_per_share = book_value / stats_json[symbol]['sharesOutstanding']
-            fundamentals_dict[symbol]['pb_ratio'] = quote_json[symbol]['latestPrice'] / book_value_per_share
-
-            # Approximate Morningstar's "quick ratio" - current liquidity minus debt - as closely as IEX data can.
-            # If no debt is reported, just set it to 2, since the algorithm only cares that it's over 1.
-            fundamentals_dict[symbol]['quick_ratio'] = financials['currentAssets'] / financials['currentDebt'] \
-                                        if financials['currentDebt'] else 2
-
-            # Store our information for this stock so we can filter on the data later.
-            fundamentals_dict[symbol]['pe_ratio'] = quote_json[symbol]['peRatio']
-            fundamentals_dict[symbol]['market_cap'] = quote_json[symbol]['marketCap']
-            fundamentals_dict[symbol]['shares_outstanding'] = stats_json[symbol]['sharesOutstanding']
-        batch_idx += batch_size
-    fundamentals_df = pd.DataFrame.from_dict(fundamentals_dict).T
-    return fundamentals_df
-
-def get_weight(context, stock):
-    # For now, this simply weights all stocks in our chosen sectors equally.
-    # If you wish to improve this algorithm's performance, you might start by weighting your positions by market cap.
-
-    if len(context.stocks) == 0:
-        return 0
-    else:
-        weight = 1.0/len(context.stocks)
-        return weight
-
-def handle_data(context, data):
-    # We're not interested in tracking price updates as they happen.
-    pass
+        return '/stock/market/collection/sector?collectionName={}'.format(
+            self.sector)
