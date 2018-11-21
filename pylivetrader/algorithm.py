@@ -106,7 +106,7 @@ class Algorithm:
         before_trading_start: before_trading_start function
         log_level: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
         '''
-        log.level = lookup_level(kwargs.pop('log_level'))
+        log.level = lookup_level(kwargs.pop('log_level', 'INFO'))
         self._recorded_vars = {}
 
         self.data_frequency = kwargs.pop('data_frequency', 'minute')
