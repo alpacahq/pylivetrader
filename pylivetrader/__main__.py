@@ -76,7 +76,9 @@ def algo_parameters(f):
             help='True to continue running in general exception'),
         click.option(
             '-l', '--log-level',
-            type=click.Choice({'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}),
+            type=click.Choice(
+                {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
+            ),
             default='INFO',
             show_default=True,
             help='The minimum level of log to be written.'),
