@@ -77,7 +77,7 @@ def algo_parameters(f):
         click.option(
             '-l', '--log-level',
             type=click.Choice({'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}),
-            default='info',
+            default='INFO',
             show_default=True,
             help='The minimum level of log to be written.'),
         click.argument('algofile', nargs=-1),
