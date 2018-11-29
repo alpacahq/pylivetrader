@@ -83,7 +83,7 @@ from pylivetrader.misc.input_validation import (
 )
 from pylivetrader.statestore import StateStore
 
-from logbook import Logger
+from logbook import Logger, lookup_level
 
 
 log = Logger('Algorithm')
@@ -104,7 +104,9 @@ class Algorithm:
         initialize: initialize function
         handle_data: handle_data function
         before_trading_start: before_trading_start function
+        log_level: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
         '''
+        log.level = lookup_level(kwargs.pop('log_level', 'INFO'))
         self._recorded_vars = {}
 
         self.data_frequency = kwargs.pop('data_frequency', 'minute')

@@ -74,6 +74,14 @@ def algo_parameters(f):
             type=bool,
             show_default=True,
             help='True to continue running in general exception'),
+        click.option(
+            '-l', '--log-level',
+            type=click.Choice(
+                {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
+            ),
+            default='INFO',
+            show_default=True,
+            help='The minimum level of log to be written.'),
         click.argument('algofile', nargs=-1),
     ]
     for opt in opts:
@@ -89,7 +97,8 @@ def process_algo_params(
         backend_config,
         data_frequency,
         statefile,
-        retry):
+        retry,
+        log_level):
     if len(algofile) > 0:
         algofile = algofile[0]
     elif file:
@@ -116,6 +125,7 @@ def process_algo_params(
         data_frequency=data_frequency,
         algoname=extract_filename(algofile),
         statefile=statefile,
+        log_level=log_level,
         **functions,
     )
     ctx.algorithm = algorithm
