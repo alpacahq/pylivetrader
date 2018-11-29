@@ -177,11 +177,13 @@ class Backend(BaseBackend):
 
         trades = self._symbol_trades(symbols)
         for symbol, trade in trades.items():
-            price = trade.price
-            dt = trade.timestamp
             z_position = position_map[symbol]
-            z_position.last_sale_price = float(price)
-            z_position.last_sale_date = dt
+            if trade is None:
+                z_position.last_sale_price = np.nan
+                z_position.last_sale_date = pd.NaT
+            else:
+                z_position.last_sale_price = float(trade.price)
+                z_position.last_sale_date = trade.timestamp
         return z_positions
 
     @property
