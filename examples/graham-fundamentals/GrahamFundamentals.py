@@ -50,6 +50,7 @@ def initialize(context):
                       date_rule=date_rules.month_start(),
                       time_rule=time_rules.market_open())
 
+    # Go ahead and run once when the script starts.
     try_rebalance(context, None)
 
 
@@ -103,7 +104,7 @@ def rebalance(context):
     for stock in context.portfolio.positions:
         if stock not in desired_stocks:
             pass
-            #order_target_percent(stock, 0)
+            order_target_percent(stock, 0)
 
     # Rebalance all stocks to target weights.
     for stock in desired_stocks:
@@ -114,7 +115,7 @@ def rebalance(context):
         if weight != 0:
             try:
                 print('Buying {}'.format(stock))
-                #order_target_percent(symbol(stock), weight)
+                order_target_percent(symbol(stock), weight)
             except BaseException:
                 print(
                     'Error: Tried to purchase {} but there was an error.'.format(stock))
@@ -280,10 +281,6 @@ def get_fundamental_data_for_symbol(
     fundamentals_dict_for_symbol['dividend_yield'] = stats_json[symbol]['dividendYield']
 
     return fundamentals_dict_for_symbol
-
-
-def handle_data(context, data):
-    try_rebalance(context, data)
 
 
 # We extend iexfinance a bit to support the sector collection endpoint.
