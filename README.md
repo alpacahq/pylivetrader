@@ -79,6 +79,7 @@ The options are as follows.
 - `--backend-config`: the yaml file for backend parameters
 - `-s` or `--statefile`: the file path to the persisted state file (look for the State Management section below)
 - `-r` or `--retry`: the algorithm runner continues execution in the event a general exception is raised
+- `-l` or `--log-level`: the minimum level of log which will be written ('DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL')
 
 ### shell
 
