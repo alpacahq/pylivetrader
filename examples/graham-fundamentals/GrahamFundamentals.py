@@ -20,7 +20,6 @@ from pylivetrader import *
 import pandas as pd
 import numpy as np
 import json
-import time
 
 
 def get_sector(sector_name):
