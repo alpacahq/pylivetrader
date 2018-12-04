@@ -20,6 +20,7 @@ from pylivetrader import *
 import pandas as pd
 import numpy as np
 import json
+import time
 
 
 def get_sector(sector_name):
@@ -49,10 +50,14 @@ def initialize(context):
     schedule_function(try_rebalance,
                       date_rule=date_rules.month_start(),
                       time_rule=time_rules.market_open())
+    context.run_once = True
 
-    # Go ahead and run once when the script starts.
-    try_rebalance(context, None)
-
+def handle_data(context, data):
+    # Go ahead and run once when the script starts to fill out the portfolio.
+    if context.run_once:
+        print("ordering")
+        try_rebalance(context, data)
+        context.run_once = False
 
 def try_rebalance(context, data):
     # See if it's time to rebalance every month.
@@ -102,8 +107,7 @@ def rebalance(context):
 
     # Exit all positions we wish to drop before starting new ones.
     for stock in context.portfolio.positions:
-        if stock not in desired_stocks:
-            pass
+        if stock.symbol not in desired_stocks:
             order_target_percent(stock, 0)
 
     # Rebalance all stocks to target weights.
@@ -116,10 +120,10 @@ def rebalance(context):
             try:
                 print('Buying {}'.format(stock))
                 order_target_percent(symbol(stock), weight)
-            except BaseException:
+            except BaseException as e:
                 print(
                     'Error: Tried to purchase {} but there was an error.'.format(stock))
-                pass
+                print(e)
 
 
 def get_weight(context, stock):
