@@ -48,7 +48,7 @@ pylivetrader does not provide direct replacement for pipeline, but you can
 use [pipeline-live](https://github.com/alpacahq/pipeline-live). You need to
 install this package separately as pylivetrader does not automatically
 include it.  For more information,
-please read [pipeline-live's migration document](https://github.com/alpacahq/pipeline-live/migration.md).
+please read [pipeline-live's migration document](https://github.com/alpacahq/pipeline-live/blob/master/migration.md).
 
 Under `attach_pipeline` and `pipeline_output`, pylivetrader uses
 the pipeline-live pakcage if it is installed, otherwise throws `RuntimeError`.
