@@ -126,7 +126,7 @@ Configuration by environment variables.
 ```
 $ export APCA_API_KEY_ID={your api key id}
 $ export APCA_API_SECRET_KEY={your api secret key}
-$ export APCA_API_BASE_URL={your api endpoint here}
+$ export APCA_API_BASE_URL={https://api.alpaca.markets/ or https://paper-api.alpaca.markets}
 $ pylivetrader run -f algo.py
 ```
 
