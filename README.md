@@ -126,6 +126,7 @@ Configuration by environment variables.
 ```
 $ export APCA_API_KEY_ID={your api key id}
 $ export APCA_API_SECRET_KEY={your api secret key}
+$ export APCA_API_BASE_URL={https://api.alpaca.markets/ or https://paper-api.alpaca.markets}
 $ pylivetrader run -f algo.py
 ```
 
@@ -135,7 +136,7 @@ Configuration by config file. Either yaml or json.
 $ cat config.yaml
 key_id: {your api key id}
 secret: {your api secret key}
-base_url: https://api.alpaca.markets/
+base_url: {https://api.alpaca.markets/ or https://paper-api.alpaca.markets}
 $ pylivetrader run -f algo.py --backend-config config.yaml
 ```
 
