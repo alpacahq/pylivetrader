@@ -150,6 +150,8 @@ class Algorithm:
         self.trading_calendar = kwargs.pop(
             'trading_calendar', get_calendar('NYSE'))
 
+        self.logger = None
+
         self.data_portal = DataPortal(
             self._backend, self.asset_finder, self.trading_calendar)
 
