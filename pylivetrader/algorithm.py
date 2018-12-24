@@ -485,9 +485,6 @@ class Algorithm:
             self._account_needs_update = False
         return self._account
 
-    def set_logger(self, logger):
-        self.logger = logger
-
     def on_dt_changed(self, dt):
         self._portfolio_needs_update = True
         self._account_needs_update = True
@@ -806,8 +803,7 @@ class Algorithm:
             zero_message = "Price of 0 for {psid}; can't infer value".format(
                 psid=asset
             )
-            if self.logger:
-                self.logger.debug(zero_message)
+            log.debug(zero_message)
             # Don't place any order
             return 0
 
