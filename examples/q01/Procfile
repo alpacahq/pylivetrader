@@ -1,1 +1,1 @@
-worker: pylivetrader run -f algo.py $PORT
+worker: pylivetrader run -f algo.py
