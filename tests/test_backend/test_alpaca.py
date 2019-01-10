@@ -297,7 +297,7 @@ def historic_agg_data(size, *args, **kwargs):
                              'h': 'high',
                              'l': 'low',
                              'v': 'volume',
-                             't': 'timestamp'},
+                             'd': 'day'},
                      'ticks': [{'o': 220.25,
                                 'c': 222.98,
                                 'h': 223.49,
