@@ -249,18 +249,18 @@ def test_data():
         res = backend.get_bars(assets[0], 'daily')
 
         polygon.last_trade.return_value = last_trade_data()
-        res = backend.get_spot_value(assets, 'price', None, None)
+        res = backend.get_spot_value(assets, 'price', None, None, False)
         assert res[0] == 225.18
-        res = backend.get_spot_value(assets, 'last_traded', None, None)
+        res = backend.get_spot_value(assets, 'last_traded', None, None, False)
         assert res[0].hour == 17
-        res = backend.get_spot_value(assets, 'close', None, None)
+        res = backend.get_spot_value(assets, 'close', None, None, False)
         assert res[0] > 220
 
-        res = backend.get_spot_value(assets[0], 'price', None, None)
+        res = backend.get_spot_value(assets[0], 'price', None, None, False)
         assert res == 225.18
-        res = backend.get_spot_value(assets[0], 'last_traded', None, None)
+        res = backend.get_spot_value(assets[0], 'last_traded', None, None, False)
         assert res.hour == 17
-        res = backend.get_spot_value(assets[0], 'close', None, None)
+        res = backend.get_spot_value(assets[0], 'close', None, None, False)
         assert res > 220
 
         dt = backend.get_last_traded_dt(assets[0])
@@ -275,11 +275,11 @@ def test_data():
         polygon.last_trade = Mock()
         polygon.last_trade.side_effect = HTTPError(
             response=(Mock(status_code=404)))
-        res = backend.get_spot_value(assets, 'price', None, None)
+        res = backend.get_spot_value(assets, 'price', None, None, False)
         assert np.isnan(res[0])
-        res = backend.get_spot_value(assets, 'last_traded', None, None)
+        res = backend.get_spot_value(assets, 'last_traded', None, None, False)
         assert len(res) == 1
-        res = backend.get_spot_value(assets, 'close', None, None)
+        res = backend.get_spot_value(assets, 'close', None, None, False)
         assert np.isnan(res[0])
 
 

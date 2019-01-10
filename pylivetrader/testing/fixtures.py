@@ -65,7 +65,7 @@ class Backend:
         ]
 
     def get_adjusted_value(self, assets, field, dt, data_frequency):
-        return self.get_spot_value(assets, field, dt, data_frequency)
+        return self.get_spot_value(assets, field, dt, data_frequency, False)
 
     def get_spot_value(
             self,
