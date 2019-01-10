@@ -205,7 +205,7 @@ class Backend(BaseBackend):
             assets,
             field,
             dt,
-            date_frequency,
+            data_frequency,
             quantopian_compatible=True):
         return self._data_proxy.get_spot_value(
             assets, field, dt, data_frequency)
@@ -280,12 +280,12 @@ class FakeDataBackend:
         return self.now
 
     def get_spot_value(
-        self,
-        assets,
-        field,
-        dt,
-        data_frequency,
-        quantopian_compatible=True):
+            self,
+            assets,
+            field,
+            dt,
+            data_frequency,
+            quantopian_compatible=True):
         now = self.now
 
         def _get_for_symbol(df, field):
