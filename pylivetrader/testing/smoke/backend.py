@@ -200,7 +200,13 @@ class Backend(BaseBackend):
     def get_last_traded_dt(self, asset):
         return self._data_proxy.get_last_traded_dt(asset)
 
-    def get_spot_value(self, assets, field, dt, data_frequency):
+    def get_spot_value(
+            self,
+            assets,
+            field,
+            dt,
+            date_frequency,
+            quantopian_compatible=True):
         return self._data_proxy.get_spot_value(
             assets, field, dt, data_frequency)
 

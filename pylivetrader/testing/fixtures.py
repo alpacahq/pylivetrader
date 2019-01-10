@@ -15,7 +15,7 @@ def get_fixture_data_portal(**kwargs):
 
     finder = AssetFinder(b)
 
-    return DataPortal(b, finder, b._calendar, True)
+    return DataPortal(b, finder, b._calendar, False)
 
 
 def create_bars(minutes, offset):
@@ -67,7 +67,13 @@ class Backend:
     def get_adjusted_value(self, assets, field, dt, data_frequency):
         return self.get_spot_value(assets, field, dt, data_frequency)
 
-    def get_spot_value(self, assets, field, dt, data_frequency):
+    def get_spot_value(
+            self,
+            assets,
+            field,
+            dt,
+            data_frequency,
+            quantopian_compatible=True):
         assets_is_scalar = not isinstance(assets, (list, set, tuple))
 
         field = 'close' if field == 'price' else field
