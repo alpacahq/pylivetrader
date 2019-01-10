@@ -258,7 +258,9 @@ def test_data():
 
         res = backend.get_spot_value(assets[0], 'price', None, None, False)
         assert res == 225.18
-        res = backend.get_spot_value(assets[0], 'last_traded', None, None, False)
+        res = backend.get_spot_value(
+            assets[0], 'last_traded', None, None, False
+        )
         assert res.hour == 17
         res = backend.get_spot_value(assets[0], 'close', None, None, False)
         assert res > 220
