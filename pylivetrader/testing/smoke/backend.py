@@ -279,7 +279,13 @@ class FakeDataBackend:
     def get_last_traded_dt(self, asset):
         return self.now
 
-    def get_spot_value(self, assets, field, dt, data_frequency):
+    def get_spot_value(
+        self,
+        assets,
+        field,
+        dt,
+        data_frequency,
+        quantopian_compatible=True):
         now = self.now
 
         def _get_for_symbol(df, field):
