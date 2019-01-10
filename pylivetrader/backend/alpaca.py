@@ -357,7 +357,7 @@ class Backend(BaseBackend):
         else:
             symbols = [asset.symbol for asset in assets]
         if ((quantopian_compatible and field == 'last_traded') or
-            (not quantopian_compatible and field in ('price', 'last_traded'))):
+           (not quantopian_compatible and field in ('price', 'last_traded'))):
             results = self._get_spot_trade(symbols, field)
         else:
             results = self._get_spot_bars(symbols, field)

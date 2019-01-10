@@ -15,7 +15,7 @@ def get_fixture_data_portal(**kwargs):
 
     finder = AssetFinder(b)
 
-    return DataPortal(b, finder, b._calendar)
+    return DataPortal(b, finder, b._calendar, True)
 
 
 def create_bars(minutes, offset):

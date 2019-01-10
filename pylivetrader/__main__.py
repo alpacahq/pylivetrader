@@ -83,7 +83,7 @@ def algo_parameters(f):
             show_default=True,
             help='The minimum level of log to be written.'),
         click.option(
-            '-q','--quantopian-compatible',
+            '-q', '--quantopian-compatible',
             default=True,
             type=bool,
             show_default=True,
