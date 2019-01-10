@@ -63,7 +63,13 @@ class BaseBackend(abc.ABC):
         pass
 
     @abstractmethod
-    def get_spot_value(self, assets, field, dt, date_frequency):
+    def get_spot_value(
+            self,
+            assets,
+            field,
+            dt,
+            date_frequency,
+            quantopian_compatible=True):
         pass
 
     @abstractmethod

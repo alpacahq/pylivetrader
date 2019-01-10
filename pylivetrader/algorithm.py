@@ -114,6 +114,8 @@ class Algorithm:
 
         self._algoname = kwargs.pop('algoname', 'algo')
 
+        self.quantopian_compatible = kwargs.pop('quantopian_compatible', True)
+
         self._state_store = StateStore(
             kwargs.pop('statefile', None) or
             '{}-state.pkl'.format(self._algoname)
@@ -151,7 +153,11 @@ class Algorithm:
             'trading_calendar', get_calendar('NYSE'))
 
         self.data_portal = DataPortal(
-            self._backend, self.asset_finder, self.trading_calendar)
+            self._backend,
+            self.asset_finder,
+            self.trading_calendar,
+            self.quantopian_compatible
+        )
 
         self.event_manager = EventManager()
 
