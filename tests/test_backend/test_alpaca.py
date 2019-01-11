@@ -248,6 +248,10 @@ def test_data():
 
         res = backend.get_bars(assets[0], 'daily')
 
+        # Make sure close is used instead of trade in compatibility mode.
+        res = backend.get_spot_value(assets, 'price', None, None, True)
+        assert res[0] == 223.0002
+
         polygon.last_trade.return_value = last_trade_data()
         res = backend.get_spot_value(assets, 'price', None, None, False)
         assert res[0] == 225.18
