@@ -43,7 +43,7 @@ setup(
     pylivetrader=pylivetrader.__main__:main
     ''',
     install_requires=[
-        'pandas',
+        'pandas<0.24.0',
         'numpy<1.15.0',
         'pytz',
         'logbook',
@@ -52,8 +52,8 @@ setup(
         'click',
         'PyYAML',
         'ipython',
-        # supoort alpaca backend by default
-        'alpaca-trade-api>=0.20',
+        # support alpaca backend by default
+        'alpaca-trade-api>=0.24',
     ],
     tests_require=[
         'pytest',

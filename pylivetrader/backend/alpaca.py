@@ -342,7 +342,13 @@ class Backend(BaseBackend):
         trade = self._api.polygon.last_trade(asset.symbol)
         return trade.timestamp
 
-    def get_spot_value(self, assets, field, dt, data_frequency):
+    def get_spot_value(
+            self,
+            assets,
+            field,
+            dt,
+            date_frequency,
+            quantopian_compatible=True):
         assert(field in (
             'open', 'high', 'low', 'close', 'volume', 'price', 'last_traded'))
         assets_is_scalar = not isinstance(assets, (list, set, tuple))
@@ -350,7 +356,8 @@ class Backend(BaseBackend):
             symbols = [assets.symbol]
         else:
             symbols = [asset.symbol for asset in assets]
-        if field in ('price', 'last_traded'):
+        if ((quantopian_compatible and field == 'last_traded') or
+           (not quantopian_compatible and field in ('price', 'last_traded'))):
             results = self._get_spot_trade(symbols, field)
         else:
             results = self._get_spot_bars(symbols, field)
@@ -382,8 +389,9 @@ class Backend(BaseBackend):
                 return np.nan
             return bars[field].values[-1]
 
+        ohlcv_field = 'close' if field == 'price' else field
         results = [
-            get_for_symbol(symbol_bars, symbol, field)
+            get_for_symbol(symbol_bars, symbol, ohlcv_field)
             for symbol in symbols
         ]
         return results

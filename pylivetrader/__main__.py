@@ -82,6 +82,13 @@ def algo_parameters(f):
             default='INFO',
             show_default=True,
             help='The minimum level of log to be written.'),
+        click.option(
+            '-q', '--quantopian-compatible',
+            default=True,
+            type=bool,
+            show_default=True,
+            help=('Set 0 if compatibility with the Quantopian platform is not '
+                  'a concern for your script.')),
         click.argument('algofile', nargs=-1),
     ]
     for opt in opts:
@@ -98,7 +105,8 @@ def process_algo_params(
         data_frequency,
         statefile,
         retry,
-        log_level):
+        log_level,
+        quantopian_compatible):
     if len(algofile) > 0:
         algofile = algofile[0]
     elif file:
@@ -126,6 +134,7 @@ def process_algo_params(
         algoname=extract_filename(algofile),
         statefile=statefile,
         log_level=log_level,
+        quantopian_compatible=quantopian_compatible,
         **functions,
     )
     ctx.algorithm = algorithm
