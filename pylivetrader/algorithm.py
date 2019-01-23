@@ -88,6 +88,7 @@ from logbook import Logger, lookup_level
 
 log = Logger('Algorithm')
 
+
 class Algorithm(object):
     """Provides algorithm compatible with zipline.
     """
@@ -103,7 +104,6 @@ class Algorithm(object):
             )
         else:
             object.__setattr__(self, name, value)
-
 
     def __init__(self, *args, **kwargs):
         '''
