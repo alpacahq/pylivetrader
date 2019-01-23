@@ -88,10 +88,22 @@ from logbook import Logger, lookup_level
 
 log = Logger('Algorithm')
 
-
-class Algorithm:
+class Algorithm(object):
     """Provides algorithm compatible with zipline.
     """
+
+    def __setattr__(self, name, value):
+        # Reject names that overlap with API method names
+        if name in [func for func in dir(Algorithm) if (
+                callable(getattr(Algorithm, func))
+        )]:
+            raise AttributeError(
+                f'Cannot set {name} on context object as it is the name of '
+                'an API method.'
+            )
+        else:
+            object.__setattr__(self, name, value)
+
 
     def __init__(self, *args, **kwargs):
         '''
