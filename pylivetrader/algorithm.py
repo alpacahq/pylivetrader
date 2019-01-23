@@ -99,8 +99,8 @@ class Algorithm(object):
                 callable(getattr(Algorithm, func))
         )]:
             raise AttributeError(
-                f'Cannot set {name} on context object as it is the name of '
-                'an API method.'
+                'Cannot set {} on context object as it is the name of '
+                'an API method.'.format(name)
             )
         else:
             object.__setattr__(self, name, value)
