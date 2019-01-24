@@ -40,7 +40,7 @@ class StateStore:
             pickle.dump(state, f)
 
     def load(self, context, checksum):
-        if not os.path.exists(self.path):
+        if not os.path.exists(self.path) or not os.stat(self.path).st_size:
             return
 
         with open(self.path, 'rb') as f:
