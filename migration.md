@@ -106,7 +106,7 @@ The implicitly imported APIs are the following.
 - set_max_order_count
 - set_max_order_size
 - set_max_position_size
-- set_max_leverage:w
+- set_max_leverage
 
 ## Checking and Testing
 Once you convert your algorithm code, you may want to check if there is

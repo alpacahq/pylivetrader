@@ -57,7 +57,7 @@ def api_method(f):
         algorithm = get_context()
         if algorithm is None:
             raise RuntimeError(
-                '{} method must be callled during live trading'.format(
+                '{} method must be called during live trading'.format(
                     f.__name__))
         return getattr(algorithm, f.__name__)(*args, **kwargs)
 
