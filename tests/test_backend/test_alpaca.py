@@ -65,7 +65,7 @@ def test_orders():
         res = backend._symbols2assets(['AAPL'])
         assert len(res) == 1
 
-        _api.get_account.return_value = Account({
+        backend._raw_account = Account({
             'account_blocked': False,
             'buying_power': '43.38',
             'cash': '35036.18',

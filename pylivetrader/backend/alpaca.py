@@ -16,6 +16,7 @@
 
 import alpaca_trade_api as tradeapi
 from alpaca_trade_api.rest import APIError
+from alpaca_trade_api.entity import Order, Account
 import concurrent.futures
 from requests.exceptions import HTTPError
 import numpy as np
@@ -165,12 +166,13 @@ class Backend(BaseBackend):
                 del self._open_orders[data.order['client_order_id']]
             else:
                 self._open_orders[data.order['client_order_id']] = (
-                    self._order2zp(tradeapi.entity.Order(data.order)))
+                    self._order2zp(Order(data.order))
+                )
 
         @conn.on(r'account_updates')
         async def handle_account_update(conn, channel, data):
             # Update account information
-            self._raw_account = data
+            self._raw_account = Account(data)
 
         conn.run(channels)
 
