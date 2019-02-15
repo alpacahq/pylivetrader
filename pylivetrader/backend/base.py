@@ -85,5 +85,5 @@ class BaseBackend(abc.ABC):
         '''
         return pd.Timedelta('0s')
 
-    def initialize_data():
+    def initialize_data(self, context):
         pass

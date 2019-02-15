@@ -144,5 +144,5 @@ class Backend:
             ),
         }
 
-    def initialize_data():
+    def initialize_data(self, context):
         pass
