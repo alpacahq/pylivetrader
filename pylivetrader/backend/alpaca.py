@@ -145,7 +145,7 @@ class Backend(BaseBackend):
 
         @conn.on(r'trade_updates')
         async def handle_trade_update(conn, channel, data):
-            if data.event in ['canceled', 'rejected', 'filled']:
+            if data.event in ['canceled', 'rejected', 'fill']:
                 del self._open_orders[data.order['client_order_id']]
             else:
                 self._open_orders[data.order['client_order_id']] = (
