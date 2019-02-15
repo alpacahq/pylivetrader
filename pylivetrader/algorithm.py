@@ -190,7 +190,6 @@ class Algorithm(object):
             prepend=True,
         )
 
-        self._account_needs_update = True
         self._portfolio_needs_update = True
 
         self._in_before_trading_start = False
@@ -212,10 +211,13 @@ class Algorithm(object):
             list(self.__dict__.keys()) + ['executor'])
         self._state_store.load(self, self._algoname)
 
+        self._backend.initialize_data(self)
+
         with LiveTraderAPI(self):
             self._initialize(self, *args, **kwargs)
             self._state_store.save(
                 self, self._algoname, self._context_persistence_excludes)
+
         self.initialized = True
 
     def handle_data(self, data):
@@ -500,14 +502,10 @@ class Algorithm(object):
 
     @property
     def account(self):
-        if self._account_needs_update:
-            self._account = self._backend.account
-            self._account_needs_update = False
-        return self._account
+        return self._backend.account
 
     def on_dt_changed(self, dt):
         self._portfolio_needs_update = True
-        self._account_needs_update = True
         self.datetime = dt
 
     @api_method
@@ -552,6 +550,7 @@ class Algorithm(object):
             return None
 
         amount = self._calculate_order_percent_amount(asset, percent)
+        print('amount:' + str(amount))
         return self.order(asset, amount,
                           limit_price=limit_price,
                           stop_price=stop_price,
@@ -565,10 +564,12 @@ class Algorithm(object):
             limit_price=None,
             stop_price=None,
             style=None):
+        print('ordering target...')
         if not self._can_order_asset(asset):
             return None
 
         amount = self._calculate_order_target_amount(asset, target)
+        print('amount:' + str(amount))
         return self.order(asset, amount,
                           limit_price=limit_price,
                           stop_price=stop_price,
@@ -621,6 +622,21 @@ class Algorithm(object):
         ]
         return self._backend.batch_order(order_args)
 
+    def _get_orders_by_assets(self, orders, asset):
+        omap = {}
+        sorted_orders = sorted([
+            o for o in orders.values()
+        ], key=lambda o: o.dt)
+        for order in sorted_orders:
+            key = order.asset
+            if key not in omap:
+                omap[key] = []
+            omap[key].append(order.to_api_obj())
+
+        if asset is None:
+            return omap
+        return omap.get(asset, [])
+
     @api_method
     def get_open_orders(self, asset=None):
         '''
@@ -629,7 +645,9 @@ class Algorithm(object):
         oldest first. If an asset is specified, returns a list of open
         orders for that asset, oldest first.
         '''
-        return self.get_all_orders(asset=asset, status='open')
+        orders = self._backend.open_orders
+        print(orders)
+        return self._get_orders_by_assets(orders, asset)
 
     @api_method
     def get_recent_orders(self, days_back=2):
@@ -654,20 +672,7 @@ class Algorithm(object):
         status ('closed' or 'open') will be returned.
         '''
         orders = self._backend.all_orders(before, status, days_back)
-
-        omap = {}
-        orders = sorted([
-            o for o in orders.values()
-        ], key=lambda o: o.dt)
-        for order in orders:
-            key = order.asset
-            if key not in omap:
-                omap[key] = []
-            omap[key].append(order.to_api_obj())
-
-        if asset is None:
-            return omap
-        return omap.get(asset, [])
+        return self._get_orders_by_assets(orders, asset)
 
     @api_method
     def get_order(self, order_id):

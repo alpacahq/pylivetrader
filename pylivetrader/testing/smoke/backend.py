@@ -213,6 +213,9 @@ class Backend(BaseBackend):
     def get_bars(self, assets, data_frequency, bar_count=500):
         return self._data_proxy.get_bars(assets, data_frequency, bar_count)
 
+    def initialize_data():
+        pass
+
 
 class FakeDataBackend:
     '''A data backend that generates synthesic sin wave price data

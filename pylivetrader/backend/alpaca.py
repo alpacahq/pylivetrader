@@ -32,6 +32,8 @@ import uuid
 from .base import BaseBackend
 
 from pylivetrader.api import symbol as symbol_lookup
+
+from pylivetrader.misc.api_context import set_context
 import pylivetrader.protocol as zp
 from pylivetrader.finance.order import (
     Order as ZPOrder,
@@ -49,6 +51,8 @@ from pylivetrader.assets import Equity
 
 from logbook import Logger
 
+from threading import Thread
+import asyncio
 
 log = Logger('Alpaca')
 
@@ -113,8 +117,68 @@ def parallelize(mapfunc, workers=10):
 class Backend(BaseBackend):
 
     def __init__(self, key_id=None, secret=None, base_url=None):
+        self._key_id = key_id
+        self._secret = secret
+        self._base_url = base_url
         self._api = tradeapi.REST(key_id, secret, base_url)
         self._cal = get_calendar('NYSE')
+
+        self._raw_account = self._api.get_account()
+        print(self._raw_account)
+
+        # This dictionary handles orders intended to take a position from
+        # net long to net short or vice versa
+        # TODO: save this in pickle
+        self._orders_pending_submission = {}
+        self.open_orders = {}
+
+    def initialize_data(self, context):
+        # Load all open orders
+        self.open_orders = self.all_orders(status='open')
+
+        # Open a websocket stream to get updates in real time
+        stream_process = Thread(target=self._get_stream, daemon=True, args=(context,))
+        stream_process.start()
+
+    def _get_stream(self, context):
+        set_context(context)
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        conn = tradeapi.StreamConn(self._key_id, self._secret, self._base_url)
+        channels = ['trade_updates', 'account_updates']
+
+        @conn.on(r'trade_updates')
+        async def handle_trade_update(conn, channel, data):
+            print('order update received')
+            # Check for any dependent orders
+            waiting_order = self._orders_pending_submission.get(
+                data.order['client_order_id']
+            )
+            if waiting_order is not None:
+                if data.event == 'fill':
+                    # Submit the waiting order
+                    self.order(*waiting_order)
+                    del self._orders_pending_submission[
+                            data.order['client_order_id']
+                        ]
+                elif data.event == 'canceled' or data.event == 'rejected':
+                    # Remove the waiting order
+                    del self._orders_pending_submission[
+                            data.order['client_order_id']
+                        ]
+
+            if data.event == 'canceled' or data.event == 'rejected':
+                del self.open_orders[data.order['client_order_id']]
+            else:
+                self.open_orders[data.order['client_order_id']] = (
+                    self._order2zp(tradeapi.entity.Order(data.order)))
+
+        @conn.on(r'account_updates')
+        async def handle_account_update(conn, channel, data):
+            # Update account information
+            print('got account update')
+            self._raw_account = data
+
+        conn.run(channels)
 
     def _symbols2assets(self, symbols):
         '''
@@ -188,7 +252,7 @@ class Backend(BaseBackend):
 
     @property
     def portfolio(self):
-        account = self._api.get_account()
+        account = self._raw_account
         z_portfolio = zp.Portfolio()
         z_portfolio.cash = float(account.cash)
         z_portfolio.positions = self.positions
@@ -199,11 +263,12 @@ class Backend(BaseBackend):
 
     @property
     def account(self):
-        account = self._api.get_account()
+        account = self._raw_account
         z_account = zp.Account()
         z_account.buying_power = float(account.buying_power)
         z_account.total_position_value = float(
-            account.portfolio_value) - float(account.cash)
+            account.equity) - float(account.cash)
+        z_account.day_trades_remaining = 4 - int(account.daytrades_remaining)
         return z_account
 
     def _order2zp(self, order):
@@ -234,7 +299,22 @@ class Backend(BaseBackend):
 
     def order(self, asset, amount, style):
         symbol = asset.symbol
-        qty = amount if amount > 0 else -amount
+        current_position = self.positions[symbol]
+        zp_order_id = self._new_order_id()
+        if (
+            abs(amount) > abs(current_position.amount) and
+            amount * current_position.amount < 0
+        ):
+            # The order would take us from a long position to a short position
+            # or vice versa and needs to be broken up
+            self._orders_pending_submission[zp_order_id] = (
+                asset,
+                amount + current_position.amount,
+                style
+            )
+            amount = -1 * current_position.amount
+        qty = abs(amount)
+
         side = 'buy' if amount > 0 else 'sell'
         order_type = 'market'
         if isinstance(style, MarketOrder):
@@ -248,8 +328,6 @@ class Backend(BaseBackend):
 
         limit_price = style.get_limit_price(side == 'buy') or None
         stop_price = style.get_stop_price(side == 'buy') or None
-
-        zp_order_id = self._new_order_id()
 
         log.debug(
             ('submitting {} order for {} - '
@@ -274,6 +352,7 @@ class Backend(BaseBackend):
                 client_order_id=zp_order_id,
             )
             zp_order = self._order2zp(order)
+            self.open_orders[zp_order_id] = zp_order
             return zp_order
         except APIError as e:
             log.warning('order for symbol {} is rejected {}'.format(
@@ -290,9 +369,14 @@ class Backend(BaseBackend):
         }
 
     def get_order(self, zp_order_id):
-        return self._order2zp(
-            self._api.get_order_by_client_order_id(zp_order_id)
-        )
+        order = None
+        try:
+            order = self.open_orders[zp_order_id]
+        except Exception as e:
+            # Order was not found in our open order list, may be closed
+            order = self._order2zp(
+                self._api.get_order_by_client_order_id(zp_order_id))
+        return order
 
     def all_orders(self, before=None, status='all', days_back=None):
         # Get all orders submitted days_back days before `before` or now.
@@ -335,6 +419,7 @@ class Backend(BaseBackend):
             order = self._api.get_order_by_client_order_id(zp_order_id)
             self._api.cancel_order(order.id)
         except Exception as e:
+            print('Error: Could not cancel order {}'.format(zp_order_id))
             log.error(e)
             return
 

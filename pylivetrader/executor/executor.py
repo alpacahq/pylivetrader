@@ -88,7 +88,6 @@ class AlgorithmExecutor:
             handle_data(algo, current_data, dt_to_use)
 
             algo.portfolio_needs_update = True
-            algo.account_needs_update = True
 
         def once_a_day(midnight_dt, current_data=self.current_data,
                        data_portal=self.data_portal):
