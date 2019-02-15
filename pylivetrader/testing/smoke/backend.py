@@ -327,3 +327,6 @@ class FakeDataBackend:
         if self._clock is not None:
             return self._clock.now
         return pd.Timestamp.now(tz='America/New_York')
+
+    def initialize_data():
+        pass
