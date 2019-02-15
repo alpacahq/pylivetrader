@@ -145,24 +145,7 @@ class Backend(BaseBackend):
 
         @conn.on(r'trade_updates')
         async def handle_trade_update(conn, channel, data):
-            # Check for any dependent orders
-            waiting_order = self._orders_pending_submission.get(
-                data.order['client_order_id']
-            )
-            if waiting_order is not None:
-                if data.event == 'fill':
-                    # Submit the waiting order
-                    self.order(*waiting_order)
-                    del self._orders_pending_submission[
-                            data.order['client_order_id']
-                        ]
-                elif data.event == 'canceled' or data.event == 'rejected':
-                    # Remove the waiting order
-                    del self._orders_pending_submission[
-                            data.order['client_order_id']
-                        ]
-
-            if data.event == 'canceled' or data.event == 'rejected':
+            if data.event in ['canceled', 'rejected', 'filled']:
                 del self._open_orders[data.order['client_order_id']]
             else:
                 self._open_orders[data.order['client_order_id']] = (
