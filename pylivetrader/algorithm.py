@@ -619,21 +619,6 @@ class Algorithm(object):
         ]
         return self._backend.batch_order(order_args)
 
-    def _get_orders_by_assets(self, orders, asset):
-        omap = {}
-        sorted_orders = sorted([
-            o for o in orders.values()
-        ], key=lambda o: o.dt)
-        for order in sorted_orders:
-            key = order.asset
-            if key not in omap:
-                omap[key] = []
-            omap[key].append(order.to_api_obj())
-
-        if asset is None:
-            return omap
-        return omap.get(asset, [])
-
     @api_method
     def get_open_orders(self, asset=None):
         '''
@@ -642,8 +627,7 @@ class Algorithm(object):
         oldest first. If an asset is specified, returns a list of open
         orders for that asset, oldest first.
         '''
-        orders = self._backend.open_orders
-        return self._get_orders_by_assets(orders, asset)
+        return self.get_all_orders(asset=asset, status='open')
 
     @api_method
     def get_recent_orders(self, days_back=2):
@@ -668,7 +652,21 @@ class Algorithm(object):
         status ('closed' or 'open') will be returned.
         '''
         orders = self._backend.all_orders(before, status, days_back)
-        return self._get_orders_by_assets(orders, asset)
+
+        omap = {}
+        sorted_orders = sorted([
+            o for o in orders.values()
+        ], key=lambda o: o.dt)
+        for order in sorted_orders:
+            key = order.asset
+            if key not in omap:
+                omap[key] = []
+            omap[key].append(order.to_api_obj())
+
+        if asset is None:
+            return omap
+
+        return omap.get(asset, [])
 
     @api_method
     def get_order(self, order_id):

@@ -124,11 +124,11 @@ class Backend(BaseBackend):
         self._cal = get_calendar('NYSE')
 
         self._raw_account = self._api.get_account()
-        self.open_orders = {}
+        self._open_orders = {}
 
     def initialize_data(self, context):
         # Load all open orders
-        self.open_orders = self.all_orders(status='open')
+        self._open_orders = self.all_orders(status='open')
 
         # Open a websocket stream to get updates in real time
         stream_process = Thread(
@@ -162,9 +162,9 @@ class Backend(BaseBackend):
                         ]
 
             if data.event == 'canceled' or data.event == 'rejected':
-                del self.open_orders[data.order['client_order_id']]
+                del self._open_orders[data.order['client_order_id']]
             else:
-                self.open_orders[data.order['client_order_id']] = (
+                self._open_orders[data.order['client_order_id']] = (
                     self._order2zp(tradeapi.entity.Order(data.order)))
 
         @conn.on(r'account_updates')
@@ -334,7 +334,7 @@ class Backend(BaseBackend):
                 client_order_id=zp_order_id,
             )
             zp_order = self._order2zp(order)
-            self.open_orders[zp_order_id] = zp_order
+            self._open_orders[zp_order_id] = zp_order
             return zp_order
         except APIError as e:
             log.warning('order for symbol {} is rejected {}'.format(
@@ -353,7 +353,7 @@ class Backend(BaseBackend):
     def get_order(self, zp_order_id):
         order = None
         try:
-            order = self.open_orders[zp_order_id]
+            order = self._open_orders[zp_order_id]
         except Exception:
             # Order was not found in our open order list, may be closed
             order = self._order2zp(
@@ -361,6 +361,10 @@ class Backend(BaseBackend):
         return order
 
     def all_orders(self, before=None, status='all', days_back=None):
+        # Check if the open order list is being asked for
+        if status == 'open' and before is None and days_back is None:
+            return self._open_orders
+
         # Get all orders submitted days_back days before `before` or now.
         now = pd.Timestamp.utcnow()
         start = now.isoformat() if before is None else before.isoformat()
