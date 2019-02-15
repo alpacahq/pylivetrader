@@ -16,7 +16,7 @@
 
 import alpaca_trade_api as tradeapi
 from alpaca_trade_api.rest import APIError
-from alpaca_trade_api.entity import Order, Account
+from alpaca_trade_api.entity import Order
 import concurrent.futures
 from requests.exceptions import HTTPError
 import numpy as np
