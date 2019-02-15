@@ -131,7 +131,9 @@ class Backend(BaseBackend):
         self.open_orders = self.all_orders(status='open')
 
         # Open a websocket stream to get updates in real time
-        stream_process = Thread(target=self._get_stream, daemon=True, args=(context,))
+        stream_process = Thread(
+            target=self._get_stream, daemon=True, args=(context,)
+        )
         stream_process.start()
 
     def _get_stream(self, context):
@@ -290,7 +292,6 @@ class Backend(BaseBackend):
 
     def order(self, asset, amount, style):
         symbol = asset.symbol
-        current_position = self.positions[symbol]
         zp_order_id = self._new_order_id()
         qty = amount if amount > 0 else -amount
 
@@ -353,7 +354,7 @@ class Backend(BaseBackend):
         order = None
         try:
             order = self.open_orders[zp_order_id]
-        except Exception as e:
+        except Exception:
             # Order was not found in our open order list, may be closed
             order = self._order2zp(
                 self._api.get_order_by_client_order_id(zp_order_id))
