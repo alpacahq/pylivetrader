@@ -123,12 +123,12 @@ class Backend(BaseBackend):
         self._api = tradeapi.REST(key_id, secret, base_url)
         self._cal = get_calendar('NYSE')
 
-        self._raw_account = self._api.get_account()
         self._open_orders = {}
 
     def initialize_data(self, context):
         # Load all open orders
         self._open_orders = self.all_orders(status='open')
+        self._raw_account = self._api.get_account()
 
         # Open a websocket stream to get updates in real time
         stream_process = Thread(
