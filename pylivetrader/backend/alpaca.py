@@ -129,7 +129,6 @@ class Backend(BaseBackend):
     def initialize_data(self, context):
         # Load all open orders
         self._open_orders = self.all_orders(status='open')
-        self._raw_account = self._api.get_account()
 
         # Open a websocket stream to get updates in real time
         stream_process = Thread(
@@ -141,7 +140,7 @@ class Backend(BaseBackend):
         set_context(context)
         asyncio.set_event_loop(asyncio.new_event_loop())
         conn = tradeapi.StreamConn(self._key_id, self._secret, self._base_url)
-        channels = ['trade_updates', 'account_updates']
+        channels = ['trade_updates']
 
         @conn.on(r'trade_updates')
         async def handle_trade_update(conn, channel, data):
@@ -151,11 +150,6 @@ class Backend(BaseBackend):
                 self._open_orders[data.order['client_order_id']] = (
                     self._order2zp(Order(data.order))
                 )
-
-        @conn.on(r'account_updates')
-        async def handle_account_update(conn, channel, data):
-            # Update account information
-            self._raw_account = Account(data)
 
         conn.run(channels)
 
@@ -231,7 +225,7 @@ class Backend(BaseBackend):
 
     @property
     def portfolio(self):
-        account = self._raw_account
+        account = self._api.get_account()
         z_portfolio = zp.Portfolio()
         z_portfolio.cash = float(account.cash)
         z_portfolio.positions = self.positions
@@ -242,7 +236,7 @@ class Backend(BaseBackend):
 
     @property
     def account(self):
-        account = self._raw_account
+        account = self._api.get_account()
         z_account = zp.Account()
         z_account.buying_power = float(account.buying_power)
         z_account.total_position_value = float(

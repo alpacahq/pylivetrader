@@ -190,6 +190,7 @@ class Algorithm(object):
             prepend=True,
         )
 
+        self._account_needs_update = True
         self._portfolio_needs_update = True
 
         self._in_before_trading_start = False
@@ -502,10 +503,14 @@ class Algorithm(object):
 
     @property
     def account(self):
-        return self._backend.account
+        if self._account_needs_update:
+            self._account = self._backend.account
+            self._account_needs_update = False
+        return self._account
 
     def on_dt_changed(self, dt):
         self._portfolio_needs_update = True
+        self._account_needs_update = True
         self.datetime = dt
 
     @api_method
