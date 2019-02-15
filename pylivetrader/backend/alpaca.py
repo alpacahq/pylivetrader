@@ -124,12 +124,6 @@ class Backend(BaseBackend):
         self._cal = get_calendar('NYSE')
 
         self._raw_account = self._api.get_account()
-        print(self._raw_account)
-
-        # This dictionary handles orders intended to take a position from
-        # net long to net short or vice versa
-        # TODO: save this in pickle
-        self._orders_pending_submission = {}
         self.open_orders = {}
 
     def initialize_data(self, context):
@@ -148,7 +142,6 @@ class Backend(BaseBackend):
 
         @conn.on(r'trade_updates')
         async def handle_trade_update(conn, channel, data):
-            print('order update received')
             # Check for any dependent orders
             waiting_order = self._orders_pending_submission.get(
                 data.order['client_order_id']
@@ -175,7 +168,6 @@ class Backend(BaseBackend):
         @conn.on(r'account_updates')
         async def handle_account_update(conn, channel, data):
             # Update account information
-            print('got account update')
             self._raw_account = data
 
         conn.run(channels)
@@ -267,8 +259,7 @@ class Backend(BaseBackend):
         z_account = zp.Account()
         z_account.buying_power = float(account.buying_power)
         z_account.total_position_value = float(
-            account.equity) - float(account.cash)
-        z_account.day_trades_remaining = 4 - int(account.daytrades_remaining)
+            account.portfolio_value) - float(account.cash)
         return z_account
 
     def _order2zp(self, order):
@@ -301,19 +292,7 @@ class Backend(BaseBackend):
         symbol = asset.symbol
         current_position = self.positions[symbol]
         zp_order_id = self._new_order_id()
-        if (
-            abs(amount) > abs(current_position.amount) and
-            amount * current_position.amount < 0
-        ):
-            # The order would take us from a long position to a short position
-            # or vice versa and needs to be broken up
-            self._orders_pending_submission[zp_order_id] = (
-                asset,
-                amount + current_position.amount,
-                style
-            )
-            amount = -1 * current_position.amount
-        qty = abs(amount)
+        qty = amount if amount > 0 else -amount
 
         side = 'buy' if amount > 0 else 'sell'
         order_type = 'market'
@@ -328,6 +307,8 @@ class Backend(BaseBackend):
 
         limit_price = style.get_limit_price(side == 'buy') or None
         stop_price = style.get_stop_price(side == 'buy') or None
+
+        zp_order_id = self._new_order_id()
 
         log.debug(
             ('submitting {} order for {} - '

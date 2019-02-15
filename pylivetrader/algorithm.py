@@ -550,7 +550,6 @@ class Algorithm(object):
             return None
 
         amount = self._calculate_order_percent_amount(asset, percent)
-        print('amount:' + str(amount))
         return self.order(asset, amount,
                           limit_price=limit_price,
                           stop_price=stop_price,
@@ -564,12 +563,10 @@ class Algorithm(object):
             limit_price=None,
             stop_price=None,
             style=None):
-        print('ordering target...')
         if not self._can_order_asset(asset):
             return None
 
         amount = self._calculate_order_target_amount(asset, target)
-        print('amount:' + str(amount))
         return self.order(asset, amount,
                           limit_price=limit_price,
                           stop_price=stop_price,
@@ -646,7 +643,6 @@ class Algorithm(object):
         orders for that asset, oldest first.
         '''
         orders = self._backend.open_orders
-        print(orders)
         return self._get_orders_by_assets(orders, asset)
 
     @api_method
