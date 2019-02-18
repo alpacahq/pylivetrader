@@ -18,7 +18,7 @@ import pickle
 import os
 
 try:
-    from redis import Redis
+    import redis
 except ImportError:
     pass
 
@@ -50,11 +50,11 @@ class RedisStore(object):
 
     def __init__(self):
         try:
-            Redis
+            redis
         except NameError:
             raise ValueError("Redis was not installed, please install the redis module.")
 
-        self.redis = Redis()
+        self.redis = redis.from_url(os.getenv('REDIS_URL', 'redis://localhost:6379'))
 
     def save(self, state):
         self.redis.set(self.REDIS_STATE_KEY, pickle.dumps(state))
