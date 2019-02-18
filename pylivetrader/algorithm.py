@@ -81,7 +81,7 @@ from pylivetrader.misc.input_validation import (
     expect_dtypes,
     optional,
 )
-from pylivetrader.statestore import StateStore
+from pylivetrader.statestore import StateStore, FileStore, RedisStore
 
 from logbook import Logger, lookup_level
 
@@ -115,6 +115,7 @@ class Algorithm(object):
         handle_data: handle_data function
         before_trading_start: before_trading_start function
         log_level: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
+        storage_engine: 'file', 'redis'
         '''
         log.level = lookup_level(kwargs.pop('log_level', 'INFO'))
         self._recorded_vars = {}
@@ -126,10 +127,15 @@ class Algorithm(object):
 
         self.quantopian_compatible = kwargs.pop('quantopian_compatible', True)
 
-        self._state_store = StateStore(
-            kwargs.pop('statefile', None) or
-            '{}-state.pkl'.format(self._algoname)
-        )
+        storage_engine = kwargs.pop('storage_engine', 'file')
+        if storage_engine == 'redis':
+            storage_engine = RedisStore()
+        else:
+            storage_engine = FileStore(
+                kwargs.pop('statefile', None) or
+                '{}-state.pkl'.format(self._algoname)
+            )
+        self._state_store = StateStore(storage_engine=storage_engine)
 
         self._pipelines = {}
 

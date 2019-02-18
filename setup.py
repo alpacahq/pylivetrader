@@ -60,5 +60,7 @@ setup(
         'pytest-cov',
     ],
     setup_requires=["flake8", "pytest-runner"],
-    extras_require={}
+    extras_require={
+        "redis": ["redis"]
+    }
 )
