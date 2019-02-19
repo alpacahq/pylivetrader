@@ -125,6 +125,7 @@ class Backend(BaseBackend):
         self._cal = get_calendar('NYSE')
 
         self._open_orders = {}
+        self._orders_pending_submission = {}
 
     def initialize_data(self, context):
         # Load all open orders
@@ -144,6 +145,23 @@ class Backend(BaseBackend):
 
         @conn.on(r'trade_updates')
         async def handle_trade_update(conn, channel, data):
+            # Check for any pending orders
+            waiting_order = self._orders_pending_submission.get(
+                data.order['client_order_id']
+            )
+            if waiting_order is not None:
+                if data.event == 'fill':
+                    # Submit the waiting order
+                    self.order(*waiting_order)
+                    del self._orders_pending_submission[
+                            data.order['client_order_id']
+                        ]
+                elif data.event in ['canceled', 'rejected']:
+                    # Remove the waiting order
+                    del self._orders_pending_submission[
+                            data.order['client_order_id']
+                        ]
+
             if data.event in ['canceled', 'rejected', 'fill']:
                 del self._open_orders[data.order['client_order_id']]
             else:
@@ -272,6 +290,21 @@ class Backend(BaseBackend):
     def order(self, asset, amount, style):
         symbol = asset.symbol
         zp_order_id = self._new_order_id()
+
+        current_position = self.positions[symbol]
+        if (
+            abs(amount) > abs(current_position.amount) and
+            amount * current_position.amount < 0
+        ):
+            # The order would take us from a long position to a short position
+            # or vice versa and needs to be broken up
+            self._orders_pending_submission[zp_order_id] = (
+                asset,
+                amount + current_position.amount,
+                style
+            )
+            amount = -1 * current_position.amount
+
         qty = amount if amount > 0 else -amount
 
         side = 'buy' if amount > 0 else 'sell'
@@ -287,8 +320,6 @@ class Backend(BaseBackend):
 
         limit_price = style.get_limit_price(side == 'buy') or None
         stop_price = style.get_stop_price(side == 'buy') or None
-
-        zp_order_id = self._new_order_id()
 
         log.debug(
             ('submitting {} order for {} - '
