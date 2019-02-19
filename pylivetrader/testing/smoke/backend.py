@@ -213,6 +213,9 @@ class Backend(BaseBackend):
     def get_bars(self, assets, data_frequency, bar_count=500):
         return self._data_proxy.get_bars(assets, data_frequency, bar_count)
 
+    def initialize_data(self, context):
+        pass
+
 
 class FakeDataBackend:
     '''A data backend that generates synthesic sin wave price data
@@ -324,3 +327,6 @@ class FakeDataBackend:
         if self._clock is not None:
             return self._clock.now
         return pd.Timestamp.now(tz='America/New_York')
+
+    def initialize_data(self, context):
+        pass

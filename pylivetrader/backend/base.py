@@ -84,3 +84,6 @@ class BaseBackend(abc.ABC):
                 Time skew between local clock and broker server clock
         '''
         return pd.Timedelta('0s')
+
+    def initialize_data(self, context):
+        pass

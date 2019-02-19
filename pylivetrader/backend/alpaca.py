@@ -16,6 +16,7 @@
 
 import alpaca_trade_api as tradeapi
 from alpaca_trade_api.rest import APIError
+from alpaca_trade_api.entity import Order
 import concurrent.futures
 from requests.exceptions import HTTPError
 import numpy as np
@@ -32,6 +33,8 @@ import uuid
 from .base import BaseBackend
 
 from pylivetrader.api import symbol as symbol_lookup
+
+from pylivetrader.misc.api_context import set_context
 import pylivetrader.protocol as zp
 from pylivetrader.finance.order import (
     Order as ZPOrder,
@@ -49,6 +52,8 @@ from pylivetrader.assets import Equity
 
 from logbook import Logger
 
+from threading import Thread
+import asyncio
 
 log = Logger('Alpaca')
 
@@ -113,8 +118,40 @@ def parallelize(mapfunc, workers=10):
 class Backend(BaseBackend):
 
     def __init__(self, key_id=None, secret=None, base_url=None):
+        self._key_id = key_id
+        self._secret = secret
+        self._base_url = base_url
         self._api = tradeapi.REST(key_id, secret, base_url)
         self._cal = get_calendar('NYSE')
+
+        self._open_orders = {}
+
+    def initialize_data(self, context):
+        # Load all open orders
+        self._open_orders = self.all_orders(status='open')
+
+        # Open a websocket stream to get updates in real time
+        stream_process = Thread(
+            target=self._get_stream, daemon=True, args=(context,)
+        )
+        stream_process.start()
+
+    def _get_stream(self, context):
+        set_context(context)
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        conn = tradeapi.StreamConn(self._key_id, self._secret, self._base_url)
+        channels = ['trade_updates']
+
+        @conn.on(r'trade_updates')
+        async def handle_trade_update(conn, channel, data):
+            if data.event in ['canceled', 'rejected', 'fill']:
+                del self._open_orders[data.order['client_order_id']]
+            else:
+                self._open_orders[data.order['client_order_id']] = (
+                    self._order2zp(Order(data.order))
+                )
+
+        conn.run(channels)
 
     def _symbols2assets(self, symbols):
         '''
@@ -234,7 +271,9 @@ class Backend(BaseBackend):
 
     def order(self, asset, amount, style):
         symbol = asset.symbol
+        zp_order_id = self._new_order_id()
         qty = amount if amount > 0 else -amount
+
         side = 'buy' if amount > 0 else 'sell'
         order_type = 'market'
         if isinstance(style, MarketOrder):
@@ -274,6 +313,7 @@ class Backend(BaseBackend):
                 client_order_id=zp_order_id,
             )
             zp_order = self._order2zp(order)
+            self._open_orders[zp_order_id] = zp_order
             return zp_order
         except APIError as e:
             log.warning('order for symbol {} is rejected {}'.format(
@@ -290,11 +330,20 @@ class Backend(BaseBackend):
         }
 
     def get_order(self, zp_order_id):
-        return self._order2zp(
-            self._api.get_order_by_client_order_id(zp_order_id)
-        )
+        order = None
+        try:
+            order = self._open_orders[zp_order_id]
+        except Exception:
+            # Order was not found in our open order list, may be closed
+            order = self._order2zp(
+                self._api.get_order_by_client_order_id(zp_order_id))
+        return order
 
     def all_orders(self, before=None, status='all', days_back=None):
+        # Check if the open order list is being asked for
+        if status == 'open' and before is None and days_back is None:
+            return self._open_orders
+
         # Get all orders submitted days_back days before `before` or now.
         now = pd.Timestamp.utcnow()
         start = now.isoformat() if before is None else before.isoformat()
@@ -335,6 +384,7 @@ class Backend(BaseBackend):
             order = self._api.get_order_by_client_order_id(zp_order_id)
             self._api.cancel_order(order.id)
         except Exception as e:
+            print('Error: Could not cancel order {}'.format(zp_order_id))
             log.error(e)
             return
 

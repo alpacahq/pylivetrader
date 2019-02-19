@@ -212,10 +212,13 @@ class Algorithm(object):
             list(self.__dict__.keys()) + ['executor'])
         self._state_store.load(self, self._algoname)
 
+        self._backend.initialize_data(self)
+
         with LiveTraderAPI(self):
             self._initialize(self, *args, **kwargs)
             self._state_store.save(
                 self, self._algoname, self._context_persistence_excludes)
+
         self.initialized = True
 
     def handle_data(self, data):
@@ -656,10 +659,10 @@ class Algorithm(object):
         orders = self._backend.all_orders(before, status, days_back)
 
         omap = {}
-        orders = sorted([
+        sorted_orders = sorted([
             o for o in orders.values()
         ], key=lambda o: o.dt)
-        for order in orders:
+        for order in sorted_orders:
             key = order.asset
             if key not in omap:
                 omap[key] = []
@@ -667,6 +670,7 @@ class Algorithm(object):
 
         if asset is None:
             return omap
+
         return omap.get(asset, [])
 
     @api_method

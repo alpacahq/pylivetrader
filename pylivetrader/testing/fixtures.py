@@ -143,3 +143,6 @@ class Backend:
                 id='o03',
             ),
         }
+
+    def initialize_data(self, context):
+        pass
