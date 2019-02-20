@@ -121,7 +121,7 @@ class Backend(BaseBackend):
         self._key_id = key_id
         self._secret = secret
         self._base_url = base_url
-        self._api = tradeapi.REST(key_id, secret, base_url)
+        self._api = tradeapi.REST(key_id, secret, base_url, api_version='v2')
         self._cal = get_calendar('NYSE')
 
         self._open_orders = {}
