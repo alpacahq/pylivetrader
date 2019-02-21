@@ -51,6 +51,20 @@ key_id: BROKER_API_KEY
 secret: BROKER_SECRET
 ```
 
+### Usage with redis
+
+If you are running pylivetrader in an environment with an ephemeral file store and need your context
+to persist across restarts, you can use the redis storage engine. This is useful if you launch in a
+place like heroku.
+
+To use this, everything is the same as above, except the `run` command looks like the following:
+
+```sh
+$ pylivetrader run -f algo.py --backend-config config.yaml --storage-engine redis
+```
+
+Assuming you have redis running, this will now serialize your context object to and from redis.
+
 ## Installation
 
 Install with pip. **pylivetrader currently supports Python 3.5, 3.6 and 3.7+**
