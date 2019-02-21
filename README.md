@@ -57,7 +57,13 @@ If you are running pylivetrader in an environment with an ephemeral file store a
 to persist across restarts, you can use the redis storage engine. This is useful if you launch in a
 place like heroku.
 
-To use this, everything is the same as above, except the `run` command looks like the following:
+To use this, you must install the redis-py library.
+
+```sh
+$ pip install redis
+```
+
+After that everything is the same as above, except the `run` command looks like the following:
 
 ```sh
 $ pylivetrader run -f algo.py --backend-config config.yaml --storage-engine redis
