@@ -136,7 +136,7 @@ class Backend(BaseBackend):
         # Load all open orders
         existing_orders = self.all_orders(status='open', initialize=True)
         for k, v in existing_orders.items():
-            if self._open_orders.get(k) != None:
+            if self._open_orders.get(k) is not None:
                 self._open_orders[k] += v
             else:
                 self._open_orders[k] = v
