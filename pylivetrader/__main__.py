@@ -83,6 +83,12 @@ def algo_parameters(f):
             show_default=True,
             help='The minimum level of log to be written.'),
         click.option(
+            '--storage-engine',
+            type=click.Choice({'file', 'redis'}),
+            default='file',
+            show_default=True,
+            help='The storage engine to use to persist context.'),
+        click.option(
             '-q', '--quantopian-compatible',
             default=True,
             type=bool,
@@ -106,6 +112,7 @@ def process_algo_params(
         statefile,
         retry,
         log_level,
+        storage_engine,
         quantopian_compatible):
     if len(algofile) > 0:
         algofile = algofile[0]
@@ -134,6 +141,7 @@ def process_algo_params(
         algoname=extract_filename(algofile),
         statefile=statefile,
         log_level=log_level,
+        storage_engine=storage_engine,
         quantopian_compatible=quantopian_compatible,
         **functions,
     )
