@@ -4,9 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pandas = "==0.22.0"
+numpy = ">1.16"
 alpaca-trade-api = "==0.25"
-pylivetrader = "==0.0.24"
+pylivetrader = "==0.0.25"
 pipeline-live = "==0.1.4"
 
 [dev-packages]
