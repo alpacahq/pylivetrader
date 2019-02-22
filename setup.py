@@ -43,7 +43,7 @@ setup(
     pylivetrader=pylivetrader.__main__:main
     ''',
     install_requires=[
-        'pandas',
+        'pandas<0.24.0',
         'numpy',
         'pytz',
         'logbook',
