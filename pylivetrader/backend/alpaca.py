@@ -127,14 +127,19 @@ class Backend(BaseBackend):
         self._open_orders = {}
 
     def initialize_data(self, context):
-        # Load all open orders
-        self._open_orders = self.all_orders(status='open')
-
         # Open a websocket stream to get updates in real time
         stream_process = Thread(
             target=self._get_stream, daemon=True, args=(context,)
         )
         stream_process.start()
+
+        # Load all open orders
+        existing_orders = self.all_orders(status='open', initialize=True)
+        for k, v in existing_orders.items():
+            if self._open_orders.get(k) is not None:
+                self._open_orders[k] += v
+            else:
+                self._open_orders[k] = v
 
     def _get_stream(self, context):
         set_context(context)
@@ -339,9 +344,15 @@ class Backend(BaseBackend):
                 self._api.get_order_by_client_order_id(zp_order_id))
         return order
 
-    def all_orders(self, before=None, status='all', days_back=None):
+    def all_orders(
+            self,
+            before=None,
+            status='all',
+            days_back=None,
+            initialize=False):
         # Check if the open order list is being asked for
-        if status == 'open' and before is None and days_back is None:
+        if (not initialize and status == 'open'
+           and before is None and days_back is None):
             return self._open_orders
 
         # Get all orders submitted days_back days before `before` or now.
