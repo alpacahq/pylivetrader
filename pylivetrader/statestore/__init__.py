@@ -25,6 +25,7 @@ except ImportError:
 VERSION_LABEL = '_stateversion_'
 CHECKSUM_KEY = '__state_checksum'
 
+
 class FileStore(object):
     def __init__(self, path):
         self.path = path
@@ -45,6 +46,7 @@ class FileStore(object):
     def can_load(self):
         return os.path.exists(self.path) and os.stat(self.path).st_size
 
+
 class RedisStore(object):
     REDIS_STATE_KEY = 'pylivetrader_redis_state'
 
@@ -52,9 +54,13 @@ class RedisStore(object):
         try:
             redis
         except NameError:
-            raise ValueError("Redis was not installed, please install the redis module.")
+            raise ValueError(
+                "Redis was not installed, please install the redis module."
+            )
 
-        self.redis = redis.from_url(os.getenv('REDIS_URL', 'redis://localhost:6379'))
+        self.redis = redis.from_url(
+            os.getenv('REDIS_URL', 'redis://localhost:6379')
+        )
 
     def save(self, state):
         self.redis.set(self.REDIS_STATE_KEY, pickle.dumps(state))
@@ -68,6 +74,7 @@ class RedisStore(object):
 
     def can_load(self):
         return self.redis.exists(self.REDIS_STATE_KEY)
+
 
 class StateStore:
 
