@@ -223,23 +223,23 @@ if __name__ == '__main__':
     test_algo()
 ```
 
-This exercises the algorithm code by harnessing synthesic backend and price data.
+This exercises the algorithm code by harnessing synthetic backend and price data.
 The `pylivetrader.testing.smoke` package provides the backend and simulator
 clock classes so that it simulates a market day from open to close.
 
 By default, the backend creates a universe with 50 stocks ('A' .. 'AX').
-For each symbol, you can query synthesic historical price, and orders
+For each symbol, you can query synthetic historical price, and orders
 are managed within this simulator without having to set up a real remote
 backend API. Additionally, you can hook up a couple of code injection
 points such as `before_run_hook` and `pipeline_hook`. In this example,
 the setup code creates a pre-populated position in the backend so you can
 test the algorithm code path that accepts existing positions.
 
-A `DefaultPipelineHooker` instance can return a synthesic pipeline result
+A `DefaultPipelineHooker` instance can return a synthetic pipeline result
 with the same column names/types, inferred from the pipeline object
 given in the `attach_pipeline` API.
 
 Again, the purpose of this smoke testing is to actually exercise various
-code path to make sure there is no easy mistakes. This code works well
-with standard test framework such as `pytest` and you can easily report
+code paths to make sure there are no easy mistakes. This code works well
+with standard test frameworks such as `pytest` and you can easily report
 line coverage using those frameworks too.
