@@ -44,7 +44,7 @@ setup(
     ''',
     install_requires=[
         'pandas<0.24.0',
-        'numpy<1.15.0',
+        'numpy',
         'pytz',
         'logbook',
         'astor',
@@ -60,5 +60,7 @@ setup(
         'pytest-cov',
     ],
     setup_requires=["flake8", "pytest-runner"],
-    extras_require={}
+    extras_require={
+        "redis": ["redis"]
+    }
 )

@@ -51,6 +51,26 @@ key_id: BROKER_API_KEY
 secret: BROKER_SECRET
 ```
 
+### Usage with redis
+
+If you are running pylivetrader in an environment with an ephemeral file store and need your context
+to persist across restarts, you can use the redis storage engine. This is useful if you launch in a
+place like heroku.
+
+To use this, you must install the redis-py library.
+
+```sh
+$ pip install redis
+```
+
+After that everything is the same as above, except the `run` command looks like the following:
+
+```sh
+$ pylivetrader run -f algo.py --backend-config config.yaml --storage-engine redis
+```
+
+Assuming you have redis running, this will now serialize your context object to and from redis.
+
 ## Installation
 
 Install with pip. **pylivetrader currently supports Python 3.5, 3.6 and 3.7+**
@@ -77,6 +97,7 @@ The options are as follows.
 - `-f` or `--file`: the file path to the algorithm source
 - `-b` or `--backend`: the name of backend to use
 - `--backend-config`: the yaml file for backend parameters
+- `--storage-engine`: the storage engine to use for persisting the context. ('file' or 'redis')
 - `-s` or `--statefile`: the file path to the persisted state file (look for the State Management section below)
 - `-r` or `--retry`: the algorithm runner continues execution in the event a general exception is raised
 - `-l` or `--log-level`: the minimum level of log which will be written ('DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL')
@@ -202,23 +223,23 @@ if __name__ == '__main__':
     test_algo()
 ```
 
-This exercises the algorithm code by harnessing synthesic backend and price data.
+This exercises the algorithm code by harnessing synthetic backend and price data.
 The `pylivetrader.testing.smoke` package provides the backend and simulator
 clock classes so that it simulates a market day from open to close.
 
 By default, the backend creates a universe with 50 stocks ('A' .. 'AX').
-For each symbol, you can query synthesic historical price, and orders
+For each symbol, you can query synthetic historical price, and orders
 are managed within this simulator without having to set up a real remote
 backend API. Additionally, you can hook up a couple of code injection
 points such as `before_run_hook` and `pipeline_hook`. In this example,
 the setup code creates a pre-populated position in the backend so you can
 test the algorithm code path that accepts existing positions.
 
-A `DefaultPipelineHooker` instance can return a synthesic pipeline result
+A `DefaultPipelineHooker` instance can return a synthetic pipeline result
 with the same column names/types, inferred from the pipeline object
 given in the `attach_pipeline` API.
 
 Again, the purpose of this smoke testing is to actually exercise various
-code path to make sure there is no easy mistakes. This code works well
-with standard test framework such as `pytest` and you can easily report
+code paths to make sure there are no easy mistakes. This code works well
+with standard test frameworks such as `pytest` and you can easily report
 line coverage using those frameworks too.
