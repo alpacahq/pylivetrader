@@ -117,11 +117,19 @@ def parallelize(mapfunc, workers=10):
 
 class Backend(BaseBackend):
 
-    def __init__(self, key_id=None, secret=None, base_url=None):
+    def __init__(
+        self,
+        key_id=None,
+        secret=None,
+        base_url=None,
+        api_version='v1'
+    ):
         self._key_id = key_id
         self._secret = secret
         self._base_url = base_url
-        self._api = tradeapi.REST(key_id, secret, base_url, api_version='v2')
+        self._api = tradeapi.REST(
+            key_id, secret, base_url, api_version=api_version
+        )
         self._cal = get_calendar('NYSE')
 
         self._open_orders = {}
