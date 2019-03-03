@@ -85,8 +85,12 @@ def update_target_securities(context):
         # contribution to its own sector's presence in our portfolio as a
         # percentage.
         sector_market_cap = filtered_fundamental_df['market_cap'].sum()
-        filtered_fundamental_df['sector_contribution'] = filtered_fundamental_df['market_cap'] / sector_market_cap
-
+        # filtered_fundamental_df['sector_contribution'] = filtered_fundamental_df['market_cap'] / sector_market_cap
+        filtered_fundamental_df = filtered_fundamental_df.assign(sector_contribution=
+                                                                 filtered_fundamental_df['market_cap']
+                                                                 / sector_market_cap
+                                                                 )
+        
         # We'll add up all these percentage values, and our portfolio's weight
         # in a stock will be determined by its weight relative to the sum total
         # of all sector contributions.
