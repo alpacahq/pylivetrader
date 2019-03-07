@@ -193,7 +193,7 @@ def test_order(func, amt, expect):
 
     target = algo.sid('asset-1')
 
-    def assert_order(asset, amount, style):
+    def assert_order(asset, amount, style, quantopian_compatible):
         assert asset == target
         assert amount == expect
 
