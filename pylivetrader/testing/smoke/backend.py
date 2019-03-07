@@ -173,7 +173,7 @@ class Backend(BaseBackend):
     def batch_order(self, args):
         return [self.order(*order) for order in args]
 
-    def order(self, asset, amount, style):
+    def order(self, asset, amount, style, quantopian_compatible=True):
         if amount == 0:
             return
         limit_price = style.get_limit_price(amount > 0) or None

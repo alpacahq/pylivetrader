@@ -300,23 +300,24 @@ class Backend(BaseBackend):
     def batch_order(self, args):
         return [self.order(*order) for order in args]
 
-    def order(self, asset, amount, style):
+    def order(self, asset, amount, style, quantopian_compatible=True):
         symbol = asset.symbol
         zp_order_id = self._new_order_id()
 
-        current_position = self.positions[symbol]
-        if (
-            abs(amount) > abs(current_position.amount) and
-            amount * current_position.amount < 0
-        ):
-            # The order would take us from a long position to a short position
-            # or vice versa and needs to be broken up
-            self._orders_pending_submission[zp_order_id] = (
-                asset,
-                amount + current_position.amount,
-                style
-            )
-            amount = -1 * current_position.amount
+        if quantopian_compatible:
+            current_position = self.positions[symbol]
+            if (
+                abs(amount) > abs(current_position.amount) and
+                amount * current_position.amount < 0
+            ):
+                # The order would take us from a long position to a short
+                # position or vice versa and needs to be broken up
+                self._orders_pending_submission[zp_order_id] = (
+                    asset,
+                    amount + current_position.amount,
+                    style
+                )
+                amount = -1 * current_position.amount
 
         qty = amount if amount > 0 else -amount
 
