@@ -42,7 +42,7 @@ class BaseBackend(abc.ABC):
         pass
 
     @abstractmethod
-    def order(self, asset, amount, style):
+    def order(self, asset, amount, style, quantopian_compatible=True):
         pass
 
     @abstractmethod
@@ -51,7 +51,7 @@ class BaseBackend(abc.ABC):
 
     @property
     @abstractmethod
-    def orders(self):
+    def orders(self, quantopian_compatible=True):
         pass
 
     @abstractmethod

@@ -117,14 +117,23 @@ def parallelize(mapfunc, workers=10):
 
 class Backend(BaseBackend):
 
-    def __init__(self, key_id=None, secret=None, base_url=None):
+    def __init__(
+        self,
+        key_id=None,
+        secret=None,
+        base_url=None,
+        api_version='v1'
+    ):
         self._key_id = key_id
         self._secret = secret
         self._base_url = base_url
-        self._api = tradeapi.REST(key_id, secret, base_url)
+        self._api = tradeapi.REST(
+            key_id, secret, base_url, api_version=api_version
+        )
         self._cal = get_calendar('NYSE')
 
         self._open_orders = {}
+        self._orders_pending_submission = {}
 
     def initialize_data(self, context):
         # Open a websocket stream to get updates in real time
@@ -149,6 +158,23 @@ class Backend(BaseBackend):
 
         @conn.on(r'trade_updates')
         async def handle_trade_update(conn, channel, data):
+            # Check for any pending orders
+            waiting_order = self._orders_pending_submission.get(
+                data.order['client_order_id']
+            )
+            if waiting_order is not None:
+                if data.event == 'fill':
+                    # Submit the waiting order
+                    self.order(*waiting_order)
+                    del self._orders_pending_submission[
+                            data.order['client_order_id']
+                        ]
+                elif data.event in ['canceled', 'rejected']:
+                    # Remove the waiting order
+                    del self._orders_pending_submission[
+                            data.order['client_order_id']
+                        ]
+
             if data.event in ['canceled', 'rejected', 'fill']:
                 del self._open_orders[data.order['client_order_id']]
             else:
@@ -274,9 +300,25 @@ class Backend(BaseBackend):
     def batch_order(self, args):
         return [self.order(*order) for order in args]
 
-    def order(self, asset, amount, style):
+    def order(self, asset, amount, style, quantopian_compatible=True):
         symbol = asset.symbol
         zp_order_id = self._new_order_id()
+
+        if quantopian_compatible:
+            current_position = self.positions[symbol]
+            if (
+                abs(amount) > abs(current_position.amount) and
+                amount * current_position.amount < 0
+            ):
+                # The order would take us from a long position to a short
+                # position or vice versa and needs to be broken up
+                self._orders_pending_submission[zp_order_id] = (
+                    asset,
+                    amount + current_position.amount,
+                    style
+                )
+                amount = -1 * current_position.amount
+
         qty = amount if amount > 0 else -amount
 
         side = 'buy' if amount > 0 else 'sell'
@@ -292,8 +334,6 @@ class Backend(BaseBackend):
 
         limit_price = style.get_limit_price(side == 'buy') or None
         stop_price = style.get_stop_price(side == 'buy') or None
-
-        zp_order_id = self._new_order_id()
 
         log.debug(
             ('submitting {} order for {} - '

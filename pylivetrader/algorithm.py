@@ -314,7 +314,9 @@ class Algorithm(object):
             raise OverflowError("Can't order more than %d shares" %
                                 self._max_shares)
 
-        o = self._backend.order(asset, amount, style)
+        o = self._backend.order(
+            asset, amount, style, self.quantopian_compatible
+        )
         if o:
             return o.id
 
