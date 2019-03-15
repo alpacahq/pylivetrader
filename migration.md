@@ -37,7 +37,7 @@ will not work outside of the Quantopian environment. There are a couple of cases
 that need different solutions here.
 
 ### Algorithm API
-This is the API under the `quantopian.algorithms` or `zipline.algorithm`
+This is the API under the `quantopian.algorithm` or `zipline.algorithm`
 package. The package path should be replaced with `pylivetrader.algorithm`.
 All the Algorithm API is ported to pylivetrader, but some of the API (such as
 futures trading specific API) will throw `NotSupported` exception.
