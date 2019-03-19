@@ -84,7 +84,7 @@ class BarData:
 
         results = parallelize(fetch, 25)(fetch_args)
 
-        if not (multiple_assets and multiple_fields):
+        if not multiple_assets and not multiple_fields:
             # Return scalar value
             return results[(assets, fields)]
         elif multiple_assets and multiple_fields:
