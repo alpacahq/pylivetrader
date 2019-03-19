@@ -22,6 +22,7 @@ from collections import Iterable
 
 from pylivetrader.misc.pd_utils import normalize_date
 from pylivetrader.assets import Asset
+from pylivetrader.parallel_utils import parallelize
 
 
 @contextmanager
@@ -55,111 +56,70 @@ class BarData:
         multiple_assets = _is_iterable(assets)
         multiple_fields = _is_iterable(fields)
 
-        if not multiple_assets:
-            asset = assets
+        asset_list = assets if _is_iterable(assets) else [assets]
+        field_list = fields if _is_iterable(fields) else [fields]
 
-            if not multiple_fields:
-                field = fields
+        fetch_args = []
+        for asset in asset_list:
+            for field in field_list:
+                fetch_args.append((asset, field))
 
-                # return scalar value
-                if not self._adjust_minutes:
-                    return self.data_portal.get_spot_value(
-                        asset,
-                        field,
-                        self._get_current_minute(),
-                        self.data_frequency
-                    )
-                else:
-                    return self.data_portal.get_adjusted_value(
-                        asset,
-                        field,
-                        self._get_current_minute(),
-                        self.simulation_dt_func(),
-                        self.data_frequency
-                    )
-            else:
-                # assume fields is iterable
-                # return a Series indexed by field
-                if not self._adjust_minutes:
-                    return pd.Series(data={
-                        field: self.data_portal.get_spot_value(
-                            asset,
-                            field,
-                            self._get_current_minute(),
-                            self.data_frequency
-                        )
-                        for field in fields
-                    }, index=fields, name=assets.symbol)
-                else:
-                    return pd.Series(data={
-                        field: self.data_portal.get_adjusted_value(
-                            asset,
-                            field,
-                            self._get_current_minute(),
-                            self.datetime,
-                            self.data_frequency
-                        )
-                        for field in fields
-                    }, index=fields, name=assets.symbol)
+        if not self._adjust_minutes:
+            def fetch(asset, field):
+                return self.data_portal.get_spot_value(
+                    asset,
+                    field,
+                    self._get_current_minute(),
+                    self.data_frequency
+                )
         else:
-            if not multiple_fields:
-                field = fields
+            def fetch(asset, field):
+                return self.data_portal.get_adjusted_value(
+                    asset,
+                    field,
+                    self._get_current_minute(),
+                    self.simulation_dt_func(),
+                    self.data_frequency
+                )
 
-                # assume assets is iterable
-                # return a Series indexed by asset
-                if not self._adjust_minutes:
-                    return pd.Series(data={
-                        asset: self.data_portal.get_spot_value(
-                            asset,
-                            field,
-                            self._get_current_minute(),
-                            self.data_frequency
-                        )
-                        for asset in assets
-                    }, index=assets, name=fields)
-                else:
-                    return pd.Series(data={
-                        asset: self.data_portal.get_adjusted_value(
-                            asset,
-                            field,
-                            self._get_current_minute(),
-                            self.datetime,
-                            self.data_frequency
-                        )
-                        for asset in assets
-                    }, index=assets, name=fields)
+        results = parallelize(fetch, 25)(fetch_args)
 
-            else:
-                # both assets and fields are iterable
-                data = {}
-
-                if not self._adjust_minutes:
-                    for field in fields:
-                        series = pd.Series(data={
-                            asset: self.data_portal.get_spot_value(
-                                asset,
-                                field,
-                                self._get_current_minute(),
-                                self.data_frequency
-                            )
-                            for asset in assets
-                        }, index=assets, name=field)
-                        data[field] = series
-                else:
-                    for field in fields:
-                        series = pd.Series(data={
-                            asset: self.data_portal.get_adjusted_value(
-                                asset,
-                                field,
-                                self._get_current_minute(),
-                                self.datetime,
-                                self.data_frequency
-                            )
-                            for asset in assets
-                        }, index=assets, name=field)
-                        data[field] = series
-
-                return pd.DataFrame(data)
+        if not (multiple_assets and multiple_fields):
+            # Return scalar value
+            return results[(assets, fields)]
+        elif multiple_assets and multiple_fields:
+            # Return DataFrame indexed on field
+            field_results = {field: {} for field in fields}
+            for args, result in results.items():
+                (asset, field) = args
+                field_results[field][asset] = result
+            data = {}
+            for field in fields:
+                series = pd.Series(
+                    data=field_results[field], index=assets, name=field
+                )
+                data[field] = series
+            return pd.DataFrame(data)
+        elif multiple_assets:
+            # Multiple assets, single field
+            # Return Series indexed on assets
+            asset_results = {}
+            for args, result in results.items():
+                (asset, field) = args
+                asset_results[asset] = result
+            return pd.Series(
+                data=asset_results, index=assets, name=fields
+            )
+        else:
+            # Single asset, multiple fields
+            # Return Series indexed on fields
+            field_results = {}
+            for args, result in results.items():
+                (asset, field) = args
+                field_results[field] = result
+            return pd.Series(
+                data=field_results, index=fields, name=assets.symbol
+            )
 
     def history(self, assets, fields, bar_count, frequency):
 
@@ -263,12 +223,11 @@ class BarData:
                 assets, dt, adjusted_dt, data_portal
             )
         else:
-            tradeable = [
-                self._can_trade_for_asset(
+            def fetch(asset):
+                return self._can_trade_for_asset(
                     asset, dt, adjusted_dt, data_portal
                 )
-                for asset in assets
-            ]
+            tradeable = parallelize(fetch, 25)(assets)
             return pd.Series(data=tradeable, index=assets, dtype=bool)
 
     @property

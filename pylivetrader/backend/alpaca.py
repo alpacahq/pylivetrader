@@ -17,7 +17,6 @@
 import alpaca_trade_api as tradeapi
 from alpaca_trade_api.rest import APIError
 from alpaca_trade_api.entity import Order
-import concurrent.futures
 from requests.exceptions import HTTPError
 import numpy as np
 import pandas as pd
@@ -47,6 +46,7 @@ from pylivetrader.finance.execution import (
     StopLimitOrder,
 )
 from pylivetrader.misc.pd_utils import normalize_date
+from pylivetrader.misc.parallel_utils import parallelize
 from pylivetrader.errors import SymbolNotFound
 from pylivetrader.assets import Equity
 
@@ -87,32 +87,6 @@ def skip_http_error(statuses):
                     raise
         return wrapper
     return decorator
-
-
-def parallelize(mapfunc, workers=10):
-    '''
-    Parallelize the mapfunc using multithread partitioned by
-    symbol.
-
-    Return: func(symbols: list[str]) => dict[str -> result]
-    '''
-
-    def wrapper(symbols):
-        result = {}
-        with concurrent.futures.ThreadPoolExecutor(
-                max_workers=workers) as executor:
-            tasks = {}
-            for symbol in symbols:
-                task = executor.submit(mapfunc, symbol)
-                tasks[task] = symbol
-
-            for task in concurrent.futures.as_completed(tasks):
-                symbol = tasks[task]
-                task_result = task.result()
-                result[symbol] = task_result
-        return result
-
-    return wrapper
 
 
 class Backend(BaseBackend):
