@@ -22,7 +22,7 @@ from collections import Iterable
 
 from pylivetrader.misc.pd_utils import normalize_date
 from pylivetrader.assets import Asset
-from pylivetrader.parallel_utils import parallelize
+from pylivetrader.misc.parallel_utils import parallelize
 
 
 @contextmanager
