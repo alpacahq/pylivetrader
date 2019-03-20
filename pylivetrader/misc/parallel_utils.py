@@ -6,6 +6,7 @@ def _get_default_workers():
     workers = os.environ.get('PYLT_NUM_WORKERS')
     return int(workers) if workers else 10
 
+
 def parallelize(mapfunc, workers=None):
     '''
     Parallelize the mapfunc with multithreading. mapfunc calls will be
