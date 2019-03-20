@@ -573,7 +573,7 @@ class Backend(BaseBackend):
                 df = df.iloc[-limit:]
             return df
 
-        return parallelize(fetch, workers=25)(symbols)
+        return parallelize(fetch)(symbols)
 
     def _symbol_trades(self, symbols):
         '''
@@ -589,4 +589,4 @@ class Backend(BaseBackend):
         def fetch(symbol):
             return self._api.polygon.last_trade(symbol)
 
-        return parallelize(fetch, workers=25)(symbols)
+        return parallelize(fetch)(symbols)

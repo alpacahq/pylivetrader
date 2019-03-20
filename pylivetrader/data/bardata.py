@@ -82,7 +82,7 @@ class BarData:
                     self.data_frequency
                 )
 
-        results = parallelize(fetch, 25)(fetch_args)
+        results = parallelize(fetch)(fetch_args)
 
         if not multiple_assets and not multiple_fields:
             # Return scalar value
@@ -227,7 +227,7 @@ class BarData:
                 return self._can_trade_for_asset(
                     asset, dt, adjusted_dt, data_portal
                 )
-            tradeable = parallelize(fetch, 25)(assets)
+            tradeable = parallelize(fetch)(assets)
             return pd.Series(data=tradeable, index=assets, dtype=bool)
 
     @property
