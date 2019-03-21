@@ -140,17 +140,17 @@ class Backend(BaseBackend):
                 if data.event == 'fill':
                     # Submit the waiting order
                     self.order(*waiting_order)
-                    del self._orders_pending_submission[
-                            data.order['client_order_id']
-                        ]
+                    self._orders_pending_submission.pop(
+                        data.order['client_order_id'], None
+                    )
                 elif data.event in ['canceled', 'rejected']:
                     # Remove the waiting order
-                    del self._orders_pending_submission[
-                            data.order['client_order_id']
-                        ]
+                    self._orders_pending_submission.pop(
+                        data.order['client_order_id'], None
+                    )
 
             if data.event in ['canceled', 'rejected', 'fill']:
-                del self._open_orders[data.order['client_order_id']]
+                self._open_orders.pop(data.order['client_order_id'], None)
             else:
                 self._open_orders[data.order['client_order_id']] = (
                     self._order2zp(Order(data.order))
@@ -279,7 +279,7 @@ class Backend(BaseBackend):
         zp_order_id = self._new_order_id()
 
         if quantopian_compatible:
-            current_position = self.positions[symbol]
+            current_position = self.positions[asset]
             if (
                 abs(amount) > abs(current_position.amount) and
                 amount * current_position.amount < 0
