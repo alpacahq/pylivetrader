@@ -1,0 +1,8 @@
+FROM sturlese/trading_base:1.0
+
+ADD test_reversion.py /work/test_reversion.py
+ADD reversion.py /work/reversion.py
+
+WORKDIR /work
+
+CMD ["python", "test_reversion.py"]

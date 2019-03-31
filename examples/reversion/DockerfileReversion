@@ -1,0 +1,7 @@
+FROM sturlese/trading_base:1.0
+
+ADD reversion.py /work/reversion.py
+
+WORKDIR /work
+
+CMD ["pylivetrader", "run", "-f", "/work/reversion.py","--data-frequency","minute","-b","paper"]
