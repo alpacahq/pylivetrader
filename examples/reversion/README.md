@@ -5,7 +5,7 @@ It uses a Custom Backend. Does not use alpaca.py backend as it only works if the
 [reversion_original.py](./reversion_original.py) is the backtested original Quantopian algorithm.\
 [reversion.py](./reversion.py) is the Quantopian algorithm migrated to run with Alpaca.\
 [paper.py](./paper.py) is the backend used for paper trading with Alpaca.\
-[migration document](../../migration.md) to migrate the Quantopian algorithm to Alpaca.\
+[migration document](../../migration.md) to migrate the Quantopian algorithm to Alpaca.
 
 
 ## How to Deploy and Run the Algorithm
