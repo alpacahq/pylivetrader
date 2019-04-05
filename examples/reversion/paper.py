@@ -455,8 +455,8 @@ class Backend(BaseBackend):
         else:
             symbols = [asset.symbol for asset in assets]
         if (quantopian_compatible and field == 'last_traded'):
-            msg = "Oh! Quantopian last_traded is not supported for non US residents!"
-            raise Exception("msg")
+            msg = "Oh! Quantopian last_traded is not supported for non live trading accounts!"
+            raise Exception(msg)
         else:
             results = self._get_spot_bars(symbols, field)
         return results[0] if assets_is_scalar else results
@@ -540,15 +540,14 @@ class Backend(BaseBackend):
             df = pre_df[symbol].df
             if size == 'minute':
                 df.index += pd.Timedelta('1min')
+                #avoid array out of bounds
+                if not df.empty:
+                    # mask out bars outside market hours
+                    mask = self._cal.minutes_in_range(df.index[0], df.index[-1],).tz_convert(NY)
+                    df = df.reindex(mask)
 
-                # mask out bars outside market hours
-                mask = self._cal.minutes_in_range(
-                    df.index[0], df.index[-1],
-                ).tz_convert(NY)
-                df = df.reindex(mask)
-
-            if limit is not None:
-                df = df.iloc[-limit:]
+                    if limit is not None:
+                        df = df.iloc[-limit:]
             return df
 
         return parallelize(fetch, workers=25)(symbols)
