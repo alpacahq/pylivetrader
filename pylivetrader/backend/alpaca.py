@@ -27,8 +27,7 @@ from trading_calendars import (
 from trading_calendars.calendar_utils import (
     global_calendar_dispatcher as default_calendar,
 )
-from datetime import datetime, timedelta
-import time
+from datetime import timedelta
 import uuid
 
 from .base import BaseBackend
@@ -573,7 +572,10 @@ class Backend(BaseBackend):
         @skip_http_error((404, 504))
         def fetch(symbol):
             df = self._api.polygon.historic_agg_v2(
-                symbol, 1, size, int(_from.timestamp()) * 1000, int(to.timestamp()) * 1000).df
+                symbol, 1, size,
+                int(_from.timestamp()) * 1000,
+                int(to.timestamp()) * 1000
+            ).df
 
             # rename Polygon's v2 agg fields to match their full titles
             df = df.rename(index=str, columns={
