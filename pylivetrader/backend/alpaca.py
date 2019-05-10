@@ -27,6 +27,7 @@ from trading_calendars import (
 from trading_calendars.calendar_utils import (
     global_calendar_dispatcher as default_calendar,
 )
+from datetime import timedelta
 import uuid
 
 from .base import BaseBackend
@@ -547,16 +548,52 @@ class Backend(BaseBackend):
         '''
         assert size in ('day', 'minute')
 
-        # temp workaround for less bars after masking by
-        # market hours
-        query_limit = limit
-        if query_limit is not None:
-            query_limit *= 2
+        if not (_from or to):
+            to = pd.to_datetime('now', utc=True).tz_convert('America/New_York')
+
+        if not (_from and to) and limit:
+            # temp workaround for less bars after masking by
+            # market hours
+            query_limit = limit
+            if query_limit is not None:
+                query_limit *= 2
+
+            if _from:
+                if size == 'day':
+                    to = _from + timedelta(days=query_limit+1)
+                else:
+                    to = _from + timedelta(minutes=query_limit+1)
+            else:
+                if size == 'day':
+                    _from = to - timedelta(days=query_limit+1)
+                else:
+                    _from = to - timedelta(minutes=query_limit+1)
 
         @skip_http_error((404, 504))
         def fetch(symbol):
-            df = self._api.polygon.historic_agg(
-                size, symbol, _from, to, query_limit).df
+            df = self._api.polygon.historic_agg_v2(
+                symbol, 1, size,
+                int(_from.timestamp()) * 1000,
+                int(to.timestamp()) * 1000
+            ).df
+
+            # rename Polygon's v2 agg fields to match their full titles
+            df = df.rename(index=str, columns={
+                't': 'timestamp',
+                'o': 'open',
+                'h': 'high',
+                'l': 'low',
+                'c': 'close',
+                'v': 'volume'
+            })
+
+            # convert timestamps to datetimes
+            # astype is necessary to deal with empty result
+            df.index = pd.to_datetime(
+                df.index.astype('int64') * 1000000,
+                utc=True,
+            ).tz_convert('America/New_York')
+            df.index.name = 'timestamp'
 
             # zipline -> right label
             # API result -> left label (beginning of bucket)
