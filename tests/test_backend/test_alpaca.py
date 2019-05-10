@@ -272,8 +272,8 @@ def test_data():
         dt = backend.get_last_traded_dt(assets[0])
         assert dt.hour == 17
 
-        polygon.historic_agg = Mock()
-        polygon.historic_agg.side_effect = HTTPError(
+        polygon.historic_agg_v2 = Mock()
+        polygon.historic_agg_v2.side_effect = HTTPError(
             response=Mock(status_code=404))
         res = backend.get_bars(assets, 'minute')
         assert res.empty
