@@ -552,22 +552,22 @@ class Backend(BaseBackend):
             to = pd.to_datetime('now', utc=True).tz_convert('America/New_York')
 
         if not (_from and to) and limit:
+            # temp workaround for less bars after masking by
+            # market hours
+            query_limit = limit
+            if query_limit is not None:
+                query_limit *= 2
+
             if _from:
                 if size == 'day':
-                    to = _from + timedelta(days=limit+1)
+                    to = _from + timedelta(days=query_limit+1)
                 else:
-                    to = _from + timedelta(minutes=limit+1)
+                    to = _from + timedelta(minutes=query_limit+1)
             else:
                 if size == 'day':
-                    _from = to - timedelta(days=limit+1)
+                    _from = to - timedelta(days=query_limit+1)
                 else:
-                    _from = to - timedelta(minutes=limit+1)
-
-        # temp workaround for less bars after masking by
-        # market hours
-        query_limit = limit
-        if query_limit is not None:
-            query_limit *= 2
+                    _from = to - timedelta(minutes=query_limit+1)
 
         @skip_http_error((404, 504))
         def fetch(symbol):
@@ -593,6 +593,7 @@ class Backend(BaseBackend):
                 df.index.astype('int64') * 1000000,
                 utc=True,
             ).tz_convert('America/New_York')
+            df.index.name = 'timestamp'
 
             # zipline -> right label
             # API result -> left label (beginning of bucket)

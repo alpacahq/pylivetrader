@@ -233,7 +233,7 @@ def test_data():
     backend = alpaca.Backend('key-id', 'secret-key')
 
     with patch.object(backend._api, 'polygon') as polygon:
-        polygon.historic_agg = historic_agg_data
+        polygon.historic_agg_v2 = historic_agg_data
 
         assets = [Mock(symbol='AAPL')]
         res = backend.get_bars(assets, 'minute')
