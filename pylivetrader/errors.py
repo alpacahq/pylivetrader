@@ -70,7 +70,10 @@ class APINotSupported(LiveTraderError):
 
 
 class BadOrderParameters(LiveTraderError):
-    pass
+    """
+    Raised if stop/limit prices in an order call are not reasonable.
+    """
+    msg = "{msg}"
 
 
 class OrderDuringInitialize(LiveTraderError):
@@ -89,7 +92,11 @@ class UnsupportedOrderParameters(LiveTraderError):
 
 
 class CannotOrderDelistedAsset(LiveTraderError):
-    pass
+    """
+    Raised if an order is attempted for an asset which looks impossible to
+    trade.
+    """
+    msg = "{msg}"
 
 
 class RegisterTradingControlPostInit(LiveTraderError):
