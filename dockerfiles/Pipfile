@@ -5,8 +5,8 @@ name = "pypi"
 
 [packages]
 numpy = ">1.16"
-alpaca-trade-api = "==0.25"
-pylivetrader = "==0.0.25"
+alpaca-trade-api = "==0.28"
+pylivetrader = "==0.0.29"
 pipeline-live = "==0.1.4"
 ta-lib = "==0.4.17"
 
