@@ -600,11 +600,12 @@ class Backend(BaseBackend):
             if size == 'minute':
                 df.index += pd.Timedelta('1min')
 
-                # mask out bars outside market hours
-                mask = self._cal.minutes_in_range(
-                    df.index[0], df.index[-1],
-                ).tz_convert(NY)
-                df = df.reindex(mask)
+                if not df.empty:
+                    # mask out bars outside market hours
+                    mask = self._cal.minutes_in_range(
+                        df.index[0], df.index[-1],
+                    ).tz_convert(NY)
+                    df = df.reindex(mask)
 
             if limit is not None:
                 df = df.iloc[-limit:]
