@@ -123,7 +123,7 @@ class BarData:
 
     def history(self, assets, fields, bar_count, frequency):
 
-        if not assets and fields:
+        if not (assets and fields):
             return None
 
         if isinstance(fields, str):
