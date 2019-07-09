@@ -97,7 +97,7 @@ class Backend(BaseBackend):
         key_id=None,
         secret=None,
         base_url=None,
-        api_version='v1'
+        api_version='v2'
     ):
         self._key_id = key_id
         self._secret = secret
