@@ -590,7 +590,7 @@ class Backend(BaseBackend):
             # convert timestamps to datetimes
             # astype is necessary to deal with empty result
             df.index = pd.to_datetime(
-                df.index.astype('int64') * 1000000,
+                df.index.astype('str'),
                 utc=True,
             ).tz_convert('America/New_York')
             df.index.name = 'timestamp'
