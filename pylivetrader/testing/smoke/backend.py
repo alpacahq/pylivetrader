@@ -5,6 +5,7 @@ import pylivetrader.protocol as zp
 from pylivetrader.assets import Equity
 from pylivetrader.finance.order import (
     Order as ZPOrder,
+    ORDER_STATUS as ZP_ORDER_STATUS,
 )
 from pylivetrader.backend.base import BaseBackend
 import pandas as pd
@@ -86,6 +87,7 @@ class Backend(BaseBackend):
         self._orders = {}
         self._clock = clock
         self._last_process_time = None
+        self._closed_orders = {}
 
         self._data_proxy = FakeDataBackend(size=size, clock=clock)
 
@@ -98,6 +100,10 @@ class Backend(BaseBackend):
     def _fill(self, order, price):
         '''Fill the order at this price and delete the order
         from the pending list.'''
+        filled_order = self._orders[order.id]
+        self._closed_orders[order.id] = filled_order
+        filled_order._status = ZP_ORDER_STATUS.FILLED
+        filled_order.filled = filled_oder.amount
         del self._orders[order.id]
         pos = self._positions.pop(order.asset, None)
         if pos is None:
@@ -173,6 +179,19 @@ class Backend(BaseBackend):
     def batch_order(self, args):
         return [self.order(*order) for order in args]
 
+    def all_orders(
+            self,
+            before=None,
+            status='all',
+            days_back=None,
+            initialize=False):
+        if status == 'all':
+            return {**self._orders, **self._closed_orders}
+        elif status == 'open':
+            return self._orders
+        else:
+            return self._closed_orders
+
     def order(self, asset, amount, style, quantopian_compatible=True):
         if amount == 0:
             return
@@ -185,13 +204,16 @@ class Backend(BaseBackend):
             amount=amount,
             limit=limit_price,
             stop=stop_price,
-            id=self._order_seq,
+            id=self._order_seq
         )
         self._orders[zpOrder.id] = zpOrder
         return zpOrder
 
     def cancel_order(self, zp_order_id):
         if zp_order_id in self._orders:
+            canceled_order = self._orders[zp_order_id]
+            canceled_order._status = ZP_ORDER_STATUS.CANCELLED
+            self._closed_orders[zp_order_id] = canceled_order
             del self._orders[zp_order_id]
 
     def get_equities(self):
