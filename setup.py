@@ -43,7 +43,7 @@ setup(
     ''',
     install_requires=[
         'pandas<0.24.0',
-        'numpy==1.16.1',
+        'numpy',
         'pytz',
         'logbook',
         'astor',
@@ -53,12 +53,14 @@ setup(
         'ipython',
         # support alpaca backend by default
         'alpaca-trade-api>=0.37',
-        'pipeline-live>=0.1.8',
-        'redis',
+        'pipeline-live>=0.1.9',
     ],
     tests_require=[
         'pytest',
         'pytest-cov',
     ],
-    setup_requires=["flake8", "pytest-runner"]
+    setup_requires=["flake8", "pytest-runner"],
+    extras_require={
+        "redis": ["redis"]
+    }
 )
