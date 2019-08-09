@@ -42,7 +42,8 @@ setup(
     pylivetrader=pylivetrader.__main__:main
     ''',
     install_requires=[
-        'pandas<0.24.0',
+        'bottleneck==1.0.0',
+        'pandas<=0.22',
         'numpy',
         'pytz',
         'logbook',
@@ -54,7 +55,6 @@ setup(
         # support alpaca backend by default
         'alpaca-trade-api>=0.37',
         'pipeline-live>=0.1.9',
-        'bottleneck==1.0.0',
     ],
     tests_require=[
         'pytest',
