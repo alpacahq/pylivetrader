@@ -43,7 +43,7 @@ setup(
     ''',
     install_requires=[
         'pandas<0.24.0',
-        'numpy<1.17.0',
+        'numpy',
         'pytz',
         'logbook',
         'astor',
@@ -52,8 +52,9 @@ setup(
         'PyYAML',
         'ipython',
         # support alpaca backend by default
-        'alpaca-trade-api==0.29',
+        'alpaca-trade-api>=0.37',
         'pipeline-live>=0.1.9',
+        'bottleneck==1.0.0',
     ],
     tests_require=[
         'pytest',
