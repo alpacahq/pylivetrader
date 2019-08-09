@@ -53,7 +53,7 @@ setup(
         'ipython',
         # support alpaca backend by default
         'alpaca-trade-api>=0.37',
-        'pipeline-live>=0.1.7',
+        'pipeline-live>=0.1.9',
     ],
     tests_require=[
         'pytest',
