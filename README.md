@@ -1,5 +1,5 @@
 [![PyPI version](https://badge.fury.io/py/pylivetrader.svg)](https://badge.fury.io/py/pylivetrader)
-[![CircleCI](https://circleci.com/gh/alpacahq/pylivetrader.svg?style=shield)](https://circleci.com/gh/alpacahq/alpaca-trade-api-python)
+[![CircleCI](https://circleci.com/gh/alpacahq/pylivetrader.svg?style=shield)](https://circleci.com/gh/alpacahq/pylivetrader)
 
 # pylivetrader
 
