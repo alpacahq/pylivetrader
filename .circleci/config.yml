@@ -12,6 +12,7 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip3 install setuptools --upgrade
+            pip3 uninstall numpy
             python3 setup.py develop
       - save_cache:
           key: deps-{{ checksum "setup.py" }}
