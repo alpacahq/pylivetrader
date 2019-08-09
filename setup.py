@@ -43,7 +43,7 @@ setup(
     ''',
     install_requires=[
         'pandas<0.24.0',
-        'numpy',
+        'numpy==1.14.1',
         'pytz',
         'logbook',
         'astor',
