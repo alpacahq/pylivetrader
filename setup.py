@@ -59,5 +59,5 @@ setup(
         'pytest>=5.0.0',
         'pytest-cov',
     ],
-    setup_requires=["flake8", "pytest-runner", "numpy<1.17"]
+    setup_requires=["flake8", "pytest-runner", "numpy<1.15"]
 )
