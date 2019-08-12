@@ -21,7 +21,7 @@ jobs:
 
   build-python37:
     docker:
-      - image: circleci/python:3.7.4
+      - image: circleci/python:3.7
     steps:
       - checkout
       - restore_cache:
