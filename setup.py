@@ -44,7 +44,6 @@ setup(
     install_requires=[
         'bottleneck==1.0.0',
         'pandas<=0.22',
-        'numpy==1.14',
         'pytz',
         'logbook',
         'astor',
