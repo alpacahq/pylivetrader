@@ -9,5 +9,4 @@ def test_basic_api_call():
 
         api.symbol('AAPL')
 
-    print(str(e))
-    assert 'must be called during live trading' in str(e)
+    assert 'must be called during live trading' in str(e.value)

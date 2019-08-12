@@ -56,7 +56,7 @@ setup(
         'pipeline-live>=0.1.9',
     ],
     tests_require=[
-        'pytest',
+        'pytest>=5.0.0',
         'pytest-cov',
     ],
     setup_requires=["flake8", "pytest-runner", "numpy==1.14.5"]
