@@ -43,7 +43,7 @@ setup(
     ''',
     install_requires=[
         'bottleneck==1.0.0',
-        'pandas<0.23',
+        'pandas<0.24',
         'pytz',
         'logbook',
         'astor',
