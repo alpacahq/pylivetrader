@@ -42,8 +42,8 @@ setup(
     pylivetrader=pylivetrader.__main__:main
     ''',
     install_requires=[
-        'bottleneck==1.0.0',
-        'pandas<0.24',
+        'bottleneck',
+        'pandas<0.23',
         'pytz',
         'logbook',
         'astor',
