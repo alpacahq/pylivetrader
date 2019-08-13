@@ -30,7 +30,6 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Operating System :: OS Independent',
@@ -43,8 +42,8 @@ setup(
     pylivetrader=pylivetrader.__main__:main
     ''',
     install_requires=[
-        'pandas<0.24.0',
-        'numpy',
+        'bottleneck==1.0.0',
+        'pandas<0.23',
         'pytz',
         'logbook',
         'astor',
@@ -53,15 +52,12 @@ setup(
         'PyYAML',
         'ipython',
         # support alpaca backend by default
-        'alpaca-trade-api>=0.30',
-        'pipeline-live>=0.1.7',
+        'alpaca-trade-api>=0.37',
+        'pipeline-live>=0.1.9',
     ],
     tests_require=[
-        'pytest',
+        'pytest>=5.0.0',
         'pytest-cov',
     ],
-    setup_requires=["flake8", "pytest-runner"],
-    extras_require={
-        "redis": ["redis"]
-    }
+    setup_requires=["flake8", "pytest-runner", "numpy<1.15"]
 )
