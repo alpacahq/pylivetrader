@@ -43,4 +43,3 @@ workflows:
   build:
     jobs:
       - build-python36
-      - build-python37
