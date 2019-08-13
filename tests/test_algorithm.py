@@ -326,7 +326,7 @@ def test_pipeline():
     pkg = 'pipeline_live.engine'
     if pkg in sys.modules:
         del sys.modules[pkg]
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         algo.pipeline_output('mock')
 
     mod = Mock()
