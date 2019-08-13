@@ -55,7 +55,13 @@ class BaseBackend(abc.ABC):
         pass
 
     @abstractmethod
-    def all_orders(self):
+    def all_orders(
+        self,
+        before=None,
+        status='all',
+        days_back=None,
+        initialize=False
+    ):
         pass
 
     @abstractmethod
