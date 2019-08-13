@@ -103,7 +103,7 @@ class Backend(BaseBackend):
         filled_order = self._orders[order.id]
         self._closed_orders[order.id] = filled_order
         filled_order._status = ZP_ORDER_STATUS.FILLED
-        filled_order.filled = filled_oder.amount
+        filled_order.filled = filled_order.amount
         del self._orders[order.id]
         pos = self._positions.pop(order.asset, None)
         if pos is None:
