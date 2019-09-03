@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "fd7a851e284d32be126ebba68f090d1b801bc48b4f4fd7ca54740f54ee91d86d"
+            "sha256": "01e3d9f630da3d363072875eabe7ed2cb52c3c0924ee69a4ac0071b214b2b40e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -455,11 +455,11 @@
         },
         "pylivetrader": {
             "hashes": [
-                "sha256:599e389794a7cd8844f0ea39d1782b897e123e384caa045286175b3d53918a5c",
-                "sha256:5a11785283b0628f92af01d359fdaac01030c8b4ff51d4c97d3ca560030aeec1"
+                "sha256:3992b8ea863e7b01e8c198cf93565dd34a7957ab8c4857c0098d0d8845edf3cb",
+                "sha256:c702613f4e2fe90c59944b6a88d0192f28c284b75d3ce95730d327b3eb855943"
             ],
             "index": "pypi",
-            "version": "==0.1.0"
+            "version": "==0.1.1"
         },
         "python-dateutil": {
             "hashes": [
