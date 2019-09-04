@@ -40,7 +40,11 @@ def _is_iterable(d):
 
 class BarData:
 
-    def __init__(self, data_portal, data_frequency):
+    def __init__(self, data_portal, data_frequency: str):
+
+        # Validate data_frequency arg
+        if data_frequency not in ['minute', 'daily']:
+            raise ValueError(f'BarData: Invalid `data_frequency` {data_frequency}')
 
         self.data_portal = data_portal
         self.data_frequency = data_frequency
