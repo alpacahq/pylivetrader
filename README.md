@@ -49,6 +49,7 @@ Config file is just simple yaml or json format.
 $ cat config.yaml
 key_id: BROKER_API_KEY
 secret: BROKER_SECRET
+base_url: https://paper-api.alpaca.markets
 ```
 
 ### Usage with redis
