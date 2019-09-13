@@ -134,7 +134,7 @@ restored on the next startup.
 Second, because the context properties are restored, you may need to
 take care of the extra steps. Often an algorithm is written under
 the assumption that `initialize()` is called only once and
-`before_start_trading()` is called once every morning. If you are
+`before_trading_start()` is called once every morning. If you are
 to restart the program in the middle of day, these functions are
 called again, with the restored context object. Therefore, you
 might need to check if the fields are from the other session
@@ -172,13 +172,13 @@ This has installed pylivetrader so you can start right away without
 worrying about your python environment.  See more details in the
 `dockerfiles` directory.
 
-If your algorithm file is called `algo.py`, this could be it.
+If your algorithm file is called `algo.py`, this could be all you need to run it.
 
 ```sh
 docker run -v $PWD:/work -w /work alpacamarkets/pylivetrader pylivetrader run -f algo.py
 ```
 
-Make sure you set up environment variables for the  backend
+Make sure you set up environment variables for the backend
 (use `-e KEY=VAL` for docker command).
 
 ## Smoke Test

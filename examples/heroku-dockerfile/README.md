@@ -9,8 +9,7 @@ Repo with (NOTE: DO NOT REPLACE ANY KEYS OR IDS IN THIS SECTION!):
 
 > algo.py
 ```
-Example here: https://github.com/alpacahq/pylivetrader/blob/master/examples/q01/algo.py
-(PS. Don't be fooled by the backtest, this does not work in production!)
+Example here: https://github.com/alpacahq/pylivetrader/blob/master/examples/MACD/macd_example.py
 ```
 
 > Dockerfile
@@ -61,7 +60,7 @@ Push repository to github.com (follow instructions there if needed)
 4. Choose Github and connect
 5. Once initial deploy completes see 'Resources' tab and enable the worker
 6. Under `Settings` tab find `Config Vars`
-7. Update Config Vars with 
+7. Update Config Vars with
 ```
 APCA_API_SECRET_KEY = {{YOUR APCA_API_SECRET_KEY}}
 APCA_API_KEY_ID = {{YOUR APCA_API_KEY_ID}}
