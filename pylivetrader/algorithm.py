@@ -116,6 +116,7 @@ class Algorithm(object):
         before_trading_start: before_trading_start function
         log_level: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
         storage_engine: 'file', 'redis'
+        pipeline_hook: pipeline_output hook function
         '''
         log.level = lookup_level(kwargs.pop('log_level', 'INFO'))
         self._recorded_vars = {}
@@ -212,6 +213,8 @@ class Algorithm(object):
         self.api_methods = [func for func in dir(Algorithm) if callable(
             getattr(Algorithm, func)
         )]
+
+        self._pipeline_hook = kwargs.pop('pipeline_hook')
 
     def initialize(self, *args, **kwargs):
         self._context_persistence_excludes = (
@@ -1062,6 +1065,9 @@ class Algorithm(object):
 
     @api_method
     def pipeline_output(self, name):
+        if self._pipeline_hook is not None:
+            return self._pipeline_hook(self, name)
+
         try:
             from pipeline_live.engine import LivePipelineEngine
         except ImportError:
