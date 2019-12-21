@@ -214,7 +214,7 @@ class Algorithm(object):
             getattr(Algorithm, func)
         )]
 
-        self._pipeline_hook = kwargs.pop('pipeline_hook')
+        self._pipeline_hook = kwargs.get('pipeline_hook')
 
     def initialize(self, *args, **kwargs):
         self._context_persistence_excludes = (
