@@ -109,7 +109,6 @@ class RealtimeClock(object):
                     sleep(1)
             elif server_time == session_close:
                 self._last_emit = server_time
-                yield server_time, BAR
                 if self.minute_emission:
                     yield server_time, MINUTE_END
                 yield server_time, SESSION_END
