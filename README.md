@@ -120,6 +120,15 @@ $ pylivetrader shell algo.py
 
 The options are the same as `run`.
 
+#### things you could do with the shell
+* get asset price data. e.g: data.history(symbol("AAPL"), "close", 10, "1d")
+* check if you can trade a certain asset. e.g: data.can_trade(symbol("AAPL"))
+* get your account information: context.account
+* get your portfolio information: context.account.portfolio
+* get all opened orders: context.get_open_orders()
+* get all orders: context.get_all_orders()
+* get a list of all available assets. eg: context._backend._api.list_assets(asset_class='us_equity')
+
 ## State Management
 
 One of the things you need to understand in live trading is that things can
