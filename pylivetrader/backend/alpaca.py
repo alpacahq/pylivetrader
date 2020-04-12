@@ -432,7 +432,7 @@ class Backend(BaseBackend):
             symbols = [assets.symbol]
         else:
             symbols = [asset.symbol for asset in assets]
-        if field == 'last_traded' or
+        if field == 'last_traded' or \
            not quantopian_compatible and field == 'price':
             results = self._get_spot_trade(symbols, field)
         else:
