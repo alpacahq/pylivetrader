@@ -9,4 +9,5 @@ def start_shell(algorithm, algomodule):
         algorithm.data_portal,
         algorithm.data_frequency)
     algorithm.on_dt_changed(pd.Timestamp.utcnow().floor('1min'))
+    algomodule['data'].datetime = algorithm.datetime
     InteractiveShellEmbed()('*** pylivetrader shell ***', local_ns=algomodule)
