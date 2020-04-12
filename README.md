@@ -110,9 +110,7 @@ The options are as follows.
 `pylivetrader shell` goes into the IPython interactive shell mode as if you are
 in the algorithm script namespace. It means, you can call Algorithm API
 such as `symbol()` and `data.history()` so you can check the behavior
-of each operation. At the start of shell, nothing has been called, so you
-may want to initialize the context by `initialize(context)` which would
-execute your `initialize()` function.
+of each operation.
 
 ```
 $ pylivetrader shell algo.py
