@@ -65,14 +65,14 @@ one_day_offset = pd.Timedelta('1 day')
 
 
 def skip_http_error(statuses):
-    '''
+    """
     A decorator to wrap with try..except to swallow
     specific HTTP errors.
 
     @skip_http_error((404, 503))
     def fetch():
         ...
-    '''
+    """
 
     assert isinstance(statuses, tuple)
 
