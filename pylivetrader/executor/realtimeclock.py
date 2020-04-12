@@ -108,10 +108,11 @@ class RealtimeClock(object):
                 else:
                     sleep(1)
             elif server_time == session_close:
-                self._last_emit = server_time
-                if self.minute_emission:
-                    yield server_time, MINUTE_END
-                yield server_time, SESSION_END
+                if server_time != self._last_emit:
+                    self._last_emit = server_time
+                    if self.minute_emission:
+                        yield server_time, MINUTE_END
+                    yield server_time, SESSION_END
             elif server_time > session_close:
                 sleep(1)
             else:
