@@ -1044,6 +1044,8 @@ class Algorithm(object):
     @api_method
     def attach_pipeline(self, pipeline, name, chunks=None):
         self._pipelines[name] = pipeline
+        # you can't pickle a pipe, and you don't want to either
+        self._context_persistence_excludes.append(name)
 
     @api_method
     def pipeline_output(self, name):
