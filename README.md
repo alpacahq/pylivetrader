@@ -10,7 +10,9 @@ please read the [migration document](./migration.md).
 
 ## Simple Usage
 
-Here is the example dual moving average algorithm (by [quantopian/zipline](https://github.com/quantopian/zipline/blob/master/zipline/examples/dual_moving_average.py)). We provide mostly the same API interfaces with zipline.
+Here is the example dual moving average algorithm (by 
+[quantopian/zipline](https://github.com/quantopian/zipline/blob/master/zipline/examples/dual_moving_average.py)).
+ We provide mostly the same API interfaces with zipline.
 
 ```py
 from pylivetrader.api import order_target, symbol
