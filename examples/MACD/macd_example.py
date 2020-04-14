@@ -1,5 +1,11 @@
-from pylivetrader.api import order_target_percent, record, symbol
+from pylivetrader.api import order_target, record, symbol
 import pandas as pd
+
+from logbook import Logger
+
+
+log = Logger('macd-logger')
+BUY_AMOUNT = 100
 
 
 def initialize(context):
@@ -10,7 +16,7 @@ def initialize(context):
     # share between methods.
 
     # This is the asset that we'll be trading.
-    context.asset = symbol('AAPL')
+    context.asset = symbol('AA')
 
 
 def handle_data(context, data):
@@ -41,12 +47,17 @@ def handle_data(context, data):
         # order_target_percent allocates a specified percentage of your
         # portfolio to a long position in a given asset. (A value of 1
         # means that 100% of your portfolio will be allocated.)
-        order_target_percent(context.asset, 1)
+        order_id = order_target(context.asset, BUY_AMOUNT)
+        if order_id:
+            log.info("Bought {} shares of {}".format(BUY_AMOUNT,
+                                                     context.asset.symbol))
     elif macd < 0:
         # You can supply a negative value to short an asset instead.
-        order_target_percent(context.asset, -1)
+        order_id = order_target(context.asset, 0)
+        if order_id:
+            log.info("Closed position for {}".format(context.asset.symbol))
 
     # Save values for later inspection
-    record(AAPL=data.current(context.asset, 'price'),
+    record(AA=data.current(context.asset, 'price'),
            short_mavg=short_ema,
            long_mavg=long_ema)
