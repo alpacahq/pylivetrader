@@ -92,6 +92,17 @@ log = Logger('Algorithm')
 class Algorithm(object):
     """Provides algorithm compatible with zipline.
     """
+
+    def __setattr__(self, name, value):
+        # Reject names that overlap with API method names
+        if hasattr(self, 'api_methods') and name in self.api_methods:
+            raise AttributeError(
+                'Cannot set {} on context object as it is the name of '
+                'an API method.'.format(name)
+            )
+        else:
+            object.__setattr__(self, name, value)
+
     def __init__(self, *args, **kwargs):
         '''
         data_frequency: 'minute' or 'daily'
@@ -197,6 +208,10 @@ class Algorithm(object):
         self._max_shares = int(1e+11)
 
         self.initialized = False
+
+        self.api_methods = [func for func in dir(Algorithm) if callable(
+            getattr(Algorithm, func)
+        )]
 
     def initialize(self, *args, **kwargs):
         self._context_persistence_excludes = (
