@@ -18,6 +18,7 @@ import json
 
 
 def load_config(path):
+    # for YAML config files
     # to fix: YAMLLoadWarning: calling yaml.load() without Loader=...
     # is deprecated, as the default Loader is unsafe we change to
     # yaml.safe_load as described here:
