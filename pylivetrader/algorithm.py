@@ -116,8 +116,8 @@ class Algorithm(object):
         before_trading_start: before_trading_start function
         log_level: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
         storage_engine: 'file', 'redis'
-        pipeline_hook: pipeline_output hook function to enable smoke like 
-                       functionality. it is not meant to be used by the 
+        pipeline_hook: pipeline_output hook function to enable smoke like
+                       functionality. it is not meant to be used by the
                        CLI
         '''
         log.level = lookup_level(kwargs.pop('log_level', 'INFO'))
@@ -215,7 +215,7 @@ class Algorithm(object):
 
         self.api_methods = [func for func in dir(Algorithm) if callable(
             getattr(Algorithm, func)
-        )]        
+        )]
 
     def initialize(self, *args, **kwargs):
         self._context_persistence_excludes = (
