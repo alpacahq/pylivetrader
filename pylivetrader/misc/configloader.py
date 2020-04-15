@@ -18,9 +18,12 @@ import json
 
 
 def load_config(path):
+    # to fix: YAMLLoadWarning: calling yaml.load() without Loader=...
+    # is deprecated, as the default Loader is unsafe we change to yaml.safe_load
+    # https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
     if path.endswith('.yaml') or path.endswith('.yml'):
         with open(path, mode='r') as f:
-            o = yaml.load(f)
+            o = yaml.safe_load(f)
     elif path.endswith('.json'):
         with open(path, mode='r') as f:
             o = json.load(f)
