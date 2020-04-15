@@ -15,22 +15,23 @@ def initialize(context):
     # execution. You can set up anything you'll be needing later here. The
     # context argument will be received by all pylivetrader methods in
     # your script, and you can store information on it that you'd like to
-    # share between methods.
+    # share between methods, or in later trades
 
     # let's create our pipeline and attach it to pylivetrader execution
     top5 = AverageDollarVolume(window_length=20).top(5)  # this is a filter
     context.pipe = Pipeline({
         'close':     USEquityPricing.close.latest,  # we only look at the close
-        'marketcap': PolygonCompany.marketcap.latest,
+        'marketcap': PolygonCompany.marketcap.latest,  # volume
     }, screen=top5)
 
-    # this line connects to pylivetrader. this is done once, and we get a new
-    # list of asset every day in before_trading_start()
+    # this line connects the pipeline to pylivetrader. this is done once,
+    # and we get a new and it's stored in the context. we will get a fresh list
+    # of assets every morning in before_trading_start()
     context.attach_pipeline(context.pipe, "pipe")
 
 
 def before_trading_start(context, data):
-    # this line will compute the pipeline for today's filtered assets
+    # this line will compute the pipeline output for today's filtered assets
     context.output = context.pipeline_output('pipe')
 
 
@@ -40,14 +41,17 @@ def handle_data(context, data):
     # an explanation of pylivetrader function scheduling, please see here:
     # https://github.com/alpacahq/pylivetrader#run.
 
-    # Compute averages
-    # data.history() will return a pandas dataframe with price information.
-    # pandas' EWM method will give us our exponential moving averages.
+    # what do we do here:
+    # 1. go over all open positions and close positions that their MACD is
+    # below zero.
+    # 2. get today's filterd results and buy assets that their MACD is above
+    # zero.
 
     # Calculate short-term EMA (using data from the past 12 minutes.)
     short_periods = 12
     long_periods = 26
 
+    # step 1
     for asset in context.portfolio.positions:
         short_data = data.history(
             asset, 'price', bar_count=short_periods, frequency="1m")
@@ -66,9 +70,8 @@ def handle_data(context, data):
             if order_id:
                 log.info("Closed position for {}".format(asset.symbol))
 
+    # step 2
     for asset in context.output.index:
-
-
         short_data = data.history(
             asset, 'price', bar_count=short_periods, frequency="1m")
         short_ema = pd.Series.ewm(short_data, span=short_periods).mean().iloc[-1]
