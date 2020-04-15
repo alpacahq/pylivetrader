@@ -189,6 +189,7 @@ class Algorithm(object):
         self._initialize = kwargs.pop('initialize', noop)
         self._handle_data = kwargs.pop('handle_data', noop)
         self._before_trading_start = kwargs.pop('before_trading_start', noop)
+        self._pipeline_hook = kwargs.get('pipeline_hook')
 
         self.event_manager.add_event(
             events.Event(
@@ -214,9 +215,7 @@ class Algorithm(object):
 
         self.api_methods = [func for func in dir(Algorithm) if callable(
             getattr(Algorithm, func)
-        )]
-
-        self._pipeline_hook = kwargs.get('pipeline_hook')
+        )]        
 
     def initialize(self, *args, **kwargs):
         self._context_persistence_excludes = (
@@ -1069,8 +1068,8 @@ class Algorithm(object):
 
     @api_method
     def pipeline_output(self, name):
-        if self._pipeline_hook is not None:
-            return self._pipeline_hook(self, name)
+        if self._pipeline_hook:
+            return self._pipeline_hook.output(self, name)
 
         try:
             from pipeline_live.engine import LivePipelineEngine
