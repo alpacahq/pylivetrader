@@ -52,13 +52,8 @@ def run_smoke(algo, before_run_hook=None, pipeline_hook=None):
         handle_data=getattr(algo, 'handle_data', noop),
         before_trading_start=getattr(algo, 'before_trading_start', noop),
         backend=be,
+        pipeline_hook=pipeline_hook
     )
-
-    if pipeline_hook is not None:
-        def _pipeline_output(name):
-            return pipeline_hook.output(a, name)
-
-        a.pipeline_output = _pipeline_output
 
     with LiveTraderAPI(a), \
             patch('pylivetrader.executor.executor.RealtimeClock') as rc:

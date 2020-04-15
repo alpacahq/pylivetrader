@@ -116,6 +116,9 @@ class Algorithm(object):
         before_trading_start: before_trading_start function
         log_level: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
         storage_engine: 'file', 'redis'
+        pipeline_hook: pipeline_output hook function to enable smoke like
+                       functionality. it is not meant to be used by the
+                       CLI
         '''
         log.level = lookup_level(kwargs.pop('log_level', 'INFO'))
         self._recorded_vars = {}
@@ -186,6 +189,7 @@ class Algorithm(object):
         self._initialize = kwargs.pop('initialize', noop)
         self._handle_data = kwargs.pop('handle_data', noop)
         self._before_trading_start = kwargs.pop('before_trading_start', noop)
+        self._pipeline_hook = kwargs.get('pipeline_hook')
 
         self.event_manager.add_event(
             events.Event(
@@ -1064,6 +1068,9 @@ class Algorithm(object):
 
     @api_method
     def pipeline_output(self, name):
+        if self._pipeline_hook:
+            return self._pipeline_hook.output(self, name)
+
         try:
             from pipeline_live.engine import LivePipelineEngine
         except ImportError:
