@@ -8,6 +8,16 @@ The main purpose is to run algorithms developed in the Quantopian platform in
 live trading via broker API. In order to convert your algorithm for pylivetrader,
 please read the [migration document](./migration.md).
 
+## example code
+check out the [examples](https://github.com/alpacahq/pylivetrader/tree/master/examples) 
+folder. you will find there the following examples:
+* simple MACD "momentum" trading
+* using pipeline-live to screen top stocks every day
+* a potfolio optimizer (used to optimize an existing porfolio. not to buy new
+ stocks)
+ each sample code contains a readme file and a smoke runner (read further to
+  understand what smoke is)
+
 ## Simple Usage
 
 Here is the example dual moving average algorithm (by 
