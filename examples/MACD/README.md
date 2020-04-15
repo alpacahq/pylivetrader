@@ -2,7 +2,7 @@
 
 This simple example algorithm allocates enters a long position
  in a stock when its [MACD](https://www.investopedia.com/terms/m/macd.asp) 
-is positive and ckoses the position when its MACD is negative. This can be 
+is positive and closes the position when its MACD is negative. This can be 
 considered a momentum-based algorithm, as the MACD indicator will be positive 
 when a stock is doing better than its recent average performance.
 
@@ -25,7 +25,7 @@ base_url: https://paper-api.alpaca.markets
 and execute it like so: `pylivetrader run macd_example.py
  --backend-config config.yaml`
  
-## Using the built-in smoke tester
+## Using the built-in smoke tool
 smoke is used to make sure you don't have any syntax error and to check to
  flow of your algorithm.
  
