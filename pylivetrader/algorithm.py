@@ -116,7 +116,9 @@ class Algorithm(object):
         before_trading_start: before_trading_start function
         log_level: 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
         storage_engine: 'file', 'redis'
-        pipeline_hook: pipeline_output hook function
+        pipeline_hook: pipeline_output hook function to enable smoke like 
+                       functionality. it is not meant to be used by the 
+                       CLI
         '''
         log.level = lookup_level(kwargs.pop('log_level', 'INFO'))
         self._recorded_vars = {}
