@@ -216,6 +216,9 @@ class Backend(BaseBackend):
             self._closed_orders[zp_order_id] = canceled_order
             del self._orders[zp_order_id]
 
+    def get_order(self, zp_order_id):
+        return self._orders[zp_order_id]
+
     def get_equities(self):
         return self._data_proxy.get_equities()
 
