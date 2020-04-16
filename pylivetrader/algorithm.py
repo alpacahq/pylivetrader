@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 import warnings
 import pytz
 import numpy as np
@@ -163,8 +163,8 @@ class Algorithm(object):
                         "Could not find backend package `{}`.".format(
                             self._backend_name))
 
-            backend_options = kwargs.pop('backend_options', None) or {}
-            self._backend = backendmod.Backend(**backend_options)
+            self.backend_options = kwargs.pop('backend_options', None) or {}
+            self._backend = backendmod.Backend(**self.backend_options)
 
         self.asset_finder = AssetFinder(self._backend)
 
@@ -1082,10 +1082,37 @@ class Algorithm(object):
             return sorted([
                 a.symbol for a in finder._asset_cache.values()])
 
+        self._make_sure_credentials_are_set()
+
         eng = LivePipelineEngine(list_symbols)
         output = eng.run_pipeline(self._pipelines[name])
         output.index = pd.Index(finder.lookup_symbols(output.index))
         return output
+
+    def _make_sure_credentials_are_set(self):
+        """
+        when using the integration of pipeline live we have to make sure that
+        the credentials are set otherwise pipeline-live will fail.
+        the user sets the credentials in one of 2 ways:
+        1. a config file (config.yaml)
+        2. set the environment variables
+        if they are using the first option, we got to pass the credentials
+        somehow to pipeline-live. so, we will check if the environment vars
+        are set, and if they are not, we will set them right here
+        :return:
+        """
+        if self.backend_options:
+            if not os.environ.get('APCA_API_KEY_ID') and \
+                    self.backend_options['key_id']:
+                os.environ['APCA_API_KEY_ID'] = self.backend_options['key_id']
+            if not os.environ.get('APCA_API_SECRET_KEY') and \
+                    self.backend_options['secret']:
+                os.environ['APCA_API_SECRET_KEY'] = self.backend_options[
+                    'secret']
+            if not os.environ.get('APCA_API_BASE_URL') and \
+                    self.backend_options['base_url']:
+                os.environ['APCA_API_BASE_URL'] = self.backend_options[
+                    'base_url']
 
 
 def noop(*args, **kwargs):
