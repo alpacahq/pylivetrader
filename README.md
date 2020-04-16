@@ -15,7 +15,8 @@ folder. you will find there the following examples:
 * using pipeline-live to screen top stocks every day
 * a potfolio optimizer (used to optimize an existing porfolio. not to buy new
  stocks)
- each sample code contains a readme file and a smoke runner (read further to
+ 
+each sample code contains a readme file and a smoke runner (read further to
   understand what smoke is)
 
 ## Simple Usage
