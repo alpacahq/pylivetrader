@@ -156,8 +156,13 @@ class Backend(BaseBackend):
                 self._open_orders[data.order['client_order_id']] = (
                     self._order2zp(Order(data.order))
                 )
-
-        conn.run(channels)
+        while 1:
+            try:
+                conn.run(channels)
+            except:
+                from time import sleep
+                sleep(5)
+                asyncio.set_event_loop(asyncio.new_event_loop())
 
     def _symbols2assets(self, symbols):
         '''
@@ -534,7 +539,7 @@ class Backend(BaseBackend):
             _from=None,
             to=None,
             limit=None):
-        '''
+        """
         Query historic_agg either minute or day in parallel
         for multiple symbols, and return in dict.
 
@@ -545,7 +550,7 @@ class Backend(BaseBackend):
         limit:   str or int
 
         return: dict[str -> pd.DataFrame]
-        '''
+        """
         assert size in ('day', 'minute')
 
         if not (_from or to):
