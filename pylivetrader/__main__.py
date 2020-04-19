@@ -31,9 +31,7 @@ from pylivetrader.shell import start_shell
 
 @click.group()
 def main():
-    from logbook import StreamHandler
-    import sys
-    StreamHandler(sys.stdout).push_application()
+    pass
 
 
 def algo_parameters(f):
@@ -83,6 +81,14 @@ def algo_parameters(f):
             show_default=True,
             help='The minimum level of log to be written.'),
         click.option(
+            '-tz', '--timezone',
+            type=click.Choice(
+                {'UTC', 'LOCAL', 'NY'}
+            ),
+            default='UTC',
+            show_default=True,
+            help='The timezone logs will be displayed in.'),
+        click.option(
             '--storage-engine',
             type=click.Choice({'file', 'redis'}),
             default='file',
@@ -112,6 +118,7 @@ def process_algo_params(
         statefile,
         retry,
         log_level,
+        timezone,
         storage_engine,
         quantopian_compatible):
     if len(algofile) > 0:
@@ -151,11 +158,37 @@ def process_algo_params(
     return ctx
 
 
+def newyork_tz():
+    """
+    a callable for the NY timezone. used to set NY tz for the logbook logger
+    """
+    import datetime
+    import pytz
+    return datetime.datetime.now(tz=pytz.timezone('America/New_York'))
+
+
+def define_log_book_app(timezone):
+    """
+    this is used to set different timezone for the logbook logger and then to
+    define the logger with default stream to be the console
+    """
+    from logbook import StreamHandler
+    import logbook
+    if timezone == "LOCAL":
+        logbook.set_datetime_format("local")
+    elif timezone == "NY":
+        logbook.set_datetime_format(newyork_tz)
+
+    import sys
+    StreamHandler(sys.stdout).push_application()
+
+
 @click.command()
 @algo_parameters
 @click.pass_context
 def run(ctx, **kwargs):
     ctx = process_algo_params(ctx, **kwargs)
+    define_log_book_app(kwargs['timezone'])
     algorithm = ctx.algorithm
     with LiveTraderAPI(algorithm):
         algorithm.run(retry=ctx.retry)
