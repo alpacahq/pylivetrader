@@ -211,7 +211,7 @@ def define_log_book_app(timezone):
     StreamHandler(sys.stdout).push_application()
 
 
-@click.command()
+@click.command(help="Execute an algorithm in pylivetrader")
 @run_parameters
 @click.pass_context
 def run(ctx, **kwargs):
