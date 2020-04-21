@@ -34,7 +34,7 @@ def main():
     pass
 
 
-def algo_parameters(f):
+def run_parameters(f):
     opts = [
         click.option(
             '-f', '--file',
@@ -212,7 +212,7 @@ def define_log_book_app(timezone):
 
 
 @click.command()
-@algo_parameters
+@run_parameters
 @click.pass_context
 def run(ctx, **kwargs):
     ctx = process_algo_params(ctx, **kwargs)
