@@ -108,6 +108,34 @@ def algo_parameters(f):
     return f
 
 
+def shell_parameters(f):
+    opts = [
+        click.option(
+            '-f', '--file',
+            default=None,
+            type=click.Path(
+                exists=True, file_okay=True, dir_okay=False,
+                readable=True, resolve_path=True),
+            help='Path to the file taht contains algorithm to run.'),
+        click.option(
+            '-b', '--backend',
+            default='alpaca',
+            show_default=True,
+            help='Broker backend to run algorithm with.'),
+        click.option(
+            '--backend-config',
+            type=click.Path(
+                exists=True, file_okay=True, dir_okay=False,
+                readable=True, resolve_path=True),
+            default=None,
+            help='Path to broker backend config file.'),
+        click.argument('algofile', nargs=-1),
+    ]
+    for opt in opts:
+        f = opt(f)
+    return f
+
+
 def process_algo_params(
         ctx,
         file,
@@ -195,7 +223,7 @@ def run(ctx, **kwargs):
 
 
 @click.command()
-@algo_parameters
+@shell_parameters
 @click.pass_context
 def shell(ctx, **kwargs):
     ctx = process_algo_params(ctx, **kwargs)
