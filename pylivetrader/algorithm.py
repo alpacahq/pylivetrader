@@ -345,7 +345,7 @@ class Algorithm(object):
             The function to execute when the rule is triggered.
         date_rule : EventRule, optional
             The rule for the dates to execute this function.
-        time_rule : EventRule, optional
+        time_rule : EventRule, optional (e.g AfterOpen, BeforeClose)
             The rule for the times to execute this function.
         half_days : bool, optional
             Should this rule fire on half days?
