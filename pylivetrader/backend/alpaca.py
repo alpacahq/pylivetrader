@@ -160,7 +160,7 @@ class Backend(BaseBackend):
             try:
                 conn.run(channels)
                 log.info("Connection reestablished")
-            except:
+            except Exception as e:
                 from time import sleep
                 sleep(5)
                 asyncio.set_event_loop(asyncio.new_event_loop())
