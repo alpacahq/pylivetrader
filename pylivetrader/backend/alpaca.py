@@ -159,6 +159,7 @@ class Backend(BaseBackend):
         while 1:
             try:
                 conn.run(channels)
+                log.info("Connection reestablished")
             except:
                 from time import sleep
                 sleep(5)
