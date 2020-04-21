@@ -222,7 +222,8 @@ def run(ctx, **kwargs):
         algorithm.run(retry=ctx.retry)
 
 
-@click.command()
+@click.command(help="opens an interactive shell for the user to try the "
+                    "interface")
 @shell_parameters
 @click.pass_context
 def shell(ctx, **kwargs):
