@@ -21,8 +21,11 @@ if you haven't done that just set them in a config.yaml file that contains:
 key_id: <YOUR-API-KEY>
 secret: <YOUR-SECRET-KEY>
 base_url: https://paper-api.alpaca.markets
+use_polygon: false
 ```
-and execute it like so: `pylivetrader run macd_example.py
+*note: we use the alpaca data api by default, you could change that by
+ setting usePolygon to true.<br>
+execute it like so: `pylivetrader run macd_example.py
  --backend-config config.yaml`
  
 ## Using the built-in smoke tool

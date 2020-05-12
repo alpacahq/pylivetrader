@@ -97,11 +97,13 @@ class Backend(BaseBackend):
         key_id=None,
         secret=None,
         base_url=None,
-        api_version='v2'
+        api_version='v2',
+        use_polygon=False
     ):
         self._key_id = key_id
         self._secret = secret
         self._base_url = base_url
+        self._use_polygon = use_polygon
         self._api = tradeapi.REST(
             key_id, secret, base_url, api_version=api_version
         )
@@ -421,7 +423,10 @@ class Backend(BaseBackend):
             return
 
     def get_last_traded_dt(self, asset):
-        trade = self._api.polygon.last_trade(asset.symbol)
+        if self._use_polygon:
+            trade = self._api.polygon.last_trade(asset.symbol)
+        else:
+            trade = self._api.get_last_trade(asset.symbol)
         return trade.timestamp
 
     def get_spot_value(
@@ -541,7 +546,7 @@ class Backend(BaseBackend):
             to=None,
             limit=None):
         """
-        Query historic_agg either minute or day in parallel
+        Query historic_agg_v2 either minute or day in parallel
         for multiple symbols, and return in dict.
 
         symbols: list[str]
@@ -563,7 +568,6 @@ class Backend(BaseBackend):
             query_limit = limit
             if query_limit is not None:
                 query_limit *= 2
-
             if _from:
                 if size == 'day':
                     to = _from + timedelta(days=query_limit+1)
@@ -577,11 +581,18 @@ class Backend(BaseBackend):
 
         @skip_http_error((404, 504))
         def fetch(symbol):
-            df = self._api.polygon.historic_agg_v2(
-                symbol, 1, size,
-                int(_from.timestamp()) * 1000,
-                int(to.timestamp()) * 1000
-            ).df
+            if self._use_polygon:
+                df = self._api.polygon.historic_agg_v2(
+                    symbol, 1, size,
+                    int(_from.timestamp()) * 1000,
+                    int(to.timestamp()) * 1000
+                ).df
+            else:
+                df = self._api.get_barset(symbol,
+                                          size,
+                                          start=_from.date().isoformat(),
+                                          end=to.date().isoformat(),
+                                          limit=limit+1).df[symbol]
 
             # rename Polygon's v2 agg fields to match their full titles
             df = df.rename(index=str, columns={
@@ -631,6 +642,9 @@ class Backend(BaseBackend):
 
         @skip_http_error((404, 504))
         def fetch(symbol):
-            return self._api.polygon.last_trade(symbol)
+            if self._use_polygon:
+                return self._api.polygon.last_trade(symbol)
+            else:
+                return self._api.get_last_trade(symbol)
 
         return parallelize(fetch)(symbols)
