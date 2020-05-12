@@ -230,7 +230,7 @@ def test_orders():
 
 
 def test_data():
-    backend = alpaca.Backend('key-id', 'secret-key')
+    backend = alpaca.Backend('key-id', 'secret-key', use_polygon=True)
 
     with patch.object(backend._api, 'polygon') as polygon:
         polygon.historic_agg_v2 = historic_agg_data

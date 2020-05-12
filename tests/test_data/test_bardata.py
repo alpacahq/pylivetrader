@@ -9,7 +9,7 @@ def test_bardata():
     portal = get_fixture_data_portal()
 
     asset0 = portal.asset_finder.retrieve_asset('asset-0')
-    asset1 = portal.asset_finder.retrieve_asset('asset-0')
+    asset1 = portal.asset_finder.retrieve_asset('asset-1')
 
     data = BarData(portal, 'minute')
 
