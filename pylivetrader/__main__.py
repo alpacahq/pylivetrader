@@ -186,6 +186,36 @@ def process_algo_params(
     return ctx
 
 
+def process_shell_params(
+        ctx,
+        file,
+        backend,
+        backend_config):
+    algofile = None
+    if file:
+        algofile = file
+    if algofile is None or algofile == '':
+        ctx.fail("must specify algo file with '-f' ")
+
+    if not (Path(algofile).exists() and Path(algofile).is_file()):
+        ctx.fail("couldn't find algofile '{}'".format(algofile))
+
+    algomodule = get_algomodule_by_path(algofile)
+
+    backend_options = None
+    if backend_config is not None:
+        backend_options = configloader.load_config(backend_config)
+
+    algorithm = Algorithm(
+        backend=backend,
+        backend_options=backend_options,
+    )
+    ctx.algorithm = algorithm
+    ctx.algomodule = algomodule
+    # ctx.retry = retry
+    return ctx
+
+
 def newyork_tz():
     """
     a callable for the NY timezone. used to set NY tz for the logbook logger
@@ -227,7 +257,7 @@ def run(ctx, **kwargs):
 @shell_parameters
 @click.pass_context
 def shell(ctx, **kwargs):
-    ctx = process_algo_params(ctx, **kwargs)
+    ctx = process_shell_params(ctx, **kwargs)
     algorithm = ctx.algorithm
     algomodule = ctx.algomodule
 
