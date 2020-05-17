@@ -190,8 +190,9 @@ def process_shell_params(
         ctx,
         file,
         backend,
-        backend_config):
-    algofile = None
+        backend_config,
+        algofile=None,
+        ):
     if file:
         algofile = file
     if algofile is None or algofile == '':
