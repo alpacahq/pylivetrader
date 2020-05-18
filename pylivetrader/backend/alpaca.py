@@ -594,23 +594,6 @@ class Backend(BaseBackend):
                                           end=to.date().isoformat(),
                                           limit=limit).df[symbol]
 
-            # rename Polygon's v2 agg fields to match their full titles
-            df = df.rename(index=str, columns={
-                't': 'timestamp',
-                'o': 'open',
-                'h': 'high',
-                'l': 'low',
-                'c': 'close',
-                'v': 'volume'
-            })
-
-            # convert timestamps to datetimes
-            # astype is necessary to deal with empty result
-            df.index = pd.to_datetime(
-                df.index.astype('str'),
-                utc=True,
-            ).tz_convert('America/New_York')
-            df.index.name = 'timestamp'
 
             # zipline -> right label
             # API result -> left label (beginning of bucket)
