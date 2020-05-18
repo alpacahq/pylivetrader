@@ -592,7 +592,7 @@ class Backend(BaseBackend):
                                           size,
                                           start=_from.date().isoformat(),
                                           end=to.date().isoformat(),
-                                          limit=limit+1).df[symbol]
+                                          limit=limit).df[symbol]
 
             # rename Polygon's v2 agg fields to match their full titles
             df = df.rename(index=str, columns={
