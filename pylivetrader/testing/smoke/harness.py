@@ -52,7 +52,8 @@ def run_smoke(algo, before_run_hook=None, pipeline_hook=None):
         handle_data=getattr(algo, 'handle_data', noop),
         before_trading_start=getattr(algo, 'before_trading_start', noop),
         backend=be,
-        pipeline_hook=pipeline_hook
+        pipeline_hook=pipeline_hook,
+        statefile='smoke-algo-state.pkl'
     )
 
     with LiveTraderAPI(a), \
