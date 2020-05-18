@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import pandas
 import pandas as pd
 import numpy as np
 
@@ -124,6 +124,9 @@ class BarData:
             )
 
     def history(self, assets, fields, bar_count, frequency):
+
+        if isinstance(assets, pandas.core.indexes.base.Index):
+            assets = list(assets)
 
         if not (assets and fields):
             return None
