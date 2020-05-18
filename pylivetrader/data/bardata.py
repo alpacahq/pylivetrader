@@ -78,7 +78,9 @@ class BarData:
                     asset,
                     field,
                     self._get_current_minute(),
-                    self.simulation_dt_func(),
+                    None,  # this is used to be self.simulation_dt_func(). but
+                           # it is a zipline residue, and it's not used
+                           # anyways. so, just use empty arg
                     self.data_frequency
                 )
 
