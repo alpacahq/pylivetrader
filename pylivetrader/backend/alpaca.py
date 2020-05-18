@@ -594,7 +594,6 @@ class Backend(BaseBackend):
                                           end=to.date().isoformat(),
                                           limit=limit).df[symbol]
 
-
             # zipline -> right label
             # API result -> left label (beginning of bucket)
             if size == 'minute':
