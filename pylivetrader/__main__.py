@@ -18,6 +18,7 @@
 from pathlib import Path
 import os
 import click
+from click import ClickException
 
 from pylivetrader.misc import configloader
 from pylivetrader.misc.api_context import LiveTraderAPI
@@ -26,6 +27,7 @@ from pylivetrader.loader import (
     get_algomodule_by_path,
     get_api_functions,
 )
+import pylivetrader.misc.migration_tool as migration_tool
 from pylivetrader.shell import start_shell
 
 
@@ -129,8 +131,30 @@ def shell_parameters(f):
                 readable=True, resolve_path=True),
             default=None,
             help='Path to broker backend config file.'),
-        click.argument('algofile', nargs=-1),
+        # click.argument('algofile', nargs=-1),
     ]
+    for opt in opts:
+        f = opt(f)
+    return f
+
+
+def migrate_parameters(f):
+    opts = [
+        click.option(
+            '-i', '--in-file',
+            default=None,
+            type=click.Path(
+                exists=True, file_okay=True, dir_okay=False,
+                readable=True, resolve_path=True),
+            help='Path to the Quantopian/zipline algorithm file to migrate.'),
+        click.option(
+            '-o', '--out-file',
+            default=None,
+            type=click.Path(
+                exists=False, file_okay=True, dir_okay=False,
+                readable=True, resolve_path=True),
+            help='Path to the pylivetrader output algorithm file.'),
+        ]
     for opt in opts:
         f = opt(f)
     return f
@@ -272,6 +296,52 @@ def version():
     click.echo('v{}'.format(VERSION))
 
 
+def emulate_progress_bar(msg, max_dots=10):
+    """
+    this method is just a visual effect utility that emulates progress of
+    the migration process and gives a nice feel of it.
+    """
+    click.echo(msg, nl=False)
+    from random import randint
+    dots = randint(3, max_dots)
+    for _ in range(dots):
+        click.echo(".", nl=False)
+        from time import sleep
+        sleep(randint(1, 5) / 10)
+    click.echo('')  # down one line
+
+
+@click.command(help="migrate a Quantopian/Zipline algorithm to pylivetrader")
+@migrate_parameters
+def migrate(**kwargs):
+    try:
+        click.echo("make sure source file is python 3 compatible")
+        click.echo(
+            migration_tool.make_sure_source_code_is_python3_compatible(
+                kwargs["in_file"])
+        )
+        data = open(kwargs["in_file"], "r").read()
+        emulate_progress_bar("check for unsupported modules", 5)
+        migration_tool.check_for_unsupported_modules(data)
+        emulate_progress_bar("make sure all required methods are implemented")
+        data = migration_tool.add_missing_base_methods(data)
+        emulate_progress_bar("remove unsupported imports", 5)
+        data = migration_tool.remove_quantopian_imports(data)
+        data = migration_tool.remove_commission(data)
+        emulate_progress_bar("define a logger", 5)
+        data = migration_tool.define_logger(data)
+        emulate_progress_bar("adding pylivetrader imports", 5)
+        data = migration_tool.add_pylivetrader_imports(data)
+        emulate_progress_bar("Finalizing")
+        data = migration_tool.cleanup(data)
+
+        with open(kwargs["out_file"], 'w') as f:
+            f.write(data)
+
+    except Exception as e:
+        raise ClickException(e)
+
+
 def extract_filename(algofile):
     algofilename = algofile
     algofilename = os.path.basename(algofilename)
@@ -283,6 +353,7 @@ def extract_filename(algofile):
 main.add_command(run)
 main.add_command(shell)
 main.add_command(version)
+main.add_command(migrate)
 
 
 if __name__ == '__main__':
