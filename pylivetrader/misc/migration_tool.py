@@ -31,7 +31,7 @@ def add_pylivetrader_imports(code: str) -> str:
     """
     imports = """
 from pylivetrader.api import *
-\r\n   
+\r\n
 """
     return imports + code
 
@@ -44,7 +44,7 @@ def define_logger(code: str) -> str:
     """
 
     logger = """
-    
+
 from logbook import Logger, StreamHandler
 import sys
 StreamHandler(sys.stdout).push_application()
