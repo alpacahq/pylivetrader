@@ -110,7 +110,7 @@ before the session starts) or if it starts after that. Once the session
 starts, it calls the `handle_data()` function every minute until the
 session ends, or any functions that are registered by `schedule_function` API.
 
-The options are as follows.
+The options are as follows
 
 - `-f` or `--file`: the file path to the algorithm source
 - `-b` or `--backend`: the name of backend to use
@@ -131,7 +131,12 @@ of each operation.
 $ pylivetrader shell algo.py
 ```
 
-The options are the same as `run`.
+
+The options are as follows
+
+- `-f` or `--file`: the file path to the algorithm source
+- `-b` or `--backend`: the name of backend to use
+- `--backend-config`: the yaml file for backend parameters
 
 #### things you could do with the shell
 * get asset price data. e.g: data.history(symbol("AAPL"), "close", 10, "1d")
@@ -141,6 +146,16 @@ The options are the same as `run`.
 * get all opened orders: context.get_open_orders()
 * get all orders: context.get_all_orders()
 * get a list of all available assets. eg: context._backend._api.list_assets(asset_class='us_equity')
+
+### migrate
+
+`pylivetrader migrate` allows you to easily migrate your quantopian/zipline code to pylivetrader compatible code.<br>
+how to run:
+```sh
+pylivetrader migrate -i zipline_code.py -o pylivetrader_compatible.py
+```
+now you could execute it with the `run` command
+
 
 ## State Management
 
