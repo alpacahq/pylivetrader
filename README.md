@@ -155,7 +155,7 @@ how to run:
 pylivetrader migrate -i zipline_code.py -o pylivetrader_compatible.py
 ```
 now you could execute it with the `run` command
-
+<br>note: we do not support the optimize api by quantopian since it is not a part of zipline
 
 ## State Management
 
