@@ -36,6 +36,21 @@ from pylivetrader.api import *
     return imports + code
 
 
+def add_pipelinelive_imports(code: str) -> str:
+    """
+    check if algo is using pipeline and if so add pipeline_live imports
+    """
+    imports = """
+from pipeline_live.data.alpaca.factors import AverageDollarVolume
+from pipeline_live.data.alpaca.pricing import USEquityPricing
+from pipeline_live.data.polygon.fundamentals import PolygonCompany
+from zipline.pipeline import Pipeline
+"""
+    if "pipeline" in code:
+        return imports + code
+    return code
+
+
 def define_logger(code: str) -> str:
     """
     quantopian has a default logger called "log"
@@ -144,6 +159,7 @@ if __name__ == '__main__':
     data = remove_commission(data)
     data = add_missing_base_methods(data)
     data = define_logger(data)
+    data = add_pipelinelive_imports(data)
     data = add_pylivetrader_imports(data)
     data = cleanup(data)
     print(data)

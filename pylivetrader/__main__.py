@@ -330,6 +330,8 @@ def migrate(**kwargs):
         data = migration_tool.remove_commission(data)
         emulate_progress_bar("define a logger", 5)
         data = migration_tool.define_logger(data)
+        emulate_progress_bar("checking if using pipeline", 5)
+        data = migration_tool.add_pipelinelive_imports(data)
         emulate_progress_bar("adding pylivetrader imports", 5)
         data = migration_tool.add_pylivetrader_imports(data)
         emulate_progress_bar("Finalizing")
