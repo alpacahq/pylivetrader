@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+import os
 from setuptools import setup, find_packages
 
 from runpy import run_path
@@ -13,6 +14,11 @@ VERSION = run_path(
 with open(str(Path(__file__).parent) + '/README.md') as readme_file:
     README = readme_file.read()
 
+with open(os.path.join("requirements", "requirements.txt")) as reqs:
+    REQUIREMENTS = reqs.readlines()
+
+with open(os.path.join("requirements", "requirements_test.txt")) as reqs:
+    REQUIREMENTS_TEST = reqs.readlines()
 
 setup(
     name='pylivetrader',
@@ -41,23 +47,7 @@ setup(
     [console_scripts]
     pylivetrader=pylivetrader.__main__:main
     ''',
-    install_requires=[
-        'bottleneck',
-        'pandas<0.23',
-        'pytz',
-        'logbook',
-        'astor',
-        'trading_calendars',
-        'click',
-        'PyYAML',
-        'ipython',
-        # support alpaca backend by default
-        'alpaca-trade-api>=0.48',
-        'pipeline-live>=0.1.9',
-    ],
-    tests_require=[
-        'pytest>=5.0.0',
-        'pytest-cov',
-    ],
+    install_requires=REQUIREMENTS,
+    tests_require=REQUIREMENTS_TEST,
     setup_requires=["flake8", "pytest-runner", "numpy<1.15"]
 )

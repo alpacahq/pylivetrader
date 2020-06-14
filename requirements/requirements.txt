@@ -1,0 +1,12 @@
+bottleneck
+pandas<0.23
+pytz
+logbook
+astor
+trading_calendars
+click
+PyYAML
+ipython
+# support alpaca backend by default
+alpaca-trade-api>=0.48
+pipeline-live>=0.1.9
