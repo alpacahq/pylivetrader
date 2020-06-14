@@ -1,5 +1,7 @@
 [![PyPI version](https://badge.fury.io/py/pylivetrader.svg)](https://badge.fury.io/py/pylivetrader)
 [![CircleCI](https://circleci.com/gh/alpacahq/pylivetrader.svg?style=shield)](https://circleci.com/gh/alpacahq/pylivetrader)
+[![Updates](https://pyup.io/repos/github/alpacahq/pylivetrader/shield.svg)](https://pyup.io/repos/github/alpacahq/pylivetrader/)
+[![Python 3](https://pyup.io/repos/github/alpacahq/pylivetrader/python-3-shield.svg)](https://pyup.io/repos/github/alpacahq/pylivetrader/)
 
 # pylivetrader
 
