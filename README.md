@@ -210,8 +210,7 @@ try our [docker image `alpacamarkets/pylivetrader`](https://hub.docker.com/r/alp
 This has installed pylivetrader so you can start right away without
 worrying about your python environment.  See more details in the
 `dockerfiles` directory.
-
-If your algorithm file is called `algo.py`, this could be all you need to run it.
+<br>If your algorithm file is called `algo.py`, this could be all you need to run it.
 
 ```sh
 docker run -v $PWD:/work -w /work alpacamarkets/pylivetrader pylivetrader run -f algo.py
@@ -219,6 +218,11 @@ docker run -v $PWD:/work -w /work alpacamarkets/pylivetrader pylivetrader run -f
 
 Make sure you set up environment variables for the backend
 (use `-e KEY=VAL` for docker command).
+
+
+you could also build the docker image from source like this:<br>
+`docker build -t alpaca/pylivetrader-dev -f dockerfiles/Dockerfile-dev .`<br>
+it gives you the power to run it locally and edit or debug the code if you desire.
 
 ## Smoke Test
 
