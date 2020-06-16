@@ -1,6 +1,6 @@
 bottleneck==1.3.2
 pandas<0.23  # pyup: ignore
-pytz
+pytz==2020.1
 logbook
 astor
 trading_calendars
