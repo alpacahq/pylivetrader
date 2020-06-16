@@ -3,7 +3,7 @@ pandas<0.23  # pyup: ignore
 pytz==2020.1
 logbook==1.5.3
 astor==0.8.1
-trading_calendars
+trading_calendars==1.11.7
 click
 PyYAML
 ipython
