@@ -5,7 +5,7 @@ logbook==1.5.3
 astor==0.8.1
 trading_calendars==1.11.7
 click==7.1.2
-PyYAML
+PyYAML==5.3.1
 ipython
 # support alpaca backend by default
 alpaca-trade-api>=0.48
