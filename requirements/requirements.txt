@@ -4,7 +4,7 @@ pytz==2020.1
 logbook==1.5.3
 astor==0.8.1
 trading_calendars==1.11.7
-click
+click==7.1.2
 PyYAML
 ipython
 # support alpaca backend by default
