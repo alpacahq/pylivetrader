@@ -6,7 +6,7 @@ astor==0.8.1
 trading_calendars==1.11.7
 click==7.1.2
 PyYAML==5.3.1
-ipython==7.15.0
+ipython==7.16.1
 # support alpaca backend by default
 alpaca-trade-api>=0.48
 pipeline-live>=0.1.9
