@@ -9,3 +9,4 @@ PyYAML>=5, <6
 ipython>=7
 alpaca-trade-api>=0.48
 pipeline-live>=0.1.9
+pandas-datareader<=0.8.1  # higher requires pandas>=0.23, zipline limits to 0.22
