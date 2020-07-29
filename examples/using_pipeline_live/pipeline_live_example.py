@@ -18,16 +18,16 @@ def initialize(context):
     # share between methods, or in later trades
 
     # let's create our pipeline and attach it to pylivetrader execution
-    top5 = AverageDollarVolume(window_length=20).top(5)  # this is a filter
-    context.pipe = Pipeline({
-        'close':     USEquityPricing.close.latest,  # we only look at the close
-        'marketcap': PolygonCompany.marketcap.latest,  # volume
+    top5 = AverageDollarVolume(window_length=20).top(5)
+    pipe = Pipeline({
+        'close':     USEquityPricing.close.latest,
+        'marketcap': PolygonCompany.marketcap.latest,
     }, screen=top5)
 
     # this line connects the pipeline to pylivetrader. this is done once,
     # and we get a new and it's stored in the context. we will get a fresh list
     # of assets every morning in before_trading_start()
-    context.attach_pipeline(context.pipe, "pipe")
+    context.attach_pipeline(pipe, "pipe")
 
 
 def before_trading_start(context, data):
@@ -48,6 +48,8 @@ def handle_data(context, data):
     # zero.
 
     # Calculate short-term EMA (using data from the past 12 minutes.)
+    output = context.pipeline_output('pipe')
+
     short_periods = 12
     long_periods = 26
 
@@ -71,7 +73,7 @@ def handle_data(context, data):
                 log.info("Closed position for {}".format(asset.symbol))
 
     # step 2
-    for asset in context.output.index:
+    for asset in output.index:
         short_data = data.history(
             asset, 'price', bar_count=short_periods, frequency="1m")
         short_ema = pd.Series.ewm(short_data, span=short_periods).mean().iloc[-1]
