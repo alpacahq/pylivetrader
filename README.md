@@ -159,6 +159,14 @@ pylivetrader migrate -i zipline_code.py -o pylivetrader_compatible.py
 now you could execute it with the `run` command
 <br>note: we do not support the optimize api by quantopian since it is not a part of zipline
 
+## Working with Pipline-live
+You can see an example usage under the examples folder.<br>
+To work with pipeline-live you need to do the following steps:
+* Create the pipeline (usually you will create it in a method, convention name is `make_pipeline()`. Inside you will define your universe and add factors and filters.
+* DO NOT store the pipe in the context object. We cannot store it to the statefile and you don't need to do it. we store it for you.
+* attach the pipeline to the Algortihm instance. do it like this: `context.attach_pipeline(pipe, "my_pipe")`. this should be done in the `intialize()` or `before_trading_start()` methods.
+* Now, to get the output of the pipeline, you do this: `context.pipeline_output('my_pipe')`. you should call it in `handle_data()` or any other method you use the scheduler for.
+
 ## State Management
 
 One of the things you need to understand in live trading is that things can
