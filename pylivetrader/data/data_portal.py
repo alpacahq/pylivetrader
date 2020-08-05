@@ -59,7 +59,7 @@ class DataPortal:
     @lru_cache(10)
     def _get_realtime_bars(self, assets, frequency, bar_count, end_dt):
         return self.backend.get_bars(
-            assets, frequency, bar_count=bar_count)
+            assets, frequency, bar_count=bar_count, end_dt=end_dt)
 
     def cache_clear(self):
         return self._get_realtime_bars.cache_clear()

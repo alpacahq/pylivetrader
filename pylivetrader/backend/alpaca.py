@@ -47,7 +47,7 @@ from pylivetrader.finance.execution import (
     StopLimitOrder,
 )
 from pylivetrader.misc.pd_utils import normalize_date
-from pylivetrader.misc.parallel_utils import parallelize
+from pylivetrader.misc.parallel_utils import parallelize, parallelize_with_multi_process
 from pylivetrader.errors import SymbolNotFound
 from pylivetrader.assets import Equity
 
@@ -483,7 +483,7 @@ class Backend(BaseBackend):
         ]
         return results
 
-    def get_bars(self, assets, data_frequency, bar_count=500):
+    def get_bars(self, assets, data_frequency, bar_count=500, end_dt=None):
         '''
         Interface method.
 
@@ -496,103 +496,101 @@ class Backend(BaseBackend):
         else:
             symbols = [asset.symbol for asset in assets]
 
-        symbol_bars = self._symbol_bars(
-            symbols, 'day' if is_daily else 'minute', limit=bar_count)
+        dfs = self._symbol_bars(
+            symbols, 'day' if is_daily else 'minute', to=end_dt, limit=bar_count)
 
-        if is_daily:
-            intra_bars = {}
-            symbol_bars_minute = self._symbol_bars(
-                symbols, 'minute', limit=1000)
-            for symbol, df in symbol_bars_minute.items():
-                agged = df.resample('1D').agg(dict(
-                    open='first',
-                    high='max',
-                    low='min',
-                    close='last',
-                    volume='sum',
-                )).dropna()
-                intra_bars[symbol] = agged
+        df = pd.concat(dfs, axis=1)
+        # change the index values to assets
+        symbol_asset = {a.symbol: a for a in assets}
+        df.columns = df.columns.set_levels([symbol_asset[s] for s in df.columns.levels[0]],
+                                                             level=0)
+        return df
+        # if is_daily:
+        #     intra_bars = {}
+        #     symbol_bars_minute = self._symbol_bars(
+        #         symbols, 'minute', limit=1000)
+        #     for symbol, df in symbol_bars_minute.items():
+        #         agged = df.resample('1D').agg(dict(
+        #             open='first',
+        #             high='max',
+        #             low='min',
+        #             close='last',
+        #             volume='sum',
+        #         )).dropna()
+        #         intra_bars[symbol] = agged
+        #
+        # dfs = []
+        # for asset in assets if not assets_is_scalar else [assets]:
+        #     symbol = asset.symbol
+        #     df = symbol_bars.get(symbol)
+        #     if df is None:
+        #         dfs.append(pd.DataFrame(
+        #             [], columns=[
+        #                 'open', 'high', 'low', 'close', 'volume']
+        #         ))
+        #         continue
+        #     if is_daily:
+        #         agged = intra_bars.get(symbol)
+        #         if agged is not None and len(
+        #                 agged.index) > 0 and agged.index[-1] not in df.index:
+        #             if not (agged.index[-1] > df.index[-1]):
+        #                 log.warn(
+        #                     ('agged.index[-1] = {}, df.index[-1] = {} '
+        #                      'for {}').format(
+        #                         agged.index[-1], df.index[-1], symbol))
+        #             df = df.append(agged.iloc[-1])
+        #     df.columns = pd.MultiIndex.from_product([[asset, ], df.columns])
+        #     dfs.append(df)
+        #
+        # return pd.concat(dfs, axis=1)
 
-        dfs = []
-        for asset in assets if not assets_is_scalar else [assets]:
-            symbol = asset.symbol
-            df = symbol_bars.get(symbol)
-            if df is None:
-                dfs.append(pd.DataFrame(
-                    [], columns=[
-                        'open', 'high', 'low', 'close', 'volume']
-                ))
-                continue
-            if is_daily:
-                agged = intra_bars.get(symbol)
-                if agged is not None and len(
-                        agged.index) > 0 and agged.index[-1] not in df.index:
-                    if not (agged.index[-1] > df.index[-1]):
-                        log.warn(
-                            ('agged.index[-1] = {}, df.index[-1] = {} '
-                             'for {}').format(
-                                agged.index[-1], df.index[-1], symbol))
-                    df = df.append(agged.iloc[-1])
-            df.columns = pd.MultiIndex.from_product([[asset, ], df.columns])
-            dfs.append(df)
-
-        return pd.concat(dfs, axis=1)
-
-    def _symbol_bars(
-            self,
-            symbols,
-            size,
-            _from=None,
-            to=None,
-            limit=None):
+    def _get_from_and_to(self, size, limit, end_dt=None):
         """
-        Query historic_agg_v2 either minute or day in parallel
-        for multiple symbols, and return in dict.
+        generate time interval for api
 
-        symbols: list[str]
-        size:    str ('day', 'minute')
-        _from:   str or pd.Timestamp
-        to:      str or pd.Timestamp
-        limit:   str or int
-
-        return: dict[str -> pd.DataFrame]
+        return:pd.Timestamp(tz=America/New_York)
         """
-        assert size in ('day', 'minute')
+        if not end_dt:
+            end_dt = pd.to_datetime('now', utc=True).floor('min')
+        session_label = self._cal.minute_to_session_label(end_dt)
+        all_minutes: pd.DatetimeIndex = self._cal.all_minutes
+        all_sessions: pd.DatetimeIndex = self._cal.all_sessions
+        if size == 'minute':
+            if end_dt not in self._cal.minutes_for_session(session_label):
+                end_dt = self._cal.previous_minute(end_dt)
+            idx = all_minutes.get_loc(end_dt)
+            start_minute = all_minutes[idx - limit + 1]
+            _from = end_dt.tz_convert(NY)
+            to = start_minute.tz_convert(NY)
+        elif size == 'day':
+            idx = all_sessions.get_loc(session_label)
+            start_session = all_sessions[idx - limit + 1]
+            _from = start_session.tz_localize(None).tz_localize('America/New_York')
+            to = session_label.tz_localize(None).tz_localize('America/New_York')
 
-        if not (_from or to):
-            to = pd.to_datetime('now', utc=True).tz_convert('America/New_York')
+        return _from, to
 
-        if not (_from and to) and limit:
-            # temp workaround for less bars after masking by
-            # market hours
-            query_limit = limit
-            if query_limit is not None:
-                query_limit *= 2
-            if _from:
-                if size == 'day':
-                    to = _from + timedelta(days=query_limit+1)
-                else:
-                    to = _from + timedelta(minutes=query_limit+1)
-            else:
-                if size == 'day':
-                    _from = to - timedelta(days=query_limit+1)
-                else:
-                    _from = to - timedelta(minutes=query_limit+1)
-
+    # move fetch function to here, cause the parallelize_with_multi_process don't support Closure
+    def _fetch(self, args):
         @skip_http_error((404, 504))
-        def fetch(symbol):
+        def wrapper():
+            symbols = args[0]  # symbols can be list or str
+            _from = args[1]
+            to = args[2]
+            size = args[3]
             if self._use_polygon:
+                assert isinstance(symbols, str)
                 df = self._api.polygon.historic_agg_v2(
-                    symbol, 1, size,
+                    symbols, 1, size,
                     int(_from.timestamp()) * 1000,
                     int(to.timestamp()) * 1000
                 ).df
+                df.columns = pd.MultiIndex.from_product([[symbols, ], df.columns])
             else:
-                df = self._api.get_barset(symbol,
+                df = self._api.get_barset(symbols,
                                           size,
                                           start=_from.date().isoformat(),
-                                          end=to.date().isoformat(),
-                                          limit=limit).df[symbol]
+                                          end=to.date().isoformat()).df[symbols]
 
             # zipline -> right label
             # API result -> left label (beginning of bucket)
@@ -605,12 +603,54 @@ class Backend(BaseBackend):
                         df.index[0], df.index[-1],
                     ).tz_convert(NY)
                     df = df.reindex(mask)
-
-            if limit is not None:
-                df = df.iloc[-limit:]
             return df
+        return wrapper()
 
-        return parallelize(fetch)(symbols)
+
+    def _symbol_bars(
+            self,
+            symbols,
+            size,
+            _from=None,
+            to=None,
+            limit=None):
+        """
+        Query historic_agg_v2 either minute or day in parallel
+        for multiple symbols, and return in dict.
+
+        you can pass:
+        1 _from + to
+        2 to + limit
+        3 limit, this way will use the current time as to
+
+        symbols: list[str]
+        size:    str ('day', 'minute')
+        _from:   str or pd.Timestamp
+        to:      str or pd.Timestamp
+        limit:   str or int
+
+        return: list[pd.DataFrame with columns MultiIndex [symbol -> OHLCV]]
+        """
+        assert size in ('day', 'minute')
+
+        assert (_from and to) or limit
+
+        if not (_from and to):
+            _from, to = self._get_from_and_to(size, limit, end_dt=to)
+
+        if self._use_polygon:
+            args = [[symbol, _from, to, size]for symbol in symbols]
+            return parallelize_with_multi_process(self._fetch)(args)
+        else:
+            # alpaca support get real-time data of multi stocks(<200) at once
+            splitlen = 199
+            parts = []
+            for i in range(0, len(symbols), splitlen):
+                part = symbols[i:i + splitlen]
+                parts.append(part)
+            args = [[part, _from, to, size] for part in parts]
+            return parallelize_with_multi_process(self._fetch, 10)(args)
+            # return parallelize(self._fetch)(args).values()
 
     def _symbol_trades(self, symbols):
         '''
