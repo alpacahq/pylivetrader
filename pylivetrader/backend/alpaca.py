@@ -544,68 +544,6 @@ class Backend(BaseBackend):
         #
         # return pd.concat(dfs, axis=1)
 
-    def _get_from_and_to(self, size, limit, end_dt=None):
-        """
-        generate time interval for api
-
-        return:pd.Timestamp(tz=America/New_York)
-        """
-        if not end_dt:
-            end_dt = pd.to_datetime('now', utc=True).floor('min')
-        session_label = self._cal.minute_to_session_label(end_dt)
-        all_minutes: pd.DatetimeIndex = self._cal.all_minutes
-        all_sessions: pd.DatetimeIndex = self._cal.all_sessions
-        if size == 'minute':
-            if end_dt not in self._cal.minutes_for_session(session_label):
-                end_dt = self._cal.previous_minute(end_dt)
-            idx = all_minutes.get_loc(end_dt)
-            start_minute = all_minutes[idx - limit + 1]
-            _from = end_dt.tz_convert(NY)
-            to = start_minute.tz_convert(NY)
-        elif size == 'day':
-            idx = all_sessions.get_loc(session_label)
-            start_session = all_sessions[idx - limit + 1]
-            _from = start_session.tz_localize(None).tz_localize('America/New_York')
-            to = session_label.tz_localize(None).tz_localize('America/New_York')
-
-        return _from, to
-
-    # move fetch function to here, cause the parallelize_with_multi_process don't support Closure
-    def _fetch(self, args):
-        @skip_http_error((404, 504))
-        def wrapper():
-            symbols = args[0]  # symbols can be list or str
-            _from = args[1]
-            to = args[2]
-            size = args[3]
-            if self._use_polygon:
-                assert isinstance(symbols, str)
-                df = self._api.polygon.historic_agg_v2(
-                    symbols, 1, size,
-                    int(_from.timestamp()) * 1000,
-                    int(to.timestamp()) * 1000
-                ).df
-                df.columns = pd.MultiIndex.from_product([[symbols, ], df.columns])
-            else:
-                df = self._api.get_barset(symbols,
-                                          size,
-                                          start=_from.date().isoformat(),
-                                          end=to.date().isoformat()).df[symbols]
-
-            # zipline -> right label
-            # API result -> left label (beginning of bucket)
-            if size == 'minute':
-                df.index += pd.Timedelta('1min')
-
-                if not df.empty:
-                    # mask out bars outside market hours
-                    mask = self._cal.minutes_in_range(
-                        df.index[0], df.index[-1],
-                    ).tz_convert(NY)
-                    df = df.reindex(mask)
-            return df
-        return wrapper()
-
 
     def _symbol_bars(
             self,
@@ -670,3 +608,65 @@ class Backend(BaseBackend):
                 return self._api.get_last_trade(symbol)
 
         return parallelize(fetch)(symbols)
+
+    def _get_from_and_to(self, size, limit, end_dt=None):
+        """
+        generate time interval for api
+
+        return:pd.Timestamp(tz=America/New_York)
+        """
+        if not end_dt:
+            end_dt = pd.to_datetime('now', utc=True).floor('min')
+        session_label = self._cal.minute_to_session_label(end_dt)
+        all_minutes: pd.DatetimeIndex = self._cal.all_minutes
+        all_sessions: pd.DatetimeIndex = self._cal.all_sessions
+        if size == 'minute':
+            if end_dt not in self._cal.minutes_for_session(session_label):
+                end_dt = self._cal.previous_minute(end_dt)
+            idx = all_minutes.get_loc(end_dt)
+            start_minute = all_minutes[idx - limit + 1]
+            _from = end_dt.tz_convert(NY)
+            to = start_minute.tz_convert(NY)
+        elif size == 'day':
+            idx = all_sessions.get_loc(session_label)
+            start_session = all_sessions[idx - limit + 1]
+            _from = start_session.tz_localize(None).tz_localize('America/New_York')
+            to = session_label.tz_localize(None).tz_localize('America/New_York')
+
+        return _from, to
+
+    # move fetch function to here, cause the parallelize_with_multi_process don't support Closure
+    def _fetch(self, args):
+        @skip_http_error((404, 504))
+        def wrapper():
+            symbols = args[0]  # symbols can be list or str
+            _from = args[1]
+            to = args[2]
+            size = args[3]
+            if self._use_polygon:
+                assert isinstance(symbols, str)
+                df = self._api.polygon.historic_agg_v2(
+                    symbols, 1, size,
+                    int(_from.timestamp()) * 1000,
+                    int(to.timestamp()) * 1000
+                ).df
+                df.columns = pd.MultiIndex.from_product([[symbols, ], df.columns])
+            else:
+                df = self._api.get_barset(symbols,
+                                          size,
+                                          start=_from.date().isoformat(),
+                                          end=to.date().isoformat()).df[symbols]
+
+            # zipline -> right label
+            # API result -> left label (beginning of bucket)
+            if size == 'minute':
+                df.index += pd.Timedelta('1min')
+
+                if not df.empty:
+                    # mask out bars outside market hours
+                    mask = self._cal.minutes_in_range(
+                        df.index[0], df.index[-1],
+                    ).tz_convert(NY)
+                    df = df.reindex(mask)
+            return df
+        return wrapper()
