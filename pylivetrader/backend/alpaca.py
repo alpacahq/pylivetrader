@@ -500,49 +500,10 @@ class Backend(BaseBackend):
             symbols, 'day' if is_daily else 'minute', to=end_dt, limit=bar_count)
 
         df = pd.concat(dfs, axis=1)
-        # change the index values to assets
+        # change the index values to assets to compatible with zipline
         symbol_asset = {a.symbol: a for a in assets}
-        df.columns = df.columns.set_levels([symbol_asset[s] for s in df.columns.levels[0]],
-                                                             level=0)
+        df.columns = df.columns.set_levels([symbol_asset[s] for s in df.columns.levels[0]], level=0)
         return df
-        # if is_daily:
-        #     intra_bars = {}
-        #     symbol_bars_minute = self._symbol_bars(
-        #         symbols, 'minute', limit=1000)
-        #     for symbol, df in symbol_bars_minute.items():
-        #         agged = df.resample('1D').agg(dict(
-        #             open='first',
-        #             high='max',
-        #             low='min',
-        #             close='last',
-        #             volume='sum',
-        #         )).dropna()
-        #         intra_bars[symbol] = agged
-        #
-        # dfs = []
-        # for asset in assets if not assets_is_scalar else [assets]:
-        #     symbol = asset.symbol
-        #     df = symbol_bars.get(symbol)
-        #     if df is None:
-        #         dfs.append(pd.DataFrame(
-        #             [], columns=[
-        #                 'open', 'high', 'low', 'close', 'volume']
-        #         ))
-        #         continue
-        #     if is_daily:
-        #         agged = intra_bars.get(symbol)
-        #         if agged is not None and len(
-        #                 agged.index) > 0 and agged.index[-1] not in df.index:
-        #             if not (agged.index[-1] > df.index[-1]):
-        #                 log.warn(
-        #                     ('agged.index[-1] = {}, df.index[-1] = {} '
-        #                      'for {}').format(
-        #                         agged.index[-1], df.index[-1], symbol))
-        #             df = df.append(agged.iloc[-1])
-        #     df.columns = pd.MultiIndex.from_product([[asset, ], df.columns])
-        #     dfs.append(df)
-        #
-        # return pd.concat(dfs, axis=1)
 
 
     def _symbol_bars(
@@ -553,8 +514,8 @@ class Backend(BaseBackend):
             to=None,
             limit=None):
         """
-        Query historic_agg_v2 either minute or day in parallel
-        for multiple symbols, and return in dict.
+        Query history bars either minute or day in parallel
+        for multiple symbols
 
         you can pass:
         1 _from + to
@@ -567,7 +528,8 @@ class Backend(BaseBackend):
         to:      str or pd.Timestamp
         limit:   str or int
 
-        return: list[pd.DataFrame with columns MultiIndex [symbol -> OHLCV]]
+        return: list[pd.DataFrame with index DatetimeIndex(tz=America/New_York)
+                                and columns MultiIndex [symbol -> OHLCV]
         """
         assert size in ('day', 'minute')
 
@@ -578,7 +540,7 @@ class Backend(BaseBackend):
 
         if self._use_polygon:
             args = [[symbol, _from, to, size]for symbol in symbols]
-            return parallelize_with_multi_process(self._fetch)(args)
+            return parallelize_with_multi_process(self._fetch_bar_fun)(args)
         else:
             # alpaca support get real-time data of multi stocks(<200) at once
             splitlen = 199
@@ -587,8 +549,7 @@ class Backend(BaseBackend):
                 part = symbols[i:i + splitlen]
                 parts.append(part)
             args = [[part, _from, to, size] for part in parts]
-            return parallelize_with_multi_process(self._fetch, 10)(args)
-            # return parallelize(self._fetch)(args).values()
+            return parallelize_with_multi_process(self._fetch_bar_fun, 10)(args)
 
     def _symbol_trades(self, symbols):
         '''
@@ -611,7 +572,8 @@ class Backend(BaseBackend):
 
     def _get_from_and_to(self, size, limit, end_dt=None):
         """
-        generate time interval for api
+        this method returns the trading time range.If end_dt is not transaction time，
+        it will be adjusted to the nearest last trading minute. when size=daily, will return a timestamp of midnight.
 
         return:pd.Timestamp(tz=America/New_York)
         """
@@ -635,8 +597,16 @@ class Backend(BaseBackend):
 
         return _from, to
 
-    # move fetch function to here, cause the parallelize_with_multi_process don't support Closure
-    def _fetch(self, args):
+
+    def _fetch_bar_fun(self, args):
+        """
+        this method is used by parallelize_with_multi_process, the args is a list object of size four.
+        Each location represents:
+        args[0]: symbol or symbols
+        args[1]: start time of the history bar
+        args[2]: end time of the history bar
+        args[3]: daily or minute
+        """
         @skip_http_error((404, 504))
         def wrapper():
             symbols = args[0]  # symbols can be list or str
@@ -645,8 +615,9 @@ class Backend(BaseBackend):
             size = args[3]
             if self._use_polygon:
                 assert isinstance(symbols, str)
+                symbol = str(symbols)
                 df = self._api.polygon.historic_agg_v2(
-                    symbols, 1, size,
+                    symbol, 1, size,
                     int(_from.timestamp()) * 1000,
                     int(to.timestamp()) * 1000
                 ).df
