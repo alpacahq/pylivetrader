@@ -59,6 +59,7 @@ import asyncio
 log = Logger('Alpaca')
 
 NY = 'America/New_York'
+SYMBOL_SPLIT_LEN = 199
 
 end_offset = pd.Timedelta('1000 days')
 one_day_offset = pd.Timedelta('1 day')
@@ -226,7 +227,7 @@ class Backend(BaseBackend):
             symbols.append(symbol)
             position_map[symbol] = z_position
 
-        trades = self._symbol_trades(symbols)
+        trades = self._get_symbols_last_trade_value(symbols)
         for symbol, trade in trades.items():
             z_position = position_map[symbol]
             if trade is None:
@@ -452,7 +453,7 @@ class Backend(BaseBackend):
 
     def _get_spot_trade(self, symbols, field):
         assert(field in ('price', 'last_traded'))
-        symbol_trades = self._symbol_trades(symbols)
+        symbol_trades = self._get_symbols_last_trade_value(symbols)
 
         def get_for_symbol(symbol_trades, symbol):
             trade = symbol_trades.get(symbol)
@@ -539,26 +540,25 @@ class Backend(BaseBackend):
             _from, to = self._get_from_and_to(size, limit, end_dt=to)
 
         if self._use_polygon:
-            args = [[symbol, _from, to, size]for symbol in symbols]
-            return parallelize_with_multi_process(self._fetch_bar_fun)(args)
+            args = [{'symbols': symbol, '_from': _from, "to": to, "size": size} for symbol in symbols]
+            return parallelize(self._fetch_bar_fun)(args)
         else:
             # alpaca support get real-time data of multi stocks(<200) at once
-            splitlen = 199
             parts = []
-            for i in range(0, len(symbols), splitlen):
-                part = symbols[i:i + splitlen]
+            for i in range(0, len(symbols), SYMBOL_SPLIT_LEN):
+                part = symbols[i:i + SYMBOL_SPLIT_LEN]
                 parts.append(part)
-            args = [[part, _from, to, size] for part in parts]
+            args = [{'symbols': part, '_from': _from, "to": to, "size": size} for part in parts]
             return parallelize_with_multi_process(self._fetch_bar_fun, 10)(args)
 
-    def _symbol_trades(self, symbols):
+    def _get_symbols_last_trade_value(self, symbols):
         '''
         Query last_trade in parallel for multiple symbols and
         return in dict.
 
         symbols: list[str]
 
-        return: dict[str -> polygon.Trade]
+        return: dict[str -> polygon.Trade or alpaca.Trade]
         '''
 
         @skip_http_error((404, 504))
@@ -598,21 +598,17 @@ class Backend(BaseBackend):
         return _from, to
 
 
-    def _fetch_bar_fun(self, args):
+    def _fetch_bar_fun(self, kwargs):
         """
-        this method is used by parallelize_with_multi_process, the args is a list object of size four.
-        Each location represents:
-        args[0]: symbol or symbols
-        args[1]: start time of the history bar
-        args[2]: end time of the history bar
-        args[3]: daily or minute
+        this method is used by parallelize_with_multi_process or parallelize.
+        kwargs: dict with keys in ['symbols', '_from', 'to', 'size']
         """
         @skip_http_error((404, 504))
         def wrapper():
-            symbols = args[0]  # symbols can be list or str
-            _from = args[1]
-            to = args[2]
-            size = args[3]
+            symbols = kwargs['symbols']  # symbols can be list or str
+            _from = kwargs['_from']
+            to = kwargs['to']
+            size = kwargs['size']
             if self._use_polygon:
                 assert isinstance(symbols, str)
                 symbol = str(symbols)
