@@ -79,7 +79,7 @@ class BaseBackend(abc.ABC):
         pass
 
     @abstractmethod
-    def get_bars(self, assets, data_frequency, bar_count=500):
+    def get_bars(self, assets, data_frequency, bar_count=500, end_dt=None):
         pass
 
     @property
