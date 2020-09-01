@@ -59,7 +59,8 @@ import asyncio
 log = Logger('Alpaca')
 
 NY = 'America/New_York'
-SYMBOL_SPLIT_LEN = 199
+# alpaca support get real-time data of multi stocks(<200) at once. we use this:
+ALPACA_MAX_SYMBOLS_PER_REQUEST = 199
 
 end_offset = pd.Timedelta('1000 days')
 one_day_offset = pd.Timedelta('1 day')
@@ -545,8 +546,8 @@ class Backend(BaseBackend):
         else:
             # alpaca support get real-time data of multi stocks(<200) at once
             parts = []
-            for i in range(0, len(symbols), SYMBOL_SPLIT_LEN):
-                part = symbols[i:i + SYMBOL_SPLIT_LEN]
+            for i in range(0, len(symbols), ALPACA_MAX_SYMBOLS_PER_REQUEST):
+                part = symbols[i:i + ALPACA_MAX_SYMBOLS_PER_REQUEST]
                 parts.append(part)
             args = [{'symbols': part, '_from': _from, "to": to, "size": size} for part in parts]
             return parallelize_with_multi_process(self._fetch_bar_fun, 10)(args)
