@@ -47,7 +47,8 @@ from pylivetrader.finance.execution import (
     StopLimitOrder,
 )
 from pylivetrader.misc.pd_utils import normalize_date
-from pylivetrader.misc.parallel_utils import parallelize, parallelize_with_multi_process
+from pylivetrader.misc.parallel_utils import parallelize, \
+    parallelize_with_multi_process
 from pylivetrader.errors import SymbolNotFound
 from pylivetrader.assets import Equity
 
@@ -498,13 +499,17 @@ class Backend(BaseBackend):
         else:
             symbols = [asset.symbol for asset in assets]
 
-        dfs = self._symbol_bars(
-            symbols, 'day' if is_daily else 'minute', to=end_dt, limit=bar_count)
+        df = self._symbol_bars(
+            symbols,
+            'day' if is_daily else 'minute',
+            to=end_dt,
+            limit=bar_count)
 
         df = pd.concat(dfs, axis=1)
         # change the index values to assets to compatible with zipline
         symbol_asset = {a.symbol: a for a in assets}
-        df.columns = df.columns.set_levels([symbol_asset[s] for s in df.columns.levels[0]], level=0)
+        df.columns = df.columns.set_levels([
+            symbol_asset[s] for s in df.columns.levels[0]], level=0)
         return df
 
 
@@ -597,8 +602,10 @@ class Backend(BaseBackend):
         elif size == 'day':
             idx = all_sessions.get_loc(session_label)
             start_session = all_sessions[idx - limit + 1]
-            _from = start_session.tz_localize(None).tz_localize('America/New_York')
-            to = session_label.tz_localize(None).tz_localize('America/New_York')
+            _from = start_session.tz_localize(
+                None).tz_localize('America/New_York')
+            to = session_label.tz_localize(
+                None).tz_localize('America/New_York')
 
         return _from, to
 
