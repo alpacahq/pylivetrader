@@ -600,18 +600,17 @@ class Backend(BaseBackend):
 
         return _from, to
 
-
-    def _fetch_bar_fun(self, kwargs):
+    def _fetch_bar_fun(self, params):
         """
         this method is used by parallelize_with_multi_process or parallelize.
-        kwargs: dict with keys in ['symbols', '_from', 'to', 'size']
+        params: dict with keys in ['symbols', '_from', 'to', 'size']
         """
         @skip_http_error((404, 504))
         def wrapper():
-            symbols = kwargs['symbols']  # symbols can be list or str
-            _from = kwargs['_from']
-            to = kwargs['to']
-            size = kwargs['size']
+            symbols = params['symbols']  # symbols can be list or str
+            _from = params['_from']
+            to = params['to']
+            size = params['size']
             if self._use_polygon:
                 assert isinstance(symbols, str)
                 symbol = str(symbols)
