@@ -624,8 +624,8 @@ class Backend(BaseBackend):
             else:
                 df = self._api.get_barset(symbols,
                                           size,
-                                          start=_from.date().isoformat(),
-                                          end=to.date().isoformat()).df[symbols]
+                                          start=_from,
+                                          end=to).df[symbols]
 
             # zipline -> right label
             # API result -> left label (beginning of bucket)
