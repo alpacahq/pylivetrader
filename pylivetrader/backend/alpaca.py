@@ -588,6 +588,8 @@ class Backend(BaseBackend):
         if size == 'minute':
             if end_dt not in self._cal.minutes_for_session(session_label):
                 end_dt = self._cal.previous_minute(end_dt)
+                # Alpaca's last minute is 15:59 not 16:00 (NY tz)
+                end_dt = end_dt - timedelta(minutes=1)
             idx = all_minutes.get_loc(end_dt)
             start_minute = all_minutes[idx - limit + 1]
             _from = end_dt.tz_convert(NY)
