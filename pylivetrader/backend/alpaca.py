@@ -592,8 +592,8 @@ class Backend(BaseBackend):
                 end_dt = end_dt - timedelta(minutes=1)
             idx = all_minutes.get_loc(end_dt)
             start_minute = all_minutes[idx - limit + 1]
-            _from = end_dt.tz_convert(NY)
-            to = start_minute.tz_convert(NY)
+            _from = start_minute.tz_convert(NY)
+            to = end_dt.tz_convert(NY)
         elif size == 'day':
             idx = all_sessions.get_loc(session_label)
             start_session = all_sessions[idx - limit + 1]
