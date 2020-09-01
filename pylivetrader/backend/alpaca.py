@@ -486,11 +486,11 @@ class Backend(BaseBackend):
         return results
 
     def get_bars(self, assets, data_frequency, bar_count=500, end_dt=None):
-        '''
+        """
         Interface method.
 
         Return: pd.Dataframe() with columns MultiIndex [asset -> OHLCV]
-        '''
+        """
         assets_is_scalar = not isinstance(assets, (list, set, tuple))
         is_daily = 'd' in data_frequency  # 'daily' or '1d'
         if assets_is_scalar:
