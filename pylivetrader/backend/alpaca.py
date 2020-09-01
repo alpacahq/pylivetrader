@@ -620,7 +620,8 @@ class Backend(BaseBackend):
                     int(_from.timestamp()) * 1000,
                     int(to.timestamp()) * 1000
                 ).df
-                df.columns = pd.MultiIndex.from_product([[symbols, ], df.columns])
+                df.columns = pd.MultiIndex.from_product([[symbols, ],
+                                                         df.columns])
             else:
                 df = self._api.get_barset(symbols,
                                           size,
