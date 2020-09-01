@@ -541,7 +541,8 @@ class Backend(BaseBackend):
             _from, to = self._get_from_and_to(size, limit, end_dt=to)
 
         if self._use_polygon:
-            args = [{'symbols': symbol, '_from': _from, "to": to, "size": size} for symbol in symbols]
+            args = [{'symbols': symbol, '_from': _from, "to": to, "size": size}
+                    for symbol in symbols]
             return parallelize(self._fetch_bar_fun)(args)
         else:
             # alpaca support get real-time data of multi stocks(<200) at once
@@ -573,8 +574,9 @@ class Backend(BaseBackend):
 
     def _get_from_and_to(self, size, limit, end_dt=None):
         """
-        this method returns the trading time range.If end_dt is not transaction time，
-        it will be adjusted to the nearest last trading minute. when size=daily, will return a timestamp of midnight.
+        this method returns the trading time range. if end_dt is not
+        transaction time， it will be adjusted to the nearest last trading
+        minute. when size=daily, will return a timestamp of midnight.
 
         return:pd.Timestamp(tz=America/New_York)
         """
