@@ -470,6 +470,25 @@ class Backend(BaseBackend):
 
         return [get_for_symbol(symbol_trades, symbol) for symbol in symbols]
 
+    def _get_symbols_last_trade_value(self, symbols):
+        """
+        Query last_trade in parallel for multiple symbols and
+        return in dict.
+
+        symbols: list[str]
+
+        return: dict[str -> polygon.Trade or alpaca.Trade]
+        """
+
+        @skip_http_error((404, 504))
+        def fetch(symbol):
+            if self._use_polygon:
+                return self._api.polygon.last_trade(symbol)
+            else:
+                return self._api.get_last_trade(symbol)
+
+        return parallelize(fetch)(symbols)
+
     def _get_spot_bars(self, symbols, field):
         symbol_bars = self._symbol_bars(symbols, 'minute', limit=1)
 
