@@ -526,7 +526,6 @@ class Backend(BaseBackend):
             to=end_dt,
             limit=bar_count)
 
-        df = pd.concat(dfs, axis=1)
         # change the index values to assets to compatible with zipline
         symbol_asset = {a.symbol: a for a in assets}
         df.columns = df.columns.set_levels([
