@@ -565,7 +565,10 @@ class Backend(BaseBackend):
             _from, to = self._get_from_and_to(size, limit, end_dt=to)
 
         if self._use_polygon:
-            args = [{'symbols': symbol, '_from': _from, "to": to, "size": size}
+            args = [{'symbols': symbol,
+                     '_from': _from,
+                     "to": to,
+                     "size": size}
                     for symbol in symbols]
             return parallelize(self._fetch_bar_fun)(args)
         else:
