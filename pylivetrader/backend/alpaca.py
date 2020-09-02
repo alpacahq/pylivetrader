@@ -490,7 +490,9 @@ class Backend(BaseBackend):
         return parallelize(fetch)(symbols)
 
     def _get_spot_bars(self, symbols, field):
-        symbol_bars = self._symbol_bars(symbols, 'minute', limit=1)
+        symbol_bars = self._fetch_bars_from_api(symbols,
+                                                'minute',
+                                                limit=1)
 
         def get_for_symbol(symbol_bars, symbol, field):
             bars = symbol_bars.get(symbol)
@@ -518,7 +520,7 @@ class Backend(BaseBackend):
         else:
             symbols = [asset.symbol for asset in assets]
 
-        df = self._symbol_bars(
+        df = self._fetch_bars_from_api(
             symbols,
             'day' if is_daily else 'minute',
             to=end_dt,
@@ -531,8 +533,7 @@ class Backend(BaseBackend):
             symbol_asset[s] for s in df.columns.levels[0]], level=0)
         return df
 
-
-    def _symbol_bars(
+    def _fetch_bars_from_api(
             self,
             symbols,
             size,
