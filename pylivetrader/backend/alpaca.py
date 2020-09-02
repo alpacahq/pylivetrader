@@ -570,34 +570,23 @@ class Backend(BaseBackend):
                      "to": to,
                      "size": size}
                     for symbol in symbols]
-            return parallelize(self._fetch_bar_fun)(args)
+            result = parallelize(self._fetch_bars_from_api_internal)(args)
+            return pd.concat(result.values(), axis=1)
         else:
             # alpaca support get real-time data of multi stocks(<200) at once
             parts = []
             for i in range(0, len(symbols), ALPACA_MAX_SYMBOLS_PER_REQUEST):
                 part = symbols[i:i + ALPACA_MAX_SYMBOLS_PER_REQUEST]
                 parts.append(part)
-            args = [{'symbols': part, '_from': _from, "to": to, "size": size} for part in parts]
-            return parallelize_with_multi_process(self._fetch_bar_fun, 10)(args)
+            args = [{'symbols': part,
+                     '_from': _from,
+                     "to": to,
+                     "size": size,
+                     "limit": limit} for part in parts]
+            result = parallelize_with_multi_process(
+                self._fetch_bars_from_api_internal)(args)
 
-    def _get_symbols_last_trade_value(self, symbols):
-        '''
-        Query last_trade in parallel for multiple symbols and
-        return in dict.
-
-        symbols: list[str]
-
-        return: dict[str -> polygon.Trade or alpaca.Trade]
-        '''
-
-        @skip_http_error((404, 504))
-        def fetch(symbol):
-            if self._use_polygon:
-                return self._api.polygon.last_trade(symbol)
-            else:
-                return self._api.get_last_trade(symbol)
-
-        return parallelize(fetch)(symbols)
+            return pd.concat(result, axis=1)
 
     def _get_from_and_to(self, size, limit, end_dt=None):
         """
