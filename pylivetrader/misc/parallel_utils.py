@@ -38,17 +38,20 @@ def parallelize(mapfunc, workers=None):
             for task in concurrent.futures.as_completed(tasks):
                 args = tasks[task]
                 task_result = task.result()
-                if isinstance(args, list):
+                if isinstance(args, list) or isinstance(args, dict):
                     args = str(args)
                 result[args] = task_result
         return result
 
     return wrapper
 
+
 def parallelize_with_multi_process(mapfun, workers=10):
     """
-    Parallelize the mapfunc with multiprocessing. Multi-process can make better use of multi-core than multi-thread
-    Attention: the mapfun and args_list must be pickled， which means the mapfun can not be Closure or lambda
+    Parallelize the mapfunc with multiprocessing. Multi-process can make better
+    use of multi-core than multi-thread
+    Attention: the mapfun and args_list must be pickled， which means the
+    mapfun can not be Closure or lambda
 
     Return: func(args_list) => list[func[arg]]
     """
