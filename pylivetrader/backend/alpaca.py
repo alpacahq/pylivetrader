@@ -527,7 +527,8 @@ class Backend(BaseBackend):
             limit=bar_count)
 
         # change the index values to assets to compatible with zipline
-        symbol_asset = {a.symbol: a for a in assets}
+        symbol_asset = {a.symbol: a for a in assets} if not assets_is_scalar \
+            else {assets.symbol: assets}
         df.columns = df.columns.set_levels([
             symbol_asset[s] for s in df.columns.levels[0]], level=0)
         return df
