@@ -607,7 +607,8 @@ class Backend(BaseBackend):
                 # Alpaca's last minute is 15:59 not 16:00 (NY tz)
                 end_dt = end_dt - timedelta(minutes=1)
             idx = all_minutes.get_loc(end_dt)
-            start_minute = all_minutes[idx - limit + 1]
+            start_minute = all_minutes[idx - limit + 1] if limit != 1 else \
+                all_minutes[idx - limit]
             _from = start_minute.tz_convert(NY)
             to = end_dt.tz_convert(NY)
         elif size == 'day':
