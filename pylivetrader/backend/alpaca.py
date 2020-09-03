@@ -563,8 +563,6 @@ class Backend(BaseBackend):
 
         if not (_from and to):
             _from, to = self._get_from_and_to(size, limit, end_dt=to)
-        # symbols = [l.symbol for l in self._api.list_assets()[:199]]
-        # symbols = ['AA','AAPL','GOOG','TSLA']
         if self._use_polygon:
             args = [{'symbols': symbol,
                      '_from': _from,
