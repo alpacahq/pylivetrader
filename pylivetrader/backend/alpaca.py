@@ -591,10 +591,10 @@ class Backend(BaseBackend):
     def _get_from_and_to(self, size, limit, end_dt=None):
         """
         this method returns the trading time range. if end_dt is not
-        transaction time， it will be adjusted to the nearest last trading
+        a session time，it will be adjusted to the nearest last trading
         minute. when size=daily, will return a timestamp of midnight.
 
-        return:pd.Timestamp(tz=America/New_York)
+        return: tuple(pd.Timestamp(tz=America/New_York))
         """
         if not end_dt:
             end_dt = pd.to_datetime('now', utc=True).floor('min')
