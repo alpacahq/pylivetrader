@@ -563,7 +563,8 @@ class Backend(BaseBackend):
 
         if not (_from and to):
             _from, to = self._get_from_and_to(size, limit, end_dt=to)
-
+        # symbols = [l.symbol for l in self._api.list_assets()[:199]]
+        # symbols = ['AA','AAPL','GOOG','TSLA']
         if self._use_polygon:
             args = [{'symbols': symbol,
                      '_from': _from,
@@ -621,7 +622,7 @@ class Backend(BaseBackend):
 
         return _from, to
 
-    def _fetch_bar_fun(self, params):
+    def _fetch_bars_from_api_internal(self, params):
         """
         this method is used by parallelize_with_multi_process or parallelize.
         params: dict with keys in ['symbols', '_from', 'to', 'size']
