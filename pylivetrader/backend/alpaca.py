@@ -571,7 +571,11 @@ class Backend(BaseBackend):
                      "size": size}
                     for symbol in symbols]
             result = parallelize(self._fetch_bars_from_api_internal)(args)
-            return pd.concat(result.values(), axis=1)
+            if [l for l in result.values() if isinstance(l, pd.DataFrame)]:
+                return pd.concat(result.values(), axis=1)
+            else:
+                return pd.DataFrame([])
+
         else:
             # alpaca support get real-time data of multi stocks(<200) at once
             parts = []
