@@ -571,7 +571,7 @@ class Backend(BaseBackend):
                      "size": size}
                     for symbol in symbols]
             result = parallelize(self._fetch_bars_from_api_internal)(args)
-            if [l for l in result.values() if isinstance(l, pd.DataFrame)]:
+            if [df for df in result.values() if isinstance(df, pd.DataFrame)]:
                 return pd.concat(result.values(), axis=1)
             else:
                 return pd.DataFrame([])
