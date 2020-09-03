@@ -2,7 +2,6 @@ from pylivetrader.backend import alpaca
 from unittest.mock import Mock, patch
 from requests.exceptions import HTTPError
 import pytest
-import pandas as pd
 import numpy as np
 
 from alpaca_trade_api.entity import Asset, Account, Position, Order
