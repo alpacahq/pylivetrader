@@ -46,7 +46,7 @@ def parallelize(mapfunc, workers=None):
     return wrapper
 
 
-def parallelize_with_multi_process(mapfun, workers=10):
+def parallelize_with_multi_process(mapfunc, workers=10):
     """
     Parallelize the mapfunc with multiprocessing. Multi-process can make better
     use of multi-core than multi-thread
@@ -57,6 +57,6 @@ def parallelize_with_multi_process(mapfun, workers=10):
     """
     def wrapper(args_list):
         with Pool(workers) as pool:
-            return pool.map(mapfun, args_list)
+            return pool.map(mapfunc, args_list)
 
     return wrapper
