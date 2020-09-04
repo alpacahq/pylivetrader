@@ -555,8 +555,13 @@ class Backend(BaseBackend):
         to:      str or pd.Timestamp
         limit:   str or int
 
-        return: list[pd.DataFrame with index DatetimeIndex(tz=America/New_York)
-                                and columns MultiIndex [symbol -> OHLCV]
+        return: MultiIndex dataframe that looks like this:
+                       AA                          GOOG
+                       open high low close volume  open high low close volume
+        DatetimeIndex:
+
+        columns: level 0 equity name, level 1 OHLCV
+
         """
         assert size in ('day', 'minute')
 
