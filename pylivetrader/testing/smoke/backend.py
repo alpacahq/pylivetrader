@@ -235,7 +235,7 @@ class Backend(BaseBackend):
         return self._data_proxy.get_spot_value(
             assets, field, dt, data_frequency)
 
-    def get_bars(self, assets, data_frequency, bar_count=500):
+    def get_bars(self, assets, data_frequency, bar_count=500, end_dt=None):
         return self._data_proxy.get_bars(assets, data_frequency, bar_count)
 
     def initialize_data(self, context):
