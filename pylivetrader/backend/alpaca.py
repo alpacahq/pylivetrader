@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 
 import alpaca_trade_api as tradeapi
 from alpaca_trade_api.rest import APIError
@@ -133,7 +133,13 @@ class Backend(BaseBackend):
     def _get_stream(self, context):
         set_context(context)
         asyncio.set_event_loop(asyncio.new_event_loop())
-        conn = tradeapi.StreamConn(self._key_id, self._secret, self._base_url)
+        conn = tradeapi.StreamConn(
+            self._key_id,
+            self._secret,
+            self._base_url,
+            data_url=os.environ.get("DATA_PROXY_WS", ''),
+            data_stream='polygon' if self._use_polygon else 'alpacadatav1'
+        )
         channels = ['trade_updates']
 
         @conn.on(r'trade_updates')
