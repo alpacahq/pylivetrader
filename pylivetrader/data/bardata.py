@@ -248,9 +248,15 @@ class BarData:
 
         session_label = self.calendar.minute_to_session_label(dt)
 
-        if not asset.is_alive_for_session(session_label):
-            # asset isn't alive
+        if not self.data_portal.backend._api.get_asset(asset.symbol).tradable:
             return False
+
+        # this sometimes fail even though the asset is trade-able. I cancelled
+        # this check, and added the one above it
+
+        # if not asset.is_alive_for_session(session_label):
+        #     # asset isn't alive
+        #     return False
 
         if asset.auto_close_date and session_label >= asset.auto_close_date:
             return False
@@ -267,12 +273,23 @@ class BarData:
             if not asset.is_exchange_open(dt_to_use_for_exchange_check):
                 return False
 
-        # is there a last price?
-        return not np.isnan(
-            data_portal.get_spot_value(
-                asset, "price", adjusted_dt, self.data_frequency
-            )
-        )
+        # spot value doesn't always exist even though the asset is trade-able
+        # you could get previous prices by doing
+        # data_portal.get_history_window([Equity("AAPL", "NYSE")],
+        #                                adjusted_dt, 120, 'minute',
+        #                                'price', '1m')
+        # but it won't always contain the lasy minute.
+        # I will not fail the "can_trade" method for that, and will allow the
+        # user the option to try trading even though, spot price doesn't exist
+
+        # # is there a last price?
+        # return not np.isnan(
+        #     data_portal.get_spot_value(
+        #         asset, "price", adjusted_dt, self.data_frequency
+        #     )
+        # )
+
+        return True
 
     def is_stale(self, assets):
         """
