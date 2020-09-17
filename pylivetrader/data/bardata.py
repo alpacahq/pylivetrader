@@ -15,7 +15,6 @@
 # limitations under the License.
 import pandas
 import pandas as pd
-import numpy as np
 
 from contextlib import contextmanager
 from collections import Iterable
