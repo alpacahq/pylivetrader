@@ -9,4 +9,4 @@ RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
   make install
 RUN rm -R ta-lib ta-lib-0.4.0-src.tar.gz
 
-RUN pip install pylivetrader==0.5.0
+RUN pip install pylivetrader==0.5.1
