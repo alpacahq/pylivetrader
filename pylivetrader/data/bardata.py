@@ -245,14 +245,13 @@ class BarData:
         # if self._is_restricted(asset, adjusted_dt):
         #     return False
 
-        session_label = self.calendar.minute_to_session_label(dt)
-
         if not self.data_portal.backend._api.get_asset(asset.symbol).tradable:
             return False
 
         # this sometimes fail even though the asset is trade-able. I cancelled
         # this check, and added the one above it
 
+        # session_label = self.calendar.minute_to_session_label(dt)
         # if not asset.is_alive_for_session(session_label):
         #     # asset isn't alive
         #     return False

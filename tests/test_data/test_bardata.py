@@ -78,7 +78,3 @@ def test_bardata():
     # assert not data.can_trade(asset_to_check)
     # when asset is not tradable, return false
     assert not data.is_stale(asset_to_check)
-
-
-if __name__ == '__main__':
-    test_bardata()
