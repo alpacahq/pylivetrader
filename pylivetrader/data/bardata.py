@@ -257,8 +257,13 @@ class BarData:
         #     # asset isn't alive
         #     return False
 
-        if asset.auto_close_date and session_label >= asset.auto_close_date:
-            return False
+        # this condition is being commented out because of the asset VXX
+        # as it turns out, there are 2 VXX assets in the Alpaca asset list.
+        # one is tradable, one is not. the auto_close_date is set (first for
+        # the tradable one then for the not tradable one, casuing this to fail
+        # it's set in alpaca.backend.get_equities() (asset.end_date)
+        # if asset.auto_close_date and session_label >= asset.auto_close_date:
+        #     return False
 
         if not self._daily_mode:
             # Find the next market minute for this calendar, and check if this
