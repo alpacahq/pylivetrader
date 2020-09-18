@@ -29,6 +29,18 @@ def create_bars(minutes, offset):
     }, index=minutes)
 
 
+class MockAsset:
+    @property
+    def tradable(self):
+        return True
+
+
+class AlpacaApi:
+    @staticmethod
+    def get_asset(sym):
+        return MockAsset()
+
+
 class Backend:
 
     def __init__(self, start=None, end=None, assets=None, exchange='NYSE'):
@@ -37,6 +49,7 @@ class Backend:
 
         self._exchange = exchange
         self._calendar = get_calendar(exchange)
+        self._api = AlpacaApi()
 
         self.assets = assets or ['asset-0', 'asset-1', 'asset-2']
 
