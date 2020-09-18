@@ -2,6 +2,8 @@ import concurrent.futures
 import os
 from multiprocessing import Pool
 
+PROCESS_POOL = None
+
 
 def _get_default_workers():
     workers = os.environ.get('PYLT_NUM_WORKERS')
@@ -55,8 +57,11 @@ def parallelize_with_multi_process(mapfunc, workers=10):
 
     Return: func(args_list) => list[func[arg]]
     """
+    global PROCESS_POOL
+    if not PROCESS_POOL:
+        PROCESS_POOL = Pool(workers)
+
     def wrapper(args_list):
-        with Pool(workers) as pool:
-            return pool.map(mapfunc, args_list)
+        return PROCESS_POOL.map(mapfunc, args_list)
 
     return wrapper
