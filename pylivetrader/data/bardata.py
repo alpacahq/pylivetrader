@@ -15,7 +15,6 @@
 # limitations under the License.
 import pandas
 import pandas as pd
-import numpy as np
 
 from contextlib import contextmanager
 from collections import Iterable
@@ -246,14 +245,24 @@ class BarData:
         # if self._is_restricted(asset, adjusted_dt):
         #     return False
 
-        session_label = self.calendar.minute_to_session_label(dt)
-
-        if not asset.is_alive_for_session(session_label):
-            # asset isn't alive
+        if not self.data_portal.backend._api.get_asset(asset.symbol).tradable:
             return False
 
-        if asset.auto_close_date and session_label >= asset.auto_close_date:
-            return False
+        # this sometimes fail even though the asset is trade-able. I cancelled
+        # this check, and added the one above it
+
+        # session_label = self.calendar.minute_to_session_label(dt)
+        # if not asset.is_alive_for_session(session_label):
+        #     # asset isn't alive
+        #     return False
+
+        # this condition is being commented out because of the asset VXX
+        # as it turns out, there are 2 VXX assets in the Alpaca asset list.
+        # one is tradable, one is not. the auto_close_date is set (first for
+        # the tradable one then for the not tradable one, casuing this to fail
+        # it's set in alpaca.backend.get_equities() (asset.end_date)
+        # if asset.auto_close_date and session_label >= asset.auto_close_date:
+        #     return False
 
         if not self._daily_mode:
             # Find the next market minute for this calendar, and check if this
@@ -267,12 +276,23 @@ class BarData:
             if not asset.is_exchange_open(dt_to_use_for_exchange_check):
                 return False
 
-        # is there a last price?
-        return not np.isnan(
-            data_portal.get_spot_value(
-                asset, "price", adjusted_dt, self.data_frequency
-            )
-        )
+        # spot value doesn't always exist even though the asset is trade-able
+        # you could get previous prices by doing
+        # data_portal.get_history_window([Equity("AAPL", "NYSE")],
+        #                                adjusted_dt, 120, 'minute',
+        #                                'price', '1m')
+        # but it won't always contain the lasy minute.
+        # I will not fail the "can_trade" method for that, and will allow the
+        # user the option to try trading even though, spot price doesn't exist
+
+        # # is there a last price?
+        # return not np.isnan(
+        #     data_portal.get_spot_value(
+        #         asset, "price", adjusted_dt, self.data_frequency
+        #     )
+        # )
+
+        return True
 
     def is_stale(self, assets):
         """
