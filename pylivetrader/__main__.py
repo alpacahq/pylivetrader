@@ -44,7 +44,7 @@ def run_parameters(f):
             type=click.Path(
                 exists=True, file_okay=True, dir_okay=False,
                 readable=True, resolve_path=True),
-            help='Path to the file taht contains algorithm to run.'),
+            help='Path to the file that contains algorithm to run.'),
         click.option(
             '-b', '--backend',
             default='alpaca',
@@ -118,7 +118,7 @@ def shell_parameters(f):
             type=click.Path(
                 exists=True, file_okay=True, dir_okay=False,
                 readable=True, resolve_path=True),
-            help='Path to the file taht contains algorithm to run.'),
+            help='Path to the file that contains algorithm to run.'),
         click.option(
             '-b', '--backend',
             default='alpaca',
