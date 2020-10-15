@@ -201,6 +201,20 @@ class Backend(BaseBackend):
             if raw_asset.status == 'active' and raw_asset.tradable:
                 asset.end_date = t + end_offset
             else:
+                # this is an experimental change, if an asset is not active or
+                # tradable, don't include it in the asset list. why?
+                # first the logical thing - if it's not tradable - we don't
+                # need it. now why bother?
+                # some symbols are included more than once in the Alpaca list.
+                # e.g VXX. one is tradable, one is not. as it happens, the
+                # first one we iterate on is the not tradable asset. which
+                # means when someone tries to trade it, even though there's a
+                # tradable asset, it rejects it because we test it against the
+                # untradable one. by doing this - we avoid this issue.
+                # but, it fear it may cause issues (e.g if an asset was
+                # tradable yesterday, but not tradable today. just a thought)
+                # so I do this with caution.
+                continue
                 # if asset is not tradable, set end_date = day before
                 asset.end_date = t - one_day_offset
             asset.auto_close_date = asset.end_date
