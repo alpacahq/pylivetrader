@@ -825,15 +825,22 @@ class Algorithm(object):
                 msg="Cannot order {0}, as it not tradable".format(asset.symbol)
             )
 
-        last_price = \
-            self.executor.current_data.current(asset, "price")
+        last_price = self.executor.current_data.current(asset, "price")
 
         if np.isnan(last_price):
-            raise CannotOrderDelistedAsset(
-                msg="Cannot order {0} on {1} as there is no last "
-                    "price for the security.".format(asset.symbol,
-                                                     self.datetime)
-            )
+            retries = 0
+            while retries < 3:
+                last_price = self.executor.current_data.current(asset, "price")
+                if np.isnan(last_price):
+                    retries += 1
+                else:
+                    break
+            if np.isnan(last_price):
+                raise CannotOrderDelistedAsset(
+                    msg="Cannot order {0} on {1} as there is no last "
+                        "price for the security.".format(asset.symbol,
+                                                         self.datetime)
+                )
 
         if tolerant_equals(last_price, 0):
             zero_message = "Price of 0 for {psid}; can't infer value".format(
