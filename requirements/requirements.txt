@@ -1,4 +1,5 @@
 statsmodels==0.11.1  # pyup: ignore # limit to work properly with zipline 1.3.0
+scipy<1.6.0
 pipeline-live>=0.1.10
 bottleneck>=1.3
 pytz>=2020.1
