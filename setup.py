@@ -49,4 +49,5 @@ setup(
     ''',
     install_requires=REQUIREMENTS,
     tests_require=REQUIREMENTS_TEST,
+    setup_requires=["flake8", "pytest-runner"]
 )
