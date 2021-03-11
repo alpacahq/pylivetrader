@@ -65,10 +65,8 @@ $ cat config.yaml
 key_id: BROKER_API_KEY
 secret: BROKER_SECRET
 base_url: https://paper-api.alpaca.markets
-use_polygon: false
+feed: iex  # <== change to pro if you have a paid account
 ```
-*note: we use the alpaca data api by default, you could change that by
- setting usePolygon to true.<br>
 ### Usage with redis
 
 If you are running pylivetrader in an environment with an ephemeral file store and need your context
