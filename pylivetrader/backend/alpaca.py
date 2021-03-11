@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 
 import alpaca_trade_api as tradeapi
 from alpaca_trade_api import Stream
@@ -647,11 +646,10 @@ class Backend(BaseBackend):
             to = params['to']
             size = params['size']
             df = self._api.get_barset(symbols,
-                                          size,
-                                          limit=params['limit'],
-                                          start=_from.isoformat(),
-                                          end=to.isoformat()).df[symbols]
-                # df2 = df.copy()
+                                      size,
+                                      limit=params['limit'],
+                                      start=_from.isoformat(),
+                                      end=to.isoformat()).df[symbols]
 
             # zipline -> right label
             # API result -> left label (beginning of bucket)
