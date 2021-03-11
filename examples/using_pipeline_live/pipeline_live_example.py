@@ -2,7 +2,6 @@ from pylivetrader.api import order_target, record, symbol, order
 import pandas as pd
 from pipeline_live.data.alpaca.factors import AverageDollarVolume
 from pipeline_live.data.alpaca.pricing import USEquityPricing
-from pipeline_live.data.polygon.fundamentals import PolygonCompany
 from zipline.pipeline import Pipeline
 from logbook import Logger
 
@@ -21,7 +20,6 @@ def initialize(context):
     top5 = AverageDollarVolume(window_length=20).top(5)
     pipe = Pipeline({
         'close':     USEquityPricing.close.latest,
-        'marketcap': PolygonCompany.marketcap.latest,
     }, screen=top5)
 
     # this line connects the pipeline to pylivetrader. this is done once,
