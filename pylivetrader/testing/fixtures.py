@@ -4,7 +4,6 @@ import numpy as np
 from pylivetrader.data.data_portal import DataPortal
 from pylivetrader.assets import AssetFinder
 from pylivetrader.assets import Equity
-from pylivetrader.misc.pd_utils import normalize_date
 from pylivetrader.finance.order import Order as ZPOrder
 from trading_calendars import get_calendar
 
@@ -44,8 +43,8 @@ class AlpacaApi:
 class Backend:
 
     def __init__(self, start=None, end=None, assets=None, exchange='NYSE'):
-        self.start = normalize_date(pd.Timestamp(start or '2018-08-13'))
-        self.end = normalize_date(pd.Timestamp(end or '2018-08-14'))
+        self.start = pd.Timestamp(start or '2018-08-13').normalize()
+        self.end = pd.Timestamp(end or '2018-08-14').normalize()
 
         self._exchange = exchange
         self._calendar = get_calendar(exchange)

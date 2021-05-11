@@ -19,7 +19,6 @@ import pandas as pd
 from contextlib import contextmanager
 from collections import Iterable
 
-from pylivetrader.misc.pd_utils import normalize_date
 from pylivetrader.assets import Asset
 from pylivetrader.misc.parallel_utils import parallelize
 
@@ -334,7 +333,7 @@ class BarData:
             })
 
     def _is_stale_for_asset(self, asset, dt, adjusted_dt, data_portal):
-        session_label = normalize_date(dt)  # FIXME
+        session_label = dt.normalize()
 
         if not asset.is_alive_for_session(session_label):
             return False

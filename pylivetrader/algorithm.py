@@ -72,9 +72,8 @@ from pylivetrader.misc.api_context import (
     require_initialized,
     disallowed_in_before_trading_start,
 )
-from pylivetrader.misc.pd_utils import normalize_date
-from pylivetrader.misc.preprocess import preprocess
-from pylivetrader.misc.input_validation import (
+from zipline.utils.preprocess import preprocess
+from zipline.utils.input_validation import (
     coerce_string,
     ensure_upper_case,
     expect_types,
@@ -876,7 +875,7 @@ class Algorithm(object):
             )
 
         if asset.auto_close_date:
-            day = normalize_date(self.get_datetime())
+            day = self.get_datetime().normalize()
 
             if day > min(asset.end_date, asset.auto_close_date):
                 # If we are after the asset's end date or auto close date, warn

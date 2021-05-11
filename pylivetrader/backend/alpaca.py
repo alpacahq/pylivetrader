@@ -46,7 +46,6 @@ from pylivetrader.finance.execution import (
     StopOrder,
     StopLimitOrder,
 )
-from pylivetrader.misc.pd_utils import normalize_date
 from pylivetrader.misc.parallel_utils import parallelize, \
     parallelize_with_multi_process
 from pylivetrader.errors import SymbolNotFound
@@ -186,7 +185,7 @@ class Backend(BaseBackend):
 
     def get_equities(self):
         assets = []
-        t = normalize_date(pd.Timestamp('now', tz=NY))
+        t = pd.Timestamp('now', tz=NY).normalize()
         raw_assets = self._api.list_assets(asset_class='us_equity')
         for raw_asset in raw_assets:
 
