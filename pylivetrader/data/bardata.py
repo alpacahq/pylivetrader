@@ -19,7 +19,6 @@ import pandas as pd
 from contextlib import contextmanager
 from collections import Iterable
 
-from pylivetrader.misc.pd_utils import normalize_date
 from pylivetrader.assets import Asset
 from pylivetrader.misc.parallel_utils import parallelize
 
@@ -123,21 +122,62 @@ class BarData:
             )
 
     def history(self, assets, fields, bar_count, frequency):
+        """
+        Returns a trailing window of length ``bar_count`` with data for
+        the given assets, fields, and frequency, adjusted for splits, dividends,
+        and mergers as of the current simulation time.
+        The semantics for missing data are identical to the ones described in
+        the notes for :meth:`current`.
+        Parameters
+        ----------
+        assets: zipline.assets.Asset or iterable of zipline.assets.Asset
+            The asset(s) for which data is requested.
+        fields: string or iterable of string.
+            Requested data field(s). Valid field names are: "price",
+            "last_traded", "open", "high", "low", "close", and "volume".
+        bar_count: int
+            Number of data observations requested.
+        frequency: str
+            String indicating whether to load daily or minutely data
+            observations. Pass '1m' for minutely data, '1d' for daily data.
+        Returns
+        -------
+        history : pd.Series or pd.DataFrame or pd.Panel
+            See notes below.
+        Notes
+        -----
+        The return type of this function depends on the types of ``assets`` and
+        ``fields``:
+        - If a single asset and a single field are requested, the returned
+          value is a :class:`pd.Series` of length ``bar_count`` whose index is
+          :class:`pd.DatetimeIndex`.
+        - If a single asset and multiple fields are requested, the returned
+          value is a :class:`pd.DataFrame` with shape
+          ``(bar_count, len(fields))``. The frame's index will be a
+          :class:`pd.DatetimeIndex`, and its columns will be ``fields``.
+        - If multiple assets and a single field are requested, the returned
+          value is a :class:`pd.DataFrame` with shape
+          ``(bar_count, len(assets))``. The frame's index will be a
+          :class:`pd.DatetimeIndex`, and its columns will be ``assets``.
+        - If multiple assets and multiple fields are requested, the returned
+          value is a :class:`pd.DataFrame` with a pd.MultiIndex containing pairs of
+           :class:`pd.DatetimeIndex`, and ``assets``, while the columns while contain the field(s).
+           It has shape``(bar_count * len(assets), len(fields))``. The names of the pd.MultiIndex are
+            - ``date`` if frequency == '1d'`` or ``date_time`` if frequency == '1m``, and
+            - ``asset``
+        If the current simulation time is not a valid market time, we use the last market close instead.
+        """
 
-        if isinstance(assets, pandas.core.indexes.base.Index):
-            assets = list(assets)
+        single_field = isinstance(fields, str)
 
-        if not (assets and fields):
-            return None
+        single_asset = isinstance(assets, Asset)
 
-        if isinstance(fields, str):
-            single_asset = isinstance(assets, Asset)
+        if single_asset:
+            asset_list = [assets]
+        else:
+            asset_list = assets
 
-            if single_asset:
-                asset_list = [assets]
-            else:
-                asset_list = assets
-
+        if single_field:  # for one or more assets:
             df = self.data_portal.get_history_window(
                 asset_list,
                 self._get_current_minute(),
@@ -147,42 +187,60 @@ class BarData:
                 self.data_frequency,
             )
 
+            if self._adjust_minutes:
+                adjs = self.data_portal.get_adjustments(
+                    asset_list,
+                    fields,
+                    self._get_current_minute(),
+                    self.simulation_dt_func()
+                )
+
+                df = df * adjs
+
             if single_asset:
-                return df[assets]
+                # single asset, single field: return pd.Series with pd.DateTimeIndex
+                return df.loc[:, assets]
             else:
+                # multiple assets, single field: return DataFrame with pd.DateTimeIndex
+                # and assets in columns.
                 return df
-        else:
-            single_asset = isinstance(assets, Asset)
+        else:  # multiple fields
+            # if single_asset:
+            # todo: optimize by querying multiple fields
+            # Make multiple history calls, one per field, then combine results
 
-            if single_asset:
+            df_dict = {
+                field: self.data_portal.get_history_window(asset_list,
+                                                           self._get_current_minute(),
+                                                           bar_count,
+                                                           frequency,
+                                                           field,
+                                                           self.data_frequency,
+                                                           ).loc[:, asset_list]
+                for field in fields
+            }
 
-                df_dict = {
-                    field: self.data_portal.get_history_window(
-                        [assets],
-                        self._get_current_minute(),
-                        bar_count,
-                        frequency,
-                        field,
-                        self.data_frequency,
-                    )[assets] for field in fields
-                }
-
-                return pd.DataFrame(df_dict)
-
-            else:
-
-                df_dict = {
-                    field: self.data_portal.get_history_window(
+            if self._adjust_minutes:
+                adjs = {
+                    field: self.data_portal.get_adjustments(
                         assets,
-                        self._get_current_minute(),
-                        bar_count,
-                        frequency,
                         field,
-                        self.data_frequency,
-                    ) for field in fields
+                        self._get_current_minute(),
+                        self.simulation_dt_func()
+                    )[0] for field in fields
                 }
 
-                return pd.Panel(df_dict)
+                df_dict = {field: df * adjs[field]
+                           for field, df in df_dict.items()}
+
+            dt_label = 'date' if frequency == '1d' else 'date_time'
+            df = (pd.concat(df_dict,
+                            keys=df_dict.keys(),
+                            names=['fields', dt_label])
+                  .stack(dropna=False)  # ensure we return all fields/assets/dates despite missing values
+                  .unstack(level='fields'))
+            df.index.set_names([dt_label, 'asset'])
+            return df.sort_index()
 
     def can_trade(self, assets):
         """
@@ -236,6 +294,7 @@ class BarData:
                 )
             tradeable = parallelize(fetch)(assets)
             return pd.Series(data=tradeable, index=assets, dtype=bool)
+
 
     @property
     def calendar(self):
@@ -334,7 +393,7 @@ class BarData:
             })
 
     def _is_stale_for_asset(self, asset, dt, adjusted_dt, data_portal):
-        session_label = normalize_date(dt)  # FIXME
+        session_label = dt.normalize()
 
         if not asset.is_alive_for_session(session_label):
             return False

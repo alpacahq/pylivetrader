@@ -24,7 +24,7 @@ import pandas as pd
 import pytz
 from toolz import curry
 
-from .preprocess import preprocess
+from zipline.utils.preprocess import preprocess
 from .memorize import lazyval
 from .sentinel import sentinel
 
