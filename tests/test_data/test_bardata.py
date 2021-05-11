@@ -60,9 +60,6 @@ def test_bardata():
     assert len(o.index) == 1
     assert len(o.columns) == 2
 
-    o = data.history([asset0, asset1], ['open', 'close'], 1, 'minute')
-    assert type(o) == pd.Panel
-
     # can_trade
     data.datetime = pd.Timestamp('2018-08-13', tz='UTC')
 
