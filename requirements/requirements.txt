@@ -7,7 +7,7 @@ pytz>=2020.1
 logbook>=1.5
 astor>=0.8.1
 trading_calendars>=1.11
-click>=7,<8
+click==8.0.0
 PyYAML>=5, <6
 ipython>=7
 alpaca-trade-api>=1.2.0
