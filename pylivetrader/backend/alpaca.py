@@ -12,9 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 
 import alpaca_trade_api as tradeapi
+from alpaca_trade_api import Stream
 from alpaca_trade_api.rest import APIError
 from alpaca_trade_api.entity import Order
 from requests.exceptions import HTTPError
@@ -101,12 +101,14 @@ class Backend(BaseBackend):
         secret=None,
         base_url=None,
         api_version='v2',
-        use_polygon=False
+        feed='iex'
+
     ):
         self._key_id = key_id
         self._secret = secret
         self._base_url = base_url
-        self._use_polygon = use_polygon
+        self._feed = feed
+
         self._api = tradeapi.REST(
             key_id, secret, base_url, api_version=api_version
         )
@@ -131,19 +133,7 @@ class Backend(BaseBackend):
                 self._open_orders[k] = v
 
     def _get_stream(self, context):
-        set_context(context)
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        conn = tradeapi.StreamConn(
-            self._key_id,
-            self._secret,
-            self._base_url,
-            data_url=os.environ.get("DATA_PROXY_WS", ''),
-            data_stream='polygon' if self._use_polygon else 'alpacadatav1'
-        )
-        channels = ['trade_updates']
-
-        @conn.on(r'trade_updates')
-        async def handle_trade_update(conn, channel, data):
+        async def handle_trade_update(data):
             # Check for any pending orders
             waiting_order = self._orders_pending_submission.get(
                 data.order['client_order_id']
@@ -167,9 +157,19 @@ class Backend(BaseBackend):
                 self._open_orders[data.order['client_order_id']] = (
                     self._order2zp(Order(data.order))
                 )
+
+        set_context(context)
+        asyncio.set_event_loop(asyncio.new_event_loop())
+        conn = Stream(self._key_id,
+                      self._secret,
+                      self._base_url,
+                      data_feed=self._feed)
+
+        conn.subscribe_trade_updates(handle_trade_update)
+
         while 1:
             try:
-                conn.run(channels)
+                conn.run()
                 log.info("Connection reestablished")
             except Exception:
                 from time import sleep
@@ -446,10 +446,7 @@ class Backend(BaseBackend):
             return
 
     def get_last_traded_dt(self, asset):
-        if self._use_polygon:
-            trade = self._api.polygon.last_trade(asset.symbol)
-        else:
-            trade = self._api.get_last_trade(asset.symbol)
+        trade = self._api.get_last_trade(asset.symbol)
         return trade.timestamp
 
     def get_spot_value(
@@ -494,18 +491,12 @@ class Backend(BaseBackend):
         """
         Query last_trade in parallel for multiple symbols and
         return in dict.
-
         symbols: list[str]
-
-        return: dict[str -> polygon.Trade or alpaca.Trade]
         """
 
         @skip_http_error((404, 504))
         def fetch(symbol):
-            if self._use_polygon:
-                return self._api.polygon.last_trade(symbol)
-            else:
-                return self._api.get_last_trade(symbol)
+            return self._api.get_last_trade(symbol)
 
         return parallelize(fetch)(symbols)
 
@@ -551,6 +542,11 @@ class Backend(BaseBackend):
             else {assets.symbol: assets}
         df.columns = df.columns.set_levels([
             symbol_asset[s] for s in df.columns.levels[0]], level=0)
+        # try:
+        #     df.columns = df.columns.set_levels([
+        #         symbol_asset[s] for s in df.columns.levels[0]], level=0)
+        # except:
+        #     pass
         return df
 
     def _fetch_bars_from_api(
@@ -589,33 +585,21 @@ class Backend(BaseBackend):
 
         if not (_from and to):
             _from, to = self._get_from_and_to(size, limit, end_dt=to)
-        if self._use_polygon:
-            args = [{'symbols': symbol,
-                     '_from': _from,
-                     "to": to,
-                     "size": size}
-                    for symbol in symbols]
-            result = parallelize(self._fetch_bars_from_api_internal)(args)
-            if [df for df in result.values() if isinstance(df, pd.DataFrame)]:
-                return pd.concat(result.values(), axis=1)
-            else:
-                return pd.DataFrame([])
+        # alpaca support get real-time data of multi stocks(<200) at once
+        parts = []
+        for i in range(0, len(symbols), ALPACA_MAX_SYMBOLS_PER_REQUEST):
+            part = symbols[i:i + ALPACA_MAX_SYMBOLS_PER_REQUEST]
+            parts.append(part)
+        args = [{'symbols': part,
+                 '_from': _from,
+                 "to": to,
+                 "size": size,
+                 "limit": limit} for part in parts]
+        # result2 = parallelize(self._fetch_bars_from_api_internal)(args)
+        result = parallelize_with_multi_process(
+            self._fetch_bars_from_api_internal)(args)
 
-        else:
-            # alpaca support get real-time data of multi stocks(<200) at once
-            parts = []
-            for i in range(0, len(symbols), ALPACA_MAX_SYMBOLS_PER_REQUEST):
-                part = symbols[i:i + ALPACA_MAX_SYMBOLS_PER_REQUEST]
-                parts.append(part)
-            args = [{'symbols': part,
-                     '_from': _from,
-                     "to": to,
-                     "size": size,
-                     "limit": limit} for part in parts]
-            result = parallelize_with_multi_process(
-                self._fetch_bars_from_api_internal)(args)
-
-            return pd.concat(result, axis=1)
+        return pd.concat(result, axis=1)
 
     def _get_from_and_to(self, size, limit, end_dt=None):
         """
@@ -661,22 +645,11 @@ class Backend(BaseBackend):
             _from = params['_from']
             to = params['to']
             size = params['size']
-            if self._use_polygon:
-                assert isinstance(symbols, str)
-                symbol = str(symbols)
-                df = self._api.polygon.historic_agg_v2(
-                    symbol, 1, size,
-                    int(_from.timestamp()) * 1000,
-                    int(to.timestamp()) * 1000
-                ).df
-                df.columns = pd.MultiIndex.from_product([[symbols, ],
-                                                         df.columns])
-            else:
-                df = self._api.get_barset(symbols,
-                                          size,
-                                          limit=params['limit'],
-                                          start=_from.isoformat(),
-                                          end=to.isoformat()).df[symbols]
+            df = self._api.get_barset(symbols,
+                                      size,
+                                      limit=params['limit'],
+                                      start=_from.isoformat(),
+                                      end=to.isoformat()).df[symbols]
 
             # zipline -> right label
             # API result -> left label (beginning of bucket)

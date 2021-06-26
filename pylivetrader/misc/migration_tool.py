@@ -43,7 +43,6 @@ def add_pipelinelive_imports(code: str) -> str:
     imports = """
 from pipeline_live.data.alpaca.factors import AverageDollarVolume
 from pipeline_live.data.alpaca.pricing import USEquityPricing
-from pipeline_live.data.polygon.fundamentals import PolygonCompany
 from zipline.pipeline import Pipeline
 """
     if "pipeline" in code:
