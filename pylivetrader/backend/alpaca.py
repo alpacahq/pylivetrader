@@ -651,7 +651,7 @@ class Backend(BaseBackend):
                                       start=_from.isoformat(),
                                       end=to.isoformat()).df[symbols]
 
-            if not df.empty:
+            if df.empty:
                 # we got an empty response. We will try to use the updated
                 # V2 api to get the data. we cannot do 1 api call for all
                 # symbols so we will iterate them
