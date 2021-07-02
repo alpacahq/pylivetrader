@@ -15,7 +15,7 @@
 
 import alpaca_trade_api as tradeapi
 from alpaca_trade_api import Stream
-from alpaca_trade_api.rest import APIError
+from alpaca_trade_api.rest import APIError, TimeFrame
 from alpaca_trade_api.entity import Order
 from requests.exceptions import HTTPError
 import numpy as np
@@ -651,8 +651,19 @@ class Backend(BaseBackend):
                                       start=_from.isoformat(),
                                       end=to.isoformat()).df[symbols]
 
-            # zipline -> right label
-            # API result -> left label (beginning of bucket)
+            if df.empty:
+                # we got an empty response. We will try to use the updated
+                # V2 api to get the data. we cannot do 1 api call for all
+                # symbols so we will iterate them
+                r = {}
+                for sym in symbols:
+                    r[sym] = self._api.get_bars(sym, TimeFrame.Minute,
+                                                _from.isoformat(),
+                                                to.isoformat(),
+                                                adjustment='raw').df
+                df = pd.concat(r, axis=1)
+                # data is received in UTC tz but without tz (naive)
+                df.index = df.index.tz_localize("UTC")
             if size == 'minute':
                 df.index += pd.Timedelta('1min')
 
