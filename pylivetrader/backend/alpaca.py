@@ -446,7 +446,7 @@ class Backend(BaseBackend):
             return
 
     def get_last_traded_dt(self, asset):
-        trade = self._api.get_last_trade(asset.symbol)
+        trade = self._api.get_latest_trade(asset.symbol)
         return trade.timestamp
 
     def get_spot_value(
@@ -496,7 +496,7 @@ class Backend(BaseBackend):
 
         @skip_http_error((404, 504))
         def fetch(symbol):
-            return self._api.get_last_trade(symbol)
+            return self._api.get_latest_trade(symbol)
 
         return parallelize(fetch)(symbols)
 
