@@ -646,7 +646,7 @@ class Backend(BaseBackend):
             to = params['to']
             size = params['size']
 
-            timeframe = TimeFrame(1, TimeFrameUnit.Minute) if size == "minute" \
+            timeframe = TimeFrame(1, TimeFrameUnit.Minute) if size == "minute"\
                 else TimeFrame(1, TimeFrameUnit.Day)
 
             # Using V2 api to get the data. we cannot do 1 api call for all
