@@ -21,8 +21,8 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
-            pip install -R requirements/requirements.txt
-            pip install -R requirements/requirements_test.txt
+            pip install -r requirements/requirements.txt
+            pip install -r requirements/requirements_test.txt
             flake8 ./pylivetrader
             pytest
 
@@ -46,8 +46,8 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
-            pip install -R requirements/requirements.txt
-            pip install -R requirements/requirements_test.txt
+            pip install -r requirements/requirements.txt
+            pip install -r requirements/requirements_test.txt
             flake8 ./pylivetrader
             pytest
 
