@@ -22,7 +22,7 @@ jobs:
           command: |
             . venv/bin/activate
             pip install -r requirements/requirements_test.txt
-            flake8 ./pylivetrader
+            flake8 ./pylivetrader && echo "Flake8 passed"
             pytest
 
   build-python37:
@@ -46,7 +46,7 @@ jobs:
           command: |
             . venv/bin/activate
             pip install -r requirements/requirements_test.txt
-            flake8 ./pylivetrader
+            flake8 ./pylivetrader && echo "Flake8 passed"
             pytest
 
 workflows:
