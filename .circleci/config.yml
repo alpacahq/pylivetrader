@@ -21,7 +21,9 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
-            python3 setup.py flake8 test
+            pip install -r requirements/requirements_test.txt
+            flake8 ./pylivetrader && echo "Flake8 passed"
+            pytest
 
   build-python37:
     docker:
@@ -43,7 +45,9 @@ jobs:
       - run:
           command: |
             . venv/bin/activate
-            python3 setup.py flake8 test
+            pip install -r requirements/requirements_test.txt
+            flake8 ./pylivetrader && echo "Flake8 passed"
+            pytest
 
 workflows:
   version: 2

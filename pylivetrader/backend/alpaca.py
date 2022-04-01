@@ -446,7 +446,7 @@ class Backend(BaseBackend):
             return
 
     def get_last_traded_dt(self, asset):
-        trade = self._api.get_last_trade(asset.symbol)
+        trade = self._api.get_latest_trade(asset.symbol)
         return trade.timestamp
 
     def get_spot_value(
@@ -496,7 +496,7 @@ class Backend(BaseBackend):
 
         @skip_http_error((404, 504))
         def fetch(symbol):
-            return self._api.get_last_trade(symbol)
+            return self._api.get_latest_trade(symbol)
 
         return parallelize(fetch)(symbols)
 
@@ -645,25 +645,25 @@ class Backend(BaseBackend):
             _from = params['_from']
             to = params['to']
             size = params['size']
-            df = self._api.get_barset(symbols,
-                                      size,
-                                      limit=params['limit'],
-                                      start=_from.isoformat(),
-                                      end=to.isoformat()).df[symbols]
 
-            if df.empty:
-                # we got an empty response. We will try to use the updated
-                # V2 api to get the data. we cannot do 1 api call for all
-                # symbols so we will iterate them
-                r = {}
-                for sym in symbols:
-                    r[sym] = self._api.get_bars(sym, TimeFrame.Minute,
-                                                _from.isoformat(),
-                                                to.isoformat(),
-                                                adjustment='raw').df
-                df = pd.concat(r, axis=1)
-                # data is received in UTC tz but without tz (naive)
-                df.index = df.index.tz_localize("UTC")
+            timeframe = TimeFrame.Minute if size == "minute" else TimeFrame.Day
+
+            # Using V2 api to get the data. we cannot do 1 api call for all
+            # symbols because the v1 `limit` was per symbol, where v2 it's for
+            # overall response size; so we will iterate over each symbol with
+            # the limit for each to replicate that behaviour
+            r = {}
+            for sym in symbols:
+                r[sym] = self._api.get_bars(sym,
+                                            limit=params['limit'],
+                                            timeframe=timeframe,
+                                            start=_from.isoformat(),
+                                            end=to.isoformat(),
+                                            adjustment='raw').df
+            df = pd.concat(r, axis=1)
+            # data is received in UTC tz but without tz (naive)
+            df.index = df.index.tz_localize("UTC")
+
             if size == 'minute':
                 df.index += pd.Timedelta('1min')
 
