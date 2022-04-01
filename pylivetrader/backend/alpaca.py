@@ -15,7 +15,7 @@
 
 import alpaca_trade_api as tradeapi
 from alpaca_trade_api import Stream
-from alpaca_trade_api.rest import APIError, TimeFrame, TimeFrameUnit
+from alpaca_trade_api.rest import APIError, TimeFrame
 from alpaca_trade_api.entity import Order
 from requests.exceptions import HTTPError
 import numpy as np
@@ -646,8 +646,7 @@ class Backend(BaseBackend):
             to = params['to']
             size = params['size']
 
-            timeframe = TimeFrame(1, TimeFrameUnit.Minute) if size == "minute"\
-                else TimeFrame(1, TimeFrameUnit.Day)
+            timeframe = TimeFrame.Minute if size == "minute" else TimeFrame.Day
 
             # Using V2 api to get the data. we cannot do 1 api call for all
             # symbols because the v1 `limit` was per symbol, where v2 it's for
