@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pandas = "==0.22.0"
+alpaca-trade-api = "==0.26"
+pipeline-live = "==0.1.5"
+pylivetrader = "==0.0.27"
+ipython = "==7.4.0"
+ta-lib = "==0.4.16"
+
+[dev-packages]
+pytest = "*"
+pytest-cov = "*"
+
+[requires]
+python_version = "3.6"
