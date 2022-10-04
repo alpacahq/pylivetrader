@@ -89,7 +89,7 @@ def test_orders():
                 'exchange': 'NASDAQ',
                 'lastday_price': '200',
                 'market_value': '200',
-                'qty': '1',
+                'qty': '1.0',
                 'side': 'long',
                 'symbol': 'AAPL',
                 'unrealized_intraday_pl': '0',

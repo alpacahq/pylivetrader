@@ -241,7 +241,7 @@ class Backend(BaseBackend):
                 z_position = zp.Position(symbol_lookup(symbol))
             except SymbolNotFound:
                 continue
-            z_position.amount = int(pos.qty)
+            z_position.amount = float(pos.qty)
             z_position.cost_basis = float(pos.cost_basis) / float(pos.qty)
             z_position.last_sale_price = None
             z_position.last_sale_date = None
@@ -284,7 +284,7 @@ class Backend(BaseBackend):
         zp_order = ZPOrder(
             id=order.client_order_id,
             asset=symbol_lookup(order.symbol),
-            amount=int(order.qty) if order.side == 'buy' else -int(order.qty),
+            amount=float(order.qty) if order.side == 'buy' else -float(order.qty),
             stop=float(order.stop_price) if order.stop_price else None,
             limit=float(order.limit_price) if order.limit_price else None,
             dt=order.submitted_at,
@@ -297,7 +297,7 @@ class Backend(BaseBackend):
             zp_order._status = ZP_ORDER_STATUS.REJECTED
         if order.filled_at:
             zp_order._status = ZP_ORDER_STATUS.FILLED
-            zp_order.filled = int(order.filled_qty)
+            zp_order.filled = float(order.filled_qty)
         return zp_order
 
     def _new_order_id(self):
